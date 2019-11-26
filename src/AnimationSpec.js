@@ -348,7 +348,7 @@ class Animation extends TimingSpec {
                             endFrame,
                             tmpActionSpec.attribute.from * 100,
                             tmpActionSpec.attribute.to * 100,
-                            tmpActionSpec.easing
+                            ActionSpec.transToLottieAction(tmpActionSpec.easing)
                         );
                     } else if (tmpActionSpec.type === ActionSpec.actionTargets.mask) {
                         let targetMark = document.getElementById(markId);//TODO: pass dom here
@@ -361,7 +361,7 @@ class Animation extends TimingSpec {
                             endFrame,
                             tmpActionSpec.attribute.from * 100,
                             tmpActionSpec.attribute.to * 100,
-                            tmpActionSpec.easing
+                            ActionSpec.transToLottieAction(tmpActionSpec.easing)
                         );
                         globalVar.jsMovin.addMask(maskLayer, globalVar.markLayers.get(markId));
 

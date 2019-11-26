@@ -1,5 +1,6 @@
 import TimingSpec from './TimingSpec.js';
 import { globalVar } from './util/GlobalVar.js';
+import { EasingFactory } from 'jsmovin';
 
 class ActionSpec extends TimingSpec {
     constructor() {
@@ -422,6 +423,20 @@ class ActionSpec extends TimingSpec {
             })
         }
         return [resultDurations, minValueEachAttr, actionArr];
+    }
+
+    static transToLottieAction(easingName) {
+        switch (easingName){
+            case ActionSpec.easingType.easeLinear:
+                return EasingFactory.linear();
+            // easeInQuad: 'easeInQuad',
+            // easeOutQuad: 'easeOutQuad',
+            // easeInOutQuad: 'easeInOutQuad',
+            // easeInCubic: 'easeInCubic',
+            // easeOutCubic: 'easeOutCubic',
+            // easeInOutCubic: 'easeInOutCubic',
+            // easeOutBounce: 'easeOutBounce'  
+        }
     }
 }
 
