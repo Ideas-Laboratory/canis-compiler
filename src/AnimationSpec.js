@@ -340,29 +340,54 @@ class Animation extends TimingSpec {
                 if (tmpActionSpec.duration > 0) {
                     console.log('type: ', tmpActionSpec.type);
                     if (tmpActionSpec.type === ActionSpec.actionTargets.mark) {
+                        //TODO: consider 'custom'
                         let startFrame = Math.ceil(tmpActionSpec.startTime / (1000 / TimingSpec.FRAME_RATE));
                         let endFrame = Math.ceil((tmpActionSpec.startTime + tmpActionSpec.duration) / (1000 / TimingSpec.FRAME_RATE));
-                        globalVar.markLayers.get(markId).setAnimatableProperty(
-                            tmpActionSpec.attribute.attrName,
-                            startFrame,
-                            endFrame,
-                            tmpActionSpec.attribute.from * 100,
-                            tmpActionSpec.attribute.to * 100,
-                            ActionSpec.transToLottieAction(tmpActionSpec.easing)
-                        );
+                        tmpActionSpec.attribute.forEach((attr) => {
+                            globalVar.markLayers.get(markId).setAnimatableProperty(
+                                attr.attrName,
+                                startFrame,
+                                endFrame,
+                                attr.from * 100,
+                                attr.to * 100,
+                                ActionSpec.transToLottieAction(tmpActionSpec.easing)
+                            );
+                        })
+
                     } else if (tmpActionSpec.type === ActionSpec.actionTargets.mask) {
                         let targetMark = document.getElementById(markId);//TODO: pass dom here
-                        let maskLayer = LayerFactory.boundingBox(targetMark);
+                        let maskLayer;
+                        switch (tmpActionSpec.animationType) {
+                            //create rect mask
+                            case ActionSpec.targetAnimationType.wipe:
+                            case ActionSpec.targetAnimationType.move:
+                            case ActionSpec.targetAnimationType.appear:
+                                maskLayer = LayerFactory.boundingBox(targetMark);
+                                break;
+                            //create circle mask
+                            case ActionSpec.targetAnimationType.circle:
+                                const tmpBbox = LayerFactory.getBoundingBox(targetMark);
+                                const r = Math.sqrt(Math.pow(tmpBbox[2] / 2, 2) + Math.pow(tmpBbox[3] / 2, 2));
+                                maskLayer = LayerFactory.ellipse(tmpBbox[0] + tmpBbox[2], tmpBbox[1] + tmpBbox[3], r, r);
+                                maskLayer.setStaticProperty('anchorX', tmpBbox[2] / 2);
+                                maskLayer.setStaticProperty('anchorY', tmpBbox[3] / 2);
+                                break;
+                            //create path mask
+                            case ActionSpec.targetAnimationType.wheel:
+                                break;
+                        }
                         let startFrame = Math.ceil(tmpActionSpec.startTime / (1000 / TimingSpec.FRAME_RATE));
                         let endFrame = Math.ceil((tmpActionSpec.startTime + tmpActionSpec.duration) / (1000 / TimingSpec.FRAME_RATE));
-                        maskLayer.setAnimatableProperty(
-                            tmpActionSpec.attribute.attrName,
-                            startFrame,
-                            endFrame,
-                            tmpActionSpec.attribute.from * 100,
-                            tmpActionSpec.attribute.to * 100,
-                            ActionSpec.transToLottieAction(tmpActionSpec.easing)
-                        );
+                        tmpActionSpec.attribute.forEach((attr) => {
+                            maskLayer.setAnimatableProperty(
+                                attr.attrName,
+                                startFrame,
+                                endFrame,
+                                attr.from * 100,
+                                attr.to * 100,
+                                ActionSpec.transToLottieAction(tmpActionSpec.easing)
+                            );
+                        })
                         globalVar.jsMovin.addMask(maskLayer, globalVar.markLayers.get(markId));
 
 
@@ -397,379 +422,379 @@ class Animation extends TimingSpec {
         })
     }
 
-    static renderFrame(timePoint) {
-        let frame = [];//store the visual status of each mark at this time
-        this.allMarkAni.forEach(function (value, markId) {
-            let currentStatus = new Map();
-            for (let i = 0, a; i < value.actionAttrs.length | (a = value.actionAttrs[i]); i++) {
-                if (a.attribute.from === a.attribute.to && a.duration === 0) {//nothing happends in this actionspec, skip it
-                    continue;
-                }
-                let resultValue = Animation.calAttrValue(a, markId, timePoint), lastValue = timePoint >= 0 ? Animation.calAttrValue(a, markId, timePoint - 1) : '';
-                if (resultValue !== lastValue) {
-                    if (a.startTime <= timePoint && a.startTime + a.duration >= timePoint) {//during this action
-                        currentStatus.set(a.attribute.attrName, { 'type': a.type, 'animationType': a.animationType, 'endTime': a.startTime + a.duration, 'attrName': a.attribute.attrName, 'value': resultValue });
-                    } else if (a.startTime + a.duration < timePoint) {
-                        if (typeof currentStatus.get(a.attribute.attrName) !== 'undefined') {
-                            if (currentStatus.get(a.attribute.attrName).endTime < a.startTime + a.duration) {
-                                currentStatus.set(a.attribute.attrName, { 'type': a.type, 'animationType': a.animationType, 'endTime': a.startTime + a.duration, 'attrName': a.attribute.attrName, 'value': resultValue });
-                            }
-                        }
-                    }
-                }
-            }
+    // static renderFrame(timePoint) {
+    //     let frame = [];//store the visual status of each mark at this time
+    //     this.allMarkAni.forEach(function (value, markId) {
+    //         let currentStatus = new Map();
+    //         for (let i = 0, a; i < value.actionAttrs.length | (a = value.actionAttrs[i]); i++) {
+    //             if (a.attribute.from === a.attribute.to && a.duration === 0) {//nothing happends in this actionspec, skip it
+    //                 continue;
+    //             }
+    //             let resultValue = Animation.calAttrValue(a, markId, timePoint), lastValue = timePoint >= 0 ? Animation.calAttrValue(a, markId, timePoint - 1) : '';
+    //             if (resultValue !== lastValue) {
+    //                 if (a.startTime <= timePoint && a.startTime + a.duration >= timePoint) {//during this action
+    //                     currentStatus.set(a.attribute.attrName, { 'type': a.type, 'animationType': a.animationType, 'endTime': a.startTime + a.duration, 'attrName': a.attribute.attrName, 'value': resultValue });
+    //                 } else if (a.startTime + a.duration < timePoint) {
+    //                     if (typeof currentStatus.get(a.attribute.attrName) !== 'undefined') {
+    //                         if (currentStatus.get(a.attribute.attrName).endTime < a.startTime + a.duration) {
+    //                             currentStatus.set(a.attribute.attrName, { 'type': a.type, 'animationType': a.animationType, 'endTime': a.startTime + a.duration, 'attrName': a.attribute.attrName, 'value': resultValue });
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
 
-            if (currentStatus.size > 0) {
-                frame.push([markId, currentStatus]);
-            }
-        })
-        return frame;
-    }
+    //         if (currentStatus.size > 0) {
+    //             frame.push([markId, currentStatus]);
+    //         }
+    //     })
+    //     return frame;
+    // }
 
-    static calAttrValue(a, markId, timePoint) {
-        let resultValue, chartIdx = a.chartIdx;
+    // static calAttrValue(a, markId, timePoint) {
+    //     let resultValue, chartIdx = a.chartIdx;
 
-        if (a.startTime <= timePoint && a.startTime + a.duration >= timePoint) {//during this action
-            let percentage = parseFloat(timePoint - a.startTime) / parseFloat(a.duration);
-            let ratio = this.calRatio(percentage, a.easing);
-            switch (a.attribute.attrName) {
-                case 'fill':
-                case 'stroke':
-                    if (a.type === ActionSpec.actionTargets.mark) {
-                        if (Array.isArray(a.attribute.to)) {
-                            let fromColor;
-                            let toColor;
-                            for (let j = 0; j < a.attribute.to.length; j++) {
-                                if (a.attribute.to[j][0] === markId && typeof a.attribute.to[j][1] === 'string') {
-                                    fromColor = a.attribute.from[j][1];
-                                    toColor = a.attribute.to[j][1];
-                                    break;
-                                }
-                            }
-                            let fromRGB = Util.color2RGB(fromColor), toRGB = Util.color2RGB(toColor);
-                            let valueR = parseInt((toRGB[0] - fromRGB[0]) * ratio) + fromRGB[0];
-                            let valueG = parseInt((toRGB[1] - fromRGB[1]) * ratio) + fromRGB[1];
-                            let valueB = parseInt((toRGB[2] - fromRGB[2]) * ratio) + fromRGB[2];
-                            resultValue = 'rgb(' + valueR + ',' + valueG + ',' + valueB + ')';
-                        }
-                    }
-                    break;
-                case 'textContent':
-                    if (a.type === ActionSpec.actionTargets.mark) {
-                        if (Array.isArray(a.attribute.to)) {
-                            let startValue = 0;
-                            for (let j = 0; j < a.attribute.to.length; j++) {
-                                if (a.attribute.to[j][0] === markId && (!isNaN(a.attribute.to[j][1]) || typeof a.attribute.to[j][1] === 'string')) {
-                                    startValue = a.attribute.to[j][1];
-                                    break;
-                                }
-                            }
-                            resultValue = startValue;
-                        }
-                    }
-                    break;
-                case 'width':
-                case 'height':
-                case 'r':
-                    if (a.type === ActionSpec.actionTargets.mark) {
-                        if (Array.isArray(a.attribute.to)) {
-                            let startValue = 0;
-                            let finalValue = 0;
-                            for (let j = 0; j < a.attribute.to.length; j++) {
-                                if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
-                                    startValue = a.attribute.from[j][1];
-                                    finalValue = a.attribute.to[j][1];
-                                    break;
-                                }
-                            }
-                            resultValue = startValue + (finalValue - startValue) * ratio;
-                        } else {
-                            let startValue = 0;
-                            let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-                            resultValue = startValue - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startValue - finalValue);
-                        }
-                    } else {
-                        let startValue = parseFloat(this.minStatus.get(a.attribute.attrName));
-                        let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-                        if (startValue < 0) {
-                            resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
-                        } else {
-                            resultValue = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * finalValue;
-                        }
-                    }
-                    break;
-                case 'y':
-                case 'y1':
-                case 'y2':
-                case 'cy':
-                    if (a.type === ActionSpec.actionTargets.mark) {
-                        if (Array.isArray(a.attribute.to)) {
-                            let startValue = 0;
-                            let finalValue = 0;
-                            for (let j = 0; j < a.attribute.to.length; j++) {
-                                if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
-                                    startValue = a.attribute.from[j][1];
-                                    finalValue = a.attribute.to[j][1];
-                                    break;
-                                }
-                            }
-                            resultValue = startValue + (finalValue - startValue) * ratio;
-                        } else {
-                            let startValue = this.startY;
-                            let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-                            resultValue = startValue - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startValue - finalValue);
-                        }
-                    } else if (a.type === ActionSpec.actionTargets.mask) {
-                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) - 1 + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (parseFloat(this.finalStatus.get(markId)[chartIdx]['height']) + 2);
-                    }
-                    break;
-                case 'x':
-                case 'x1':
-                case 'x2':
-                case 'cx':
-                    if (a.type === ActionSpec.actionTargets.mark) {
-                        if (Array.isArray(a.attribute.to)) {//changing from one status to the other
-                            let startValue = 0;
-                            let finalValue = 0;
-                            for (let j = 0; j < a.attribute.to.length; j++) {
-                                if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
-                                    startValue = a.attribute.from[j][1];
-                                    finalValue = a.attribute.to[j][1];
-                                    break;
-                                }
-                            }
-                            resultValue = startValue + (finalValue - startValue) * ratio;
-                        } else {//marks entering charts
-                            let startValue = this.startX;
-                            let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-                            resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
-                        }
-                    } else if (a.type === ActionSpec.actionTargets.mask) {
-                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) - 1 + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (parseFloat(this.finalStatus.get(markId)[chartIdx]['width']) + 2);
-                    }
-                    break;
-                case 'startAngle':
-                    let startAngle = parseFloat(this.finalStatus.get(markId)[chartIdx].startAngle);
-                    let endAngle = parseFloat(this.finalStatus.get(markId)[chartIdx].endAngle);
+    //     if (a.startTime <= timePoint && a.startTime + a.duration >= timePoint) {//during this action
+    //         let percentage = parseFloat(timePoint - a.startTime) / parseFloat(a.duration);
+    //         let ratio = this.calRatio(percentage, a.easing);
+    //         switch (a.attribute.attrName) {
+    //             case 'fill':
+    //             case 'stroke':
+    //                 if (a.type === ActionSpec.actionTargets.mark) {
+    //                     if (Array.isArray(a.attribute.to)) {
+    //                         let fromColor;
+    //                         let toColor;
+    //                         for (let j = 0; j < a.attribute.to.length; j++) {
+    //                             if (a.attribute.to[j][0] === markId && typeof a.attribute.to[j][1] === 'string') {
+    //                                 fromColor = a.attribute.from[j][1];
+    //                                 toColor = a.attribute.to[j][1];
+    //                                 break;
+    //                             }
+    //                         }
+    //                         let fromRGB = Util.color2RGB(fromColor), toRGB = Util.color2RGB(toColor);
+    //                         let valueR = parseInt((toRGB[0] - fromRGB[0]) * ratio) + fromRGB[0];
+    //                         let valueG = parseInt((toRGB[1] - fromRGB[1]) * ratio) + fromRGB[1];
+    //                         let valueB = parseInt((toRGB[2] - fromRGB[2]) * ratio) + fromRGB[2];
+    //                         resultValue = 'rgb(' + valueR + ',' + valueG + ',' + valueB + ')';
+    //                     }
+    //                 }
+    //                 break;
+    //             case 'textContent':
+    //                 if (a.type === ActionSpec.actionTargets.mark) {
+    //                     if (Array.isArray(a.attribute.to)) {
+    //                         let startValue = 0;
+    //                         for (let j = 0; j < a.attribute.to.length; j++) {
+    //                             if (a.attribute.to[j][0] === markId && (!isNaN(a.attribute.to[j][1]) || typeof a.attribute.to[j][1] === 'string')) {
+    //                                 startValue = a.attribute.to[j][1];
+    //                                 break;
+    //                             }
+    //                         }
+    //                         resultValue = startValue;
+    //                     }
+    //                 }
+    //                 break;
+    //             case 'width':
+    //             case 'height':
+    //             case 'r':
+    //                 if (a.type === ActionSpec.actionTargets.mark) {
+    //                     if (Array.isArray(a.attribute.to)) {
+    //                         let startValue = 0;
+    //                         let finalValue = 0;
+    //                         for (let j = 0; j < a.attribute.to.length; j++) {
+    //                             if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
+    //                                 startValue = a.attribute.from[j][1];
+    //                                 finalValue = a.attribute.to[j][1];
+    //                                 break;
+    //                             }
+    //                         }
+    //                         resultValue = startValue + (finalValue - startValue) * ratio;
+    //                     } else {
+    //                         let startValue = 0;
+    //                         let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+    //                         resultValue = startValue - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startValue - finalValue);
+    //                     }
+    //                 } else {
+    //                     let startValue = parseFloat(this.minStatus.get(a.attribute.attrName));
+    //                     let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+    //                     if (startValue < 0) {
+    //                         resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
+    //                     } else {
+    //                         resultValue = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * finalValue;
+    //                     }
+    //                 }
+    //                 break;
+    //             case 'y':
+    //             case 'y1':
+    //             case 'y2':
+    //             case 'cy':
+    //                 if (a.type === ActionSpec.actionTargets.mark) {
+    //                     if (Array.isArray(a.attribute.to)) {
+    //                         let startValue = 0;
+    //                         let finalValue = 0;
+    //                         for (let j = 0; j < a.attribute.to.length; j++) {
+    //                             if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
+    //                                 startValue = a.attribute.from[j][1];
+    //                                 finalValue = a.attribute.to[j][1];
+    //                                 break;
+    //                             }
+    //                         }
+    //                         resultValue = startValue + (finalValue - startValue) * ratio;
+    //                     } else {
+    //                         let startValue = this.startY;
+    //                         let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+    //                         resultValue = startValue - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startValue - finalValue);
+    //                     }
+    //                 } else if (a.type === ActionSpec.actionTargets.mask) {
+    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) - 1 + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (parseFloat(this.finalStatus.get(markId)[chartIdx]['height']) + 2);
+    //                 }
+    //                 break;
+    //             case 'x':
+    //             case 'x1':
+    //             case 'x2':
+    //             case 'cx':
+    //                 if (a.type === ActionSpec.actionTargets.mark) {
+    //                     if (Array.isArray(a.attribute.to)) {//changing from one status to the other
+    //                         let startValue = 0;
+    //                         let finalValue = 0;
+    //                         for (let j = 0; j < a.attribute.to.length; j++) {
+    //                             if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
+    //                                 startValue = a.attribute.from[j][1];
+    //                                 finalValue = a.attribute.to[j][1];
+    //                                 break;
+    //                             }
+    //                         }
+    //                         resultValue = startValue + (finalValue - startValue) * ratio;
+    //                     } else {//marks entering charts
+    //                         let startValue = this.startX;
+    //                         let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+    //                         resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
+    //                     }
+    //                 } else if (a.type === ActionSpec.actionTargets.mask) {
+    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) - 1 + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (parseFloat(this.finalStatus.get(markId)[chartIdx]['width']) + 2);
+    //                 }
+    //                 break;
+    //             case 'startAngle':
+    //                 let startAngle = parseFloat(this.finalStatus.get(markId)[chartIdx].startAngle);
+    //                 let endAngle = parseFloat(this.finalStatus.get(markId)[chartIdx].endAngle);
 
-                    let _startAngle = startAngle < 0 ? startAngle + 2 * Math.PI : startAngle;
-                    let _endAngle = endAngle < 0 || _startAngle > endAngle ? endAngle + 2 * Math.PI : endAngle;
+    //                 let _startAngle = startAngle < 0 ? startAngle + 2 * Math.PI : startAngle;
+    //                 let _endAngle = endAngle < 0 || _startAngle > endAngle ? endAngle + 2 * Math.PI : endAngle;
 
-                    let tmpAngle;
-                    if (_endAngle > _startAngle) {
-                        tmpAngle = _startAngle + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (_endAngle - _startAngle);
-                    } else {
-                        tmpAngle = _startAngle + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (Math.PI * 2 - _startAngle + _endAngle);
-                    }
+    //                 let tmpAngle;
+    //                 if (_endAngle > _startAngle) {
+    //                     tmpAngle = _startAngle + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (_endAngle - _startAngle);
+    //                 } else {
+    //                     tmpAngle = _startAngle + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (Math.PI * 2 - _startAngle + _endAngle);
+    //                 }
 
-                    resultValue = {
-                        'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
-                        'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
-                        'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']),
-                        'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) + 2,
-                        'startAngle': tmpAngle,
-                        'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
-                    }
-                    break;
-                case 'innerRadius':
-                    let startRadius = parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']);
-                    let endRadius = parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']);
-                    let tmpRadius = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (endRadius - startRadius);
-                    if (tmpRadius < 0) {
-                        resultValue = {
-                            'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
-                            'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
-                            'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']) + 2,
-                            'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) - tmpRadius + 2,
-                            'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
-                            'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
-                        }
-                    } else {
-                        resultValue = {
-                            'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
-                            'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
-                            'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']) + tmpRadius + 2,
-                            'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) + 2,
-                            'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
-                            'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
-                        }
-                    }
-                    break;
-                case 'stroke-dashoffset':
-                    let startDashOffset = 0;
-                    let finalDashOffset = parseFloat(this.finalStatus.get(markId)[chartIdx]['stroke-dasharray']);
-                    resultValue = startDashOffset - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startDashOffset - finalDashOffset);
-                    break;
-                case 'd':
-                    if (a.type === ActionSpec.actionTargets.mark) {
-                        if (Array.isArray(a.attribute.to)) {//changing from one status to the other
-                            let startValue = '', finalValue = '', startDiscretVal = '', finalDiscretVal = '';
-                            for (let j = 0; j < a.attribute.to.length; j++) {
-                                if (a.attribute.to[j][0] === markId && a.attribute.from[j][1] && a.attribute.to[j][1]) {
-                                    startValue = a.attribute.from[j][1];
-                                    finalValue = a.attribute.to[j][1];
-                                    startDiscretVal = a.attribute.from[j][2];
-                                    finalDiscretVal = a.attribute.to[j][2];
-                                    break;
-                                }
-                            }
-                            resultValue = Util.calTransD(startValue, finalValue, ratio, startDiscretVal, finalDiscretVal);
-                        }
-                    }
-                    break;
-                default://numeric attribute values
-                    let startValue = parseFloat(this.minStatus.get(a.attribute.attrName));
-                    let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-                    if (startValue < 0) {
-                        resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
-                    } else {
-                        resultValue = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * finalValue;
-                    }
-            }
-        } else if (a.startTime + a.duration < timePoint) {//past actions
-            switch (a.attribute.attrName) {
-                case 'fill':
-                case 'stroke':
-                    if (a.type === ActionSpec.actionTargets.mark) {
-                        if (Array.isArray(a.attribute.to)) {
-                            for (let j = 0; j < a.attribute.to.length; j++) {
-                                if (a.attribute.to[j][0] === markId && typeof a.attribute.to[j][1] === 'string') {
-                                    resultValue = a.attribute.to[j][1];
-                                    break;
-                                }
-                            }
-                        } else {
-                            resultValue = this.finalStatus.get(markId)[chartIdx][a.attribute.attrName];
-                        }
-                    }
-                    break;
-                case 'textContent':
-                    if (a.type === ActionSpec.actionTargets.mark) {
-                        if (Array.isArray(a.attribute.to)) {
-                            let startValue = 0;
-                            for (let j = 0; j < a.attribute.to.length; j++) {
-                                if (a.attribute.to[j][0] === markId && (!isNaN(a.attribute.to[j][1]) || typeof a.attribute.to[j][1] === 'string')) {
-                                    startValue = a.attribute.to[j][1];
-                                    break;
-                                }
-                            }
-                            resultValue = startValue;
-                        }
-                    }
-                    break;
-                case 'width':
-                case 'height':
-                case 'r':
-                    if (a.type === ActionSpec.actionTargets.mark) {
-                        if (Array.isArray(a.attribute.to)) {//changing from one status to the other
-                            let finalValue = 0;
-                            for (let j = 0; j < a.attribute.to.length; j++) {
-                                if (a.attribute.to[j][0] === markId) {
-                                    finalValue = a.attribute.to[j][1];
-                                    break;
-                                }
-                            }
-                            resultValue = finalValue;
-                        } else {
-                            resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-                        }
-                    } else {
-                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-                    }
-                    break;
-                case 'y':
-                case 'y1':
-                case 'y2':
-                case 'cy':
-                    if (a.type === ActionSpec.actionTargets.mark) {
-                        if (Array.isArray(a.attribute.to)) {//changing from one status to the other
-                            let finalValue = 0;
-                            for (let j = 0; j < a.attribute.to.length; j++) {
-                                if (a.attribute.to[j][0] === markId) {
-                                    finalValue = a.attribute.to[j][1];
-                                    break;
-                                }
-                            }
-                            resultValue = finalValue;
-                        } else {
-                            resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-                        }
-                    } else if (a.type === ActionSpec.actionTargets.mask) {
-                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) + parseFloat(this.finalStatus.get(markId)[chartIdx]['height']);
-                    }
-                    break;
-                case 'x':
-                case 'x1':
-                case 'x2':
-                case 'cx':
-                    if (a.type === ActionSpec.actionTargets.mark) {
-                        if (Array.isArray(a.attribute.to)) {//changing from one status to the other
-                            let finalValue = 0;
-                            for (let j = 0; j < a.attribute.to.length; j++) {
-                                if (a.attribute.to[j][0] === markId) {
-                                    finalValue = a.attribute.to[j][1];
-                                    break;
-                                }
-                            }
-                            resultValue = finalValue;
-                        } else {
-                            resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-                        }
-                    } else if (a.type === ActionSpec.actionTargets.mask) {
-                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) + parseFloat(this.finalStatus.get(markId)[chartIdx]['height']);
-                    }
-                    break;
-                case 'startAngle':
-                case 'innerRadius':
-                    resultValue = {
-                        'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
-                        'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
-                        'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']),
-                        'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']),
-                        'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
-                        'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
-                    }
-                    break;
-                default://numeric attribute values
-                    if (typeof this.finalStatus.get(markId)[chartIdx] !== 'undefined') {
-                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-                    }
-            }
-        }
-        return resultValue;
-    }
+    //                 resultValue = {
+    //                     'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
+    //                     'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
+    //                     'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']),
+    //                     'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) + 2,
+    //                     'startAngle': tmpAngle,
+    //                     'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
+    //                 }
+    //                 break;
+    //             case 'innerRadius':
+    //                 let startRadius = parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']);
+    //                 let endRadius = parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']);
+    //                 let tmpRadius = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (endRadius - startRadius);
+    //                 if (tmpRadius < 0) {
+    //                     resultValue = {
+    //                         'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
+    //                         'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
+    //                         'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']) + 2,
+    //                         'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) - tmpRadius + 2,
+    //                         'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
+    //                         'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
+    //                     }
+    //                 } else {
+    //                     resultValue = {
+    //                         'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
+    //                         'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
+    //                         'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']) + tmpRadius + 2,
+    //                         'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) + 2,
+    //                         'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
+    //                         'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
+    //                     }
+    //                 }
+    //                 break;
+    //             case 'stroke-dashoffset':
+    //                 let startDashOffset = 0;
+    //                 let finalDashOffset = parseFloat(this.finalStatus.get(markId)[chartIdx]['stroke-dasharray']);
+    //                 resultValue = startDashOffset - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startDashOffset - finalDashOffset);
+    //                 break;
+    //             case 'd':
+    //                 if (a.type === ActionSpec.actionTargets.mark) {
+    //                     if (Array.isArray(a.attribute.to)) {//changing from one status to the other
+    //                         let startValue = '', finalValue = '', startDiscretVal = '', finalDiscretVal = '';
+    //                         for (let j = 0; j < a.attribute.to.length; j++) {
+    //                             if (a.attribute.to[j][0] === markId && a.attribute.from[j][1] && a.attribute.to[j][1]) {
+    //                                 startValue = a.attribute.from[j][1];
+    //                                 finalValue = a.attribute.to[j][1];
+    //                                 startDiscretVal = a.attribute.from[j][2];
+    //                                 finalDiscretVal = a.attribute.to[j][2];
+    //                                 break;
+    //                             }
+    //                         }
+    //                         resultValue = Util.calTransD(startValue, finalValue, ratio, startDiscretVal, finalDiscretVal);
+    //                     }
+    //                 }
+    //                 break;
+    //             default://numeric attribute values
+    //                 let startValue = parseFloat(this.minStatus.get(a.attribute.attrName));
+    //                 let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+    //                 if (startValue < 0) {
+    //                     resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
+    //                 } else {
+    //                     resultValue = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * finalValue;
+    //                 }
+    //         }
+    //     } else if (a.startTime + a.duration < timePoint) {//past actions
+    //         switch (a.attribute.attrName) {
+    //             case 'fill':
+    //             case 'stroke':
+    //                 if (a.type === ActionSpec.actionTargets.mark) {
+    //                     if (Array.isArray(a.attribute.to)) {
+    //                         for (let j = 0; j < a.attribute.to.length; j++) {
+    //                             if (a.attribute.to[j][0] === markId && typeof a.attribute.to[j][1] === 'string') {
+    //                                 resultValue = a.attribute.to[j][1];
+    //                                 break;
+    //                             }
+    //                         }
+    //                     } else {
+    //                         resultValue = this.finalStatus.get(markId)[chartIdx][a.attribute.attrName];
+    //                     }
+    //                 }
+    //                 break;
+    //             case 'textContent':
+    //                 if (a.type === ActionSpec.actionTargets.mark) {
+    //                     if (Array.isArray(a.attribute.to)) {
+    //                         let startValue = 0;
+    //                         for (let j = 0; j < a.attribute.to.length; j++) {
+    //                             if (a.attribute.to[j][0] === markId && (!isNaN(a.attribute.to[j][1]) || typeof a.attribute.to[j][1] === 'string')) {
+    //                                 startValue = a.attribute.to[j][1];
+    //                                 break;
+    //                             }
+    //                         }
+    //                         resultValue = startValue;
+    //                     }
+    //                 }
+    //                 break;
+    //             case 'width':
+    //             case 'height':
+    //             case 'r':
+    //                 if (a.type === ActionSpec.actionTargets.mark) {
+    //                     if (Array.isArray(a.attribute.to)) {//changing from one status to the other
+    //                         let finalValue = 0;
+    //                         for (let j = 0; j < a.attribute.to.length; j++) {
+    //                             if (a.attribute.to[j][0] === markId) {
+    //                                 finalValue = a.attribute.to[j][1];
+    //                                 break;
+    //                             }
+    //                         }
+    //                         resultValue = finalValue;
+    //                     } else {
+    //                         resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+    //                     }
+    //                 } else {
+    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+    //                 }
+    //                 break;
+    //             case 'y':
+    //             case 'y1':
+    //             case 'y2':
+    //             case 'cy':
+    //                 if (a.type === ActionSpec.actionTargets.mark) {
+    //                     if (Array.isArray(a.attribute.to)) {//changing from one status to the other
+    //                         let finalValue = 0;
+    //                         for (let j = 0; j < a.attribute.to.length; j++) {
+    //                             if (a.attribute.to[j][0] === markId) {
+    //                                 finalValue = a.attribute.to[j][1];
+    //                                 break;
+    //                             }
+    //                         }
+    //                         resultValue = finalValue;
+    //                     } else {
+    //                         resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+    //                     }
+    //                 } else if (a.type === ActionSpec.actionTargets.mask) {
+    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) + parseFloat(this.finalStatus.get(markId)[chartIdx]['height']);
+    //                 }
+    //                 break;
+    //             case 'x':
+    //             case 'x1':
+    //             case 'x2':
+    //             case 'cx':
+    //                 if (a.type === ActionSpec.actionTargets.mark) {
+    //                     if (Array.isArray(a.attribute.to)) {//changing from one status to the other
+    //                         let finalValue = 0;
+    //                         for (let j = 0; j < a.attribute.to.length; j++) {
+    //                             if (a.attribute.to[j][0] === markId) {
+    //                                 finalValue = a.attribute.to[j][1];
+    //                                 break;
+    //                             }
+    //                         }
+    //                         resultValue = finalValue;
+    //                     } else {
+    //                         resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+    //                     }
+    //                 } else if (a.type === ActionSpec.actionTargets.mask) {
+    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) + parseFloat(this.finalStatus.get(markId)[chartIdx]['height']);
+    //                 }
+    //                 break;
+    //             case 'startAngle':
+    //             case 'innerRadius':
+    //                 resultValue = {
+    //                     'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
+    //                     'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
+    //                     'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']),
+    //                     'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']),
+    //                     'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
+    //                     'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
+    //                 }
+    //                 break;
+    //             default://numeric attribute values
+    //                 if (typeof this.finalStatus.get(markId)[chartIdx] !== 'undefined') {
+    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+    //                 }
+    //         }
+    //     }
+    //     return resultValue;
+    // }
 
-    static calRatio(percentage, easingType) {
-        let ratio = 0;
-        switch (easingType) {
-            case ActionSpec.easingType.easeLinear:
-                ratio = percentage;
-                break;
-            case ActionSpec.easingType.easeInQuad:
-                ratio = this.easeFuncs.easeInQuad(percentage);
-                break;
-            case ActionSpec.easingType.easeOutQuad:
-                ratio = this.easeFuncs.easeOutQuad(percentage);
-                break;
-            case ActionSpec.easingType.easeInOutQuad:
-                ratio = this.easeFuncs.easeInOutQuad(percentage);
-                break;
-            case ActionSpec.easingType.easeInCubic:
-                ratio = this.easeFuncs.easeInCubic(percentage);
-                break;
-            case ActionSpec.easingType.easeOutCubic:
-                ratio = this.easeFuncs.easeOutCubic(percentage);
-                break;
-            case ActionSpec.easingType.easeInOutCubic:
-                ratio = this.easeFuncs.easeInOutCubic(percentage);
-                break;
-            case ActionSpec.easingType.easeOutBounce:
-                ratio = this.easeFuncs.easeOutBounce(percentage);
-                break;
+    // static calRatio(percentage, easingType) {
+    //     let ratio = 0;
+    //     switch (easingType) {
+    //         case ActionSpec.easingType.easeLinear:
+    //             ratio = percentage;
+    //             break;
+    //         case ActionSpec.easingType.easeInQuad:
+    //             ratio = this.easeFuncs.easeInQuad(percentage);
+    //             break;
+    //         case ActionSpec.easingType.easeOutQuad:
+    //             ratio = this.easeFuncs.easeOutQuad(percentage);
+    //             break;
+    //         case ActionSpec.easingType.easeInOutQuad:
+    //             ratio = this.easeFuncs.easeInOutQuad(percentage);
+    //             break;
+    //         case ActionSpec.easingType.easeInCubic:
+    //             ratio = this.easeFuncs.easeInCubic(percentage);
+    //             break;
+    //         case ActionSpec.easingType.easeOutCubic:
+    //             ratio = this.easeFuncs.easeOutCubic(percentage);
+    //             break;
+    //         case ActionSpec.easingType.easeInOutCubic:
+    //             ratio = this.easeFuncs.easeInOutCubic(percentage);
+    //             break;
+    //         case ActionSpec.easingType.easeOutBounce:
+    //             ratio = this.easeFuncs.easeOutBounce(percentage);
+    //             break;
 
-        }
-        return ratio;
-    }
+    //     }
+    //     return ratio;
+    // }
 
     static resetAll() {
         this.wholeEndTime = 0;

@@ -51,8 +51,9 @@ class ChartSpec {
                 let tmpDiv = document.createElement('div');
                 tmpDiv.innerHTML = xhr.responseText;
                 svgContent = tmpDiv.children[0];
-                defaultWidth = parseFloat(svgContent.getAttribute('width'));
-                defaultHeight = parseFloat(svgContent.getAttribute('height'));
+                let viewBoxNums = svgContent.getAttribute('viewBox').split(' ');
+                defaultWidth = parseFloat(viewBoxNums[2]);
+                defaultHeight = parseFloat(viewBoxNums[3]);
                 ChartSpec.charts.push(svgContent);
                 nameCharts.set(chartSpecs[i].id, ChartSpec.charts.length - 1);
             } else if (xhr.status === 404) {
