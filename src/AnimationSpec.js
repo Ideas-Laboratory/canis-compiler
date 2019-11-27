@@ -232,93 +232,93 @@ class Animation extends TimingSpec {
                 that.wholeEndTime = value.startTime + value.totalDuration;
             }
 
-            //categorize the actions according to the attribute name in order to insert place holder actions
-            let maskActionByAttr = new Map(), markActionByAttr = new Map();
-            for (let i = 0, item; i < value.actionAttrs.length | (item = value.actionAttrs[i]); i++) {
-                if (item.type === ActionSpec.actionTargets.mark) {
-                    if (typeof markActionByAttr.get(item.attribute.attrName) === 'undefined') {
-                        markActionByAttr.set(item.attribute.attrName, [item]);
-                    } else {
-                        markActionByAttr.get(item.attribute.attrName).push(item);
-                    }
-                } else if (item.type === ActionSpec.actionTargets.mask) {
-                    if (typeof maskActionByAttr.get(item.attribute.attrName) === 'undefined') {
-                        maskActionByAttr.set(item.attribute.attrName, [item]);
-                    } else {
-                        maskActionByAttr.get(item.attribute.attrName).push(item);
-                    }
-                } else {
-                    console.log('we have some action with no type !!!!!');
-                }
-            }
+            // //categorize the actions according to the attribute name in order to insert place holder actions
+            // let maskActionByAttr = new Map(), markActionByAttr = new Map();
+            // for (let i = 0, item; i < value.actionAttrs.length | (item = value.actionAttrs[i]); i++) {
+            //     if (item.type === ActionSpec.actionTargets.mark) {
+            //         if (typeof markActionByAttr.get(item.attribute.attrName) === 'undefined') {
+            //             markActionByAttr.set(item.attribute.attrName, [item]);
+            //         } else {
+            //             markActionByAttr.get(item.attribute.attrName).push(item);
+            //         }
+            //     } else if (item.type === ActionSpec.actionTargets.mask) {
+            //         if (typeof maskActionByAttr.get(item.attribute.attrName) === 'undefined') {
+            //             maskActionByAttr.set(item.attribute.attrName, [item]);
+            //         } else {
+            //             maskActionByAttr.get(item.attribute.attrName).push(item);
+            //         }
+            //     } else {
+            //         console.log('we have some action with no type !!!!!');
+            //     }
+            // }
 
-            //add extra action to fill the timeline for both mark and mask
-            maskActionByAttr.forEach(function (actionList, attrName) {
-                //put an start action
-                let tmpAction0 = new ActionSpec();
-                tmpAction0.type = ActionSpec.actionTargets.mask;
-                tmpAction0.chartIdx = actionList[0].chartIdx;
-                tmpAction0.animationType = actionList[0].animationType;
-                tmpAction0.startTime = 0;
-                tmpAction0.duration = actionList[0].startTime;
-                tmpAction0.attribute = {
-                    'attrName': actionList[0].attribute.attrName,
-                    'from': actionList[0].attribute.from,
-                    'to': actionList[0].attribute.from
-                }
-                value.actionAttrs.push(tmpAction0);
-                for (let i = 0; i < actionList.length; i++) {
-                    let tmpAction = new ActionSpec();
-                    tmpAction.type = ActionSpec.actionTargets.mask;
-                    tmpAction.chartIdx = actionList[i].chartIdx;
-                    tmpAction.animationType = actionList[i].animationType;
-                    tmpAction.startTime = actionList[i].startTime + actionList[i].duration;
-                    if (i === actionList.length - 1) {
-                        tmpAction.duration = 'wholeEnd';
-                    } else {
-                        tmpAction.duration = actionList[i + 1].startTime - actionList[i].startTime - actionList[i].duration;
-                    }
+            // //add extra action to fill the timeline for both mark and mask
+            // maskActionByAttr.forEach(function (actionList, attrName) {
+            //     //put an start action
+            //     let tmpAction0 = new ActionSpec();
+            //     tmpAction0.type = ActionSpec.actionTargets.mask;
+            //     tmpAction0.chartIdx = actionList[0].chartIdx;
+            //     tmpAction0.animationType = actionList[0].animationType;
+            //     tmpAction0.startTime = 0;
+            //     tmpAction0.duration = actionList[0].startTime;
+            //     tmpAction0.attribute = [{
+            //         'attrName': actionList[0].attribute.attrName,
+            //         'from': actionList[0].attribute.from,
+            //         'to': actionList[0].attribute.from
+            //     }]
+            //     value.actionAttrs.push(tmpAction0);
+            //     for (let i = 0; i < actionList.length; i++) {
+            //         let tmpAction = new ActionSpec();
+            //         tmpAction.type = ActionSpec.actionTargets.mask;
+            //         tmpAction.chartIdx = actionList[i].chartIdx;
+            //         tmpAction.animationType = actionList[i].animationType;
+            //         tmpAction.startTime = actionList[i].startTime + actionList[i].duration;
+            //         if (i === actionList.length - 1) {
+            //             tmpAction.duration = 'wholeEnd';
+            //         } else {
+            //             tmpAction.duration = actionList[i + 1].startTime - actionList[i].startTime - actionList[i].duration;
+            //         }
 
-                    tmpAction.attribute = {
-                        'attrName': actionList[i].attribute.attrName,
-                        'from': actionList[i].attribute.to,
-                        'to': actionList[i].attribute.to
-                    }
-                    value.actionAttrs.push(tmpAction);
-                }
-            })
-            markActionByAttr.forEach(function (actionList, attrName) {
-                //put an start action
-                let tmpAction0 = new ActionSpec();
-                tmpAction0.type = ActionSpec.actionTargets.mark;
-                tmpAction0.animationType = actionList[0].animationType;
-                tmpAction0.startTime = 0;
-                tmpAction0.duration = actionList[0].startTime;
-                tmpAction0.attribute = {
-                    'attrName': actionList[0].attribute.attrName,
-                    'from': actionList[0].attribute.from,
-                    'to': actionList[0].attribute.from
-                }
-                value.actionAttrs.push(tmpAction0);
-                for (let i = 0; i < actionList.length; i++) {
-                    let tmpAction = new ActionSpec();
-                    tmpAction.type = ActionSpec.actionTargets.mark;
-                    tmpAction.animationType = actionList[i].animationType;
-                    tmpAction.startTime = actionList[i].startTime + actionList[i].duration;
-                    if (i === actionList.length - 1) {
-                        tmpAction.duration = 'wholeEnd';
-                    } else {
-                        tmpAction.duration = actionList[i + 1].startTime - actionList[i].startTime - actionList[i].duration;
-                    }
+            //         tmpAction.attribute = [{
+            //             'attrName': actionList[i].attribute.attrName,
+            //             'from': actionList[i].attribute.to,
+            //             'to': actionList[i].attribute.to
+            //         }]
+            //         value.actionAttrs.push(tmpAction);
+            //     }
+            // })
+            // markActionByAttr.forEach(function (actionList, attrName) {
+            //     //put an start action
+            //     let tmpAction0 = new ActionSpec();
+            //     tmpAction0.type = ActionSpec.actionTargets.mark;
+            //     tmpAction0.animationType = actionList[0].animationType;
+            //     tmpAction0.startTime = 0;
+            //     tmpAction0.duration = actionList[0].startTime;
+            //     tmpAction0.attribute = [{
+            //         'attrName': actionList[0].attribute.attrName,
+            //         'from': actionList[0].attribute.from,
+            //         'to': actionList[0].attribute.from
+            //     }]
+            //     value.actionAttrs.push(tmpAction0);
+            //     for (let i = 0; i < actionList.length; i++) {
+            //         let tmpAction = new ActionSpec();
+            //         tmpAction.type = ActionSpec.actionTargets.mark;
+            //         tmpAction.animationType = actionList[i].animationType;
+            //         tmpAction.startTime = actionList[i].startTime + actionList[i].duration;
+            //         if (i === actionList.length - 1) {
+            //             tmpAction.duration = 'wholeEnd';
+            //         } else {
+            //             tmpAction.duration = actionList[i + 1].startTime - actionList[i].startTime - actionList[i].duration;
+            //         }
 
-                    tmpAction.attribute = {
-                        'attrName': actionList[i].attribute.attrName,
-                        'from': actionList[i].attribute.to,
-                        'to': actionList[i].attribute.to
-                    }
-                    value.actionAttrs.push(tmpAction);
-                }
-            })
+            //         tmpAction.attribute = [{
+            //             'attrName': actionList[i].attribute.attrName,
+            //             'from': actionList[i].attribute.to,
+            //             'to': actionList[i].attribute.to
+            //         }]
+            //         value.actionAttrs.push(tmpAction);
+            //     }
+            // })
         })
         console.log('The duration of the generated animation is: ' + this.wholeEndTime + 'ms');
 
@@ -333,6 +333,32 @@ class Animation extends TimingSpec {
         console.log('all mark ani: ', this.allMarkAni);
     }
 
+    static translateToLottieChannel(attrName) {
+        switch (attrName) {
+            case 'x':
+            case 'cx':
+                return ['x'];
+            case 'y':
+            case 'cy':
+                return ['y'];
+            case 'r':
+                return ['scaleX', 'scaleY'];
+            case 'width':
+                return ['scaleX'];
+            case 'height':
+                return ['scaleY'];
+            case 'd':
+            case 'x1':
+            case 'x2':
+            case 'y1':
+            case 'y2':
+            case 'textContent':
+            case 'fill':
+            case 'stroke':
+                break;
+        }
+    }
+
     static mapToLottieSpec() {
         this.allMarkAni.forEach(function (value, markId) {
             for (let i = 0; i < value.actionAttrs.length; i++) {
@@ -344,16 +370,51 @@ class Animation extends TimingSpec {
                         let startFrame = Math.ceil(tmpActionSpec.startTime / (1000 / TimingSpec.FRAME_RATE));
                         let endFrame = Math.ceil((tmpActionSpec.startTime + tmpActionSpec.duration) / (1000 / TimingSpec.FRAME_RATE));
                         tmpActionSpec.attribute.forEach((attr) => {
-                            globalVar.markLayers.get(markId).setAnimatableProperty(
-                                attr.attrName,
-                                startFrame,
-                                endFrame,
-                                attr.from * 100,
-                                attr.to * 100,
-                                ActionSpec.transToLottieAction(tmpActionSpec.easing)
-                            );
+                            if (tmpActionSpec.animationType === ActionSpec.targetAnimationType.custom) {
+                                //translate visual channels to lottie channels
+                                let lottieChannels = Animation.translateToLottieChannel(attr.attrName);
+                                if (Array.isArray(attr.to)) {//doing transition
+                                    let fromValue = 0, toValue = 0;
+                                    for (let j = 0; j < attr.to.length; j++) {
+                                        if (attr.to[j][0] === markId) {
+                                            fromValue = attr.from[j][1];
+                                            toValue = attr.to[j][1];
+                                            break;
+                                        }
+                                    }
+                                    lottieChannels.forEach((lc) => {
+                                        globalVar.markLayers.get(markId).setAnimatableProperty(
+                                            lc,
+                                            startFrame,
+                                            endFrame,
+                                            fromValue,
+                                            toValue,
+                                            ActionSpec.transToLottieAction(tmpActionSpec.easing)
+                                        );
+                                    })
+                                } else {
+                                    lottieChannels.forEach((lc) => {//TODO: difference from and to strategy with positions and channels like opacity
+                                        globalVar.markLayers.get(markId).setAnimatableProperty(
+                                            lc,
+                                            startFrame,
+                                            endFrame,
+                                            attr.from * 100,
+                                            attr.to * 100,
+                                            ActionSpec.transToLottieAction(tmpActionSpec.easing)
+                                        );
+                                    })
+                                }
+                            } else {//if not custom, then attrName is already lottie channels
+                                globalVar.markLayers.get(markId).setAnimatableProperty(
+                                    attr.attrName,
+                                    startFrame,
+                                    endFrame,
+                                    attr.from * 100,
+                                    attr.to * 100,
+                                    ActionSpec.transToLottieAction(tmpActionSpec.easing)
+                                );
+                            }
                         })
-
                     } else if (tmpActionSpec.type === ActionSpec.actionTargets.mask) {
                         let targetMark = document.getElementById(markId);//TODO: pass dom here
                         let maskLayer;
@@ -422,347 +483,347 @@ class Animation extends TimingSpec {
         })
     }
 
-    // static renderFrame(timePoint) {
-    //     let frame = [];//store the visual status of each mark at this time
-    //     this.allMarkAni.forEach(function (value, markId) {
-    //         let currentStatus = new Map();
-    //         for (let i = 0, a; i < value.actionAttrs.length | (a = value.actionAttrs[i]); i++) {
-    //             if (a.attribute.from === a.attribute.to && a.duration === 0) {//nothing happends in this actionspec, skip it
-    //                 continue;
-    //             }
-    //             let resultValue = Animation.calAttrValue(a, markId, timePoint), lastValue = timePoint >= 0 ? Animation.calAttrValue(a, markId, timePoint - 1) : '';
-    //             if (resultValue !== lastValue) {
-    //                 if (a.startTime <= timePoint && a.startTime + a.duration >= timePoint) {//during this action
-    //                     currentStatus.set(a.attribute.attrName, { 'type': a.type, 'animationType': a.animationType, 'endTime': a.startTime + a.duration, 'attrName': a.attribute.attrName, 'value': resultValue });
-    //                 } else if (a.startTime + a.duration < timePoint) {
-    //                     if (typeof currentStatus.get(a.attribute.attrName) !== 'undefined') {
-    //                         if (currentStatus.get(a.attribute.attrName).endTime < a.startTime + a.duration) {
-    //                             currentStatus.set(a.attribute.attrName, { 'type': a.type, 'animationType': a.animationType, 'endTime': a.startTime + a.duration, 'attrName': a.attribute.attrName, 'value': resultValue });
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
+    static renderFrame(timePoint) {
+        let frame = [];//store the visual status of each mark at this time
+        this.allMarkAni.forEach(function (value, markId) {
+            let currentStatus = new Map();
+            for (let i = 0, a; i < value.actionAttrs.length | (a = value.actionAttrs[i]); i++) {
+                if (a.attribute.from === a.attribute.to && a.duration === 0) {//nothing happends in this actionspec, skip it
+                    continue;
+                }
+                let resultValue = Animation.calAttrValue(a, markId, timePoint), lastValue = timePoint >= 0 ? Animation.calAttrValue(a, markId, timePoint - 1) : '';
+                if (resultValue !== lastValue) {
+                    if (a.startTime <= timePoint && a.startTime + a.duration >= timePoint) {//during this action
+                        currentStatus.set(a.attribute.attrName, { 'type': a.type, 'animationType': a.animationType, 'endTime': a.startTime + a.duration, 'attrName': a.attribute.attrName, 'value': resultValue });
+                    } else if (a.startTime + a.duration < timePoint) {
+                        if (typeof currentStatus.get(a.attribute.attrName) !== 'undefined') {
+                            if (currentStatus.get(a.attribute.attrName).endTime < a.startTime + a.duration) {
+                                currentStatus.set(a.attribute.attrName, { 'type': a.type, 'animationType': a.animationType, 'endTime': a.startTime + a.duration, 'attrName': a.attribute.attrName, 'value': resultValue });
+                            }
+                        }
+                    }
+                }
+            }
 
-    //         if (currentStatus.size > 0) {
-    //             frame.push([markId, currentStatus]);
-    //         }
-    //     })
-    //     return frame;
-    // }
+            if (currentStatus.size > 0) {
+                frame.push([markId, currentStatus]);
+            }
+        })
+        return frame;
+    }
 
-    // static calAttrValue(a, markId, timePoint) {
-    //     let resultValue, chartIdx = a.chartIdx;
+    static calAttrValue(a, markId, timePoint) {
+        let resultValue, chartIdx = a.chartIdx;
 
-    //     if (a.startTime <= timePoint && a.startTime + a.duration >= timePoint) {//during this action
-    //         let percentage = parseFloat(timePoint - a.startTime) / parseFloat(a.duration);
-    //         let ratio = this.calRatio(percentage, a.easing);
-    //         switch (a.attribute.attrName) {
-    //             case 'fill':
-    //             case 'stroke':
-    //                 if (a.type === ActionSpec.actionTargets.mark) {
-    //                     if (Array.isArray(a.attribute.to)) {
-    //                         let fromColor;
-    //                         let toColor;
-    //                         for (let j = 0; j < a.attribute.to.length; j++) {
-    //                             if (a.attribute.to[j][0] === markId && typeof a.attribute.to[j][1] === 'string') {
-    //                                 fromColor = a.attribute.from[j][1];
-    //                                 toColor = a.attribute.to[j][1];
-    //                                 break;
-    //                             }
-    //                         }
-    //                         let fromRGB = Util.color2RGB(fromColor), toRGB = Util.color2RGB(toColor);
-    //                         let valueR = parseInt((toRGB[0] - fromRGB[0]) * ratio) + fromRGB[0];
-    //                         let valueG = parseInt((toRGB[1] - fromRGB[1]) * ratio) + fromRGB[1];
-    //                         let valueB = parseInt((toRGB[2] - fromRGB[2]) * ratio) + fromRGB[2];
-    //                         resultValue = 'rgb(' + valueR + ',' + valueG + ',' + valueB + ')';
-    //                     }
-    //                 }
-    //                 break;
-    //             case 'textContent':
-    //                 if (a.type === ActionSpec.actionTargets.mark) {
-    //                     if (Array.isArray(a.attribute.to)) {
-    //                         let startValue = 0;
-    //                         for (let j = 0; j < a.attribute.to.length; j++) {
-    //                             if (a.attribute.to[j][0] === markId && (!isNaN(a.attribute.to[j][1]) || typeof a.attribute.to[j][1] === 'string')) {
-    //                                 startValue = a.attribute.to[j][1];
-    //                                 break;
-    //                             }
-    //                         }
-    //                         resultValue = startValue;
-    //                     }
-    //                 }
-    //                 break;
-    //             case 'width':
-    //             case 'height':
-    //             case 'r':
-    //                 if (a.type === ActionSpec.actionTargets.mark) {
-    //                     if (Array.isArray(a.attribute.to)) {
-    //                         let startValue = 0;
-    //                         let finalValue = 0;
-    //                         for (let j = 0; j < a.attribute.to.length; j++) {
-    //                             if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
-    //                                 startValue = a.attribute.from[j][1];
-    //                                 finalValue = a.attribute.to[j][1];
-    //                                 break;
-    //                             }
-    //                         }
-    //                         resultValue = startValue + (finalValue - startValue) * ratio;
-    //                     } else {
-    //                         let startValue = 0;
-    //                         let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-    //                         resultValue = startValue - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startValue - finalValue);
-    //                     }
-    //                 } else {
-    //                     let startValue = parseFloat(this.minStatus.get(a.attribute.attrName));
-    //                     let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-    //                     if (startValue < 0) {
-    //                         resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
-    //                     } else {
-    //                         resultValue = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * finalValue;
-    //                     }
-    //                 }
-    //                 break;
-    //             case 'y':
-    //             case 'y1':
-    //             case 'y2':
-    //             case 'cy':
-    //                 if (a.type === ActionSpec.actionTargets.mark) {
-    //                     if (Array.isArray(a.attribute.to)) {
-    //                         let startValue = 0;
-    //                         let finalValue = 0;
-    //                         for (let j = 0; j < a.attribute.to.length; j++) {
-    //                             if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
-    //                                 startValue = a.attribute.from[j][1];
-    //                                 finalValue = a.attribute.to[j][1];
-    //                                 break;
-    //                             }
-    //                         }
-    //                         resultValue = startValue + (finalValue - startValue) * ratio;
-    //                     } else {
-    //                         let startValue = this.startY;
-    //                         let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-    //                         resultValue = startValue - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startValue - finalValue);
-    //                     }
-    //                 } else if (a.type === ActionSpec.actionTargets.mask) {
-    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) - 1 + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (parseFloat(this.finalStatus.get(markId)[chartIdx]['height']) + 2);
-    //                 }
-    //                 break;
-    //             case 'x':
-    //             case 'x1':
-    //             case 'x2':
-    //             case 'cx':
-    //                 if (a.type === ActionSpec.actionTargets.mark) {
-    //                     if (Array.isArray(a.attribute.to)) {//changing from one status to the other
-    //                         let startValue = 0;
-    //                         let finalValue = 0;
-    //                         for (let j = 0; j < a.attribute.to.length; j++) {
-    //                             if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
-    //                                 startValue = a.attribute.from[j][1];
-    //                                 finalValue = a.attribute.to[j][1];
-    //                                 break;
-    //                             }
-    //                         }
-    //                         resultValue = startValue + (finalValue - startValue) * ratio;
-    //                     } else {//marks entering charts
-    //                         let startValue = this.startX;
-    //                         let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-    //                         resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
-    //                     }
-    //                 } else if (a.type === ActionSpec.actionTargets.mask) {
-    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) - 1 + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (parseFloat(this.finalStatus.get(markId)[chartIdx]['width']) + 2);
-    //                 }
-    //                 break;
-    //             case 'startAngle':
-    //                 let startAngle = parseFloat(this.finalStatus.get(markId)[chartIdx].startAngle);
-    //                 let endAngle = parseFloat(this.finalStatus.get(markId)[chartIdx].endAngle);
+        if (a.startTime <= timePoint && a.startTime + a.duration >= timePoint) {//during this action
+            let percentage = parseFloat(timePoint - a.startTime) / parseFloat(a.duration);
+            let ratio = this.calRatio(percentage, a.easing);
+            switch (a.attribute.attrName) {
+                case 'fill':
+                case 'stroke':
+                    if (a.type === ActionSpec.actionTargets.mark) {
+                        if (Array.isArray(a.attribute.to)) {
+                            let fromColor;
+                            let toColor;
+                            for (let j = 0; j < a.attribute.to.length; j++) {
+                                if (a.attribute.to[j][0] === markId && typeof a.attribute.to[j][1] === 'string') {
+                                    fromColor = a.attribute.from[j][1];
+                                    toColor = a.attribute.to[j][1];
+                                    break;
+                                }
+                            }
+                            let fromRGB = Util.color2RGB(fromColor), toRGB = Util.color2RGB(toColor);
+                            let valueR = parseInt((toRGB[0] - fromRGB[0]) * ratio) + fromRGB[0];
+                            let valueG = parseInt((toRGB[1] - fromRGB[1]) * ratio) + fromRGB[1];
+                            let valueB = parseInt((toRGB[2] - fromRGB[2]) * ratio) + fromRGB[2];
+                            resultValue = 'rgb(' + valueR + ',' + valueG + ',' + valueB + ')';
+                        }
+                    }
+                    break;
+                case 'textContent':
+                    if (a.type === ActionSpec.actionTargets.mark) {
+                        if (Array.isArray(a.attribute.to)) {
+                            let startValue = 0;
+                            for (let j = 0; j < a.attribute.to.length; j++) {
+                                if (a.attribute.to[j][0] === markId && (!isNaN(a.attribute.to[j][1]) || typeof a.attribute.to[j][1] === 'string')) {
+                                    startValue = a.attribute.to[j][1];
+                                    break;
+                                }
+                            }
+                            resultValue = startValue;
+                        }
+                    }
+                    break;
+                case 'width':
+                case 'height':
+                case 'r':
+                    if (a.type === ActionSpec.actionTargets.mark) {
+                        if (Array.isArray(a.attribute.to)) {
+                            let startValue = 0;
+                            let finalValue = 0;
+                            for (let j = 0; j < a.attribute.to.length; j++) {
+                                if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
+                                    startValue = a.attribute.from[j][1];
+                                    finalValue = a.attribute.to[j][1];
+                                    break;
+                                }
+                            }
+                            resultValue = startValue + (finalValue - startValue) * ratio;
+                        } else {
+                            let startValue = 0;
+                            let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+                            resultValue = startValue - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startValue - finalValue);
+                        }
+                    } else {
+                        let startValue = parseFloat(this.minStatus.get(a.attribute.attrName));
+                        let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+                        if (startValue < 0) {
+                            resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
+                        } else {
+                            resultValue = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * finalValue;
+                        }
+                    }
+                    break;
+                case 'y':
+                case 'y1':
+                case 'y2':
+                case 'cy':
+                    if (a.type === ActionSpec.actionTargets.mark) {
+                        if (Array.isArray(a.attribute.to)) {
+                            let startValue = 0;
+                            let finalValue = 0;
+                            for (let j = 0; j < a.attribute.to.length; j++) {
+                                if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
+                                    startValue = a.attribute.from[j][1];
+                                    finalValue = a.attribute.to[j][1];
+                                    break;
+                                }
+                            }
+                            resultValue = startValue + (finalValue - startValue) * ratio;
+                        } else {
+                            let startValue = this.startY;
+                            let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+                            resultValue = startValue - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startValue - finalValue);
+                        }
+                    } else if (a.type === ActionSpec.actionTargets.mask) {
+                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) - 1 + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (parseFloat(this.finalStatus.get(markId)[chartIdx]['height']) + 2);
+                    }
+                    break;
+                case 'x':
+                case 'x1':
+                case 'x2':
+                case 'cx':
+                    if (a.type === ActionSpec.actionTargets.mark) {
+                        if (Array.isArray(a.attribute.to)) {//changing from one status to the other
+                            let startValue = 0;
+                            let finalValue = 0;
+                            for (let j = 0; j < a.attribute.to.length; j++) {
+                                if (a.attribute.to[j][0] === markId && !isNaN(a.attribute.from[j][1]) && !isNaN(a.attribute.to[j][1])) {
+                                    startValue = a.attribute.from[j][1];
+                                    finalValue = a.attribute.to[j][1];
+                                    break;
+                                }
+                            }
+                            resultValue = startValue + (finalValue - startValue) * ratio;
+                        } else {//marks entering charts
+                            let startValue = this.startX;
+                            let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+                            resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
+                        }
+                    } else if (a.type === ActionSpec.actionTargets.mask) {
+                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) - 1 + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (parseFloat(this.finalStatus.get(markId)[chartIdx]['width']) + 2);
+                    }
+                    break;
+                case 'startAngle':
+                    let startAngle = parseFloat(this.finalStatus.get(markId)[chartIdx].startAngle);
+                    let endAngle = parseFloat(this.finalStatus.get(markId)[chartIdx].endAngle);
 
-    //                 let _startAngle = startAngle < 0 ? startAngle + 2 * Math.PI : startAngle;
-    //                 let _endAngle = endAngle < 0 || _startAngle > endAngle ? endAngle + 2 * Math.PI : endAngle;
+                    let _startAngle = startAngle < 0 ? startAngle + 2 * Math.PI : startAngle;
+                    let _endAngle = endAngle < 0 || _startAngle > endAngle ? endAngle + 2 * Math.PI : endAngle;
 
-    //                 let tmpAngle;
-    //                 if (_endAngle > _startAngle) {
-    //                     tmpAngle = _startAngle + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (_endAngle - _startAngle);
-    //                 } else {
-    //                     tmpAngle = _startAngle + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (Math.PI * 2 - _startAngle + _endAngle);
-    //                 }
+                    let tmpAngle;
+                    if (_endAngle > _startAngle) {
+                        tmpAngle = _startAngle + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (_endAngle - _startAngle);
+                    } else {
+                        tmpAngle = _startAngle + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (Math.PI * 2 - _startAngle + _endAngle);
+                    }
 
-    //                 resultValue = {
-    //                     'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
-    //                     'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
-    //                     'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']),
-    //                     'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) + 2,
-    //                     'startAngle': tmpAngle,
-    //                     'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
-    //                 }
-    //                 break;
-    //             case 'innerRadius':
-    //                 let startRadius = parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']);
-    //                 let endRadius = parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']);
-    //                 let tmpRadius = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (endRadius - startRadius);
-    //                 if (tmpRadius < 0) {
-    //                     resultValue = {
-    //                         'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
-    //                         'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
-    //                         'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']) + 2,
-    //                         'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) - tmpRadius + 2,
-    //                         'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
-    //                         'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
-    //                     }
-    //                 } else {
-    //                     resultValue = {
-    //                         'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
-    //                         'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
-    //                         'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']) + tmpRadius + 2,
-    //                         'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) + 2,
-    //                         'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
-    //                         'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
-    //                     }
-    //                 }
-    //                 break;
-    //             case 'stroke-dashoffset':
-    //                 let startDashOffset = 0;
-    //                 let finalDashOffset = parseFloat(this.finalStatus.get(markId)[chartIdx]['stroke-dasharray']);
-    //                 resultValue = startDashOffset - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startDashOffset - finalDashOffset);
-    //                 break;
-    //             case 'd':
-    //                 if (a.type === ActionSpec.actionTargets.mark) {
-    //                     if (Array.isArray(a.attribute.to)) {//changing from one status to the other
-    //                         let startValue = '', finalValue = '', startDiscretVal = '', finalDiscretVal = '';
-    //                         for (let j = 0; j < a.attribute.to.length; j++) {
-    //                             if (a.attribute.to[j][0] === markId && a.attribute.from[j][1] && a.attribute.to[j][1]) {
-    //                                 startValue = a.attribute.from[j][1];
-    //                                 finalValue = a.attribute.to[j][1];
-    //                                 startDiscretVal = a.attribute.from[j][2];
-    //                                 finalDiscretVal = a.attribute.to[j][2];
-    //                                 break;
-    //                             }
-    //                         }
-    //                         resultValue = Util.calTransD(startValue, finalValue, ratio, startDiscretVal, finalDiscretVal);
-    //                     }
-    //                 }
-    //                 break;
-    //             default://numeric attribute values
-    //                 let startValue = parseFloat(this.minStatus.get(a.attribute.attrName));
-    //                 let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-    //                 if (startValue < 0) {
-    //                     resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
-    //                 } else {
-    //                     resultValue = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * finalValue;
-    //                 }
-    //         }
-    //     } else if (a.startTime + a.duration < timePoint) {//past actions
-    //         switch (a.attribute.attrName) {
-    //             case 'fill':
-    //             case 'stroke':
-    //                 if (a.type === ActionSpec.actionTargets.mark) {
-    //                     if (Array.isArray(a.attribute.to)) {
-    //                         for (let j = 0; j < a.attribute.to.length; j++) {
-    //                             if (a.attribute.to[j][0] === markId && typeof a.attribute.to[j][1] === 'string') {
-    //                                 resultValue = a.attribute.to[j][1];
-    //                                 break;
-    //                             }
-    //                         }
-    //                     } else {
-    //                         resultValue = this.finalStatus.get(markId)[chartIdx][a.attribute.attrName];
-    //                     }
-    //                 }
-    //                 break;
-    //             case 'textContent':
-    //                 if (a.type === ActionSpec.actionTargets.mark) {
-    //                     if (Array.isArray(a.attribute.to)) {
-    //                         let startValue = 0;
-    //                         for (let j = 0; j < a.attribute.to.length; j++) {
-    //                             if (a.attribute.to[j][0] === markId && (!isNaN(a.attribute.to[j][1]) || typeof a.attribute.to[j][1] === 'string')) {
-    //                                 startValue = a.attribute.to[j][1];
-    //                                 break;
-    //                             }
-    //                         }
-    //                         resultValue = startValue;
-    //                     }
-    //                 }
-    //                 break;
-    //             case 'width':
-    //             case 'height':
-    //             case 'r':
-    //                 if (a.type === ActionSpec.actionTargets.mark) {
-    //                     if (Array.isArray(a.attribute.to)) {//changing from one status to the other
-    //                         let finalValue = 0;
-    //                         for (let j = 0; j < a.attribute.to.length; j++) {
-    //                             if (a.attribute.to[j][0] === markId) {
-    //                                 finalValue = a.attribute.to[j][1];
-    //                                 break;
-    //                             }
-    //                         }
-    //                         resultValue = finalValue;
-    //                     } else {
-    //                         resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-    //                     }
-    //                 } else {
-    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-    //                 }
-    //                 break;
-    //             case 'y':
-    //             case 'y1':
-    //             case 'y2':
-    //             case 'cy':
-    //                 if (a.type === ActionSpec.actionTargets.mark) {
-    //                     if (Array.isArray(a.attribute.to)) {//changing from one status to the other
-    //                         let finalValue = 0;
-    //                         for (let j = 0; j < a.attribute.to.length; j++) {
-    //                             if (a.attribute.to[j][0] === markId) {
-    //                                 finalValue = a.attribute.to[j][1];
-    //                                 break;
-    //                             }
-    //                         }
-    //                         resultValue = finalValue;
-    //                     } else {
-    //                         resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-    //                     }
-    //                 } else if (a.type === ActionSpec.actionTargets.mask) {
-    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) + parseFloat(this.finalStatus.get(markId)[chartIdx]['height']);
-    //                 }
-    //                 break;
-    //             case 'x':
-    //             case 'x1':
-    //             case 'x2':
-    //             case 'cx':
-    //                 if (a.type === ActionSpec.actionTargets.mark) {
-    //                     if (Array.isArray(a.attribute.to)) {//changing from one status to the other
-    //                         let finalValue = 0;
-    //                         for (let j = 0; j < a.attribute.to.length; j++) {
-    //                             if (a.attribute.to[j][0] === markId) {
-    //                                 finalValue = a.attribute.to[j][1];
-    //                                 break;
-    //                             }
-    //                         }
-    //                         resultValue = finalValue;
-    //                     } else {
-    //                         resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-    //                     }
-    //                 } else if (a.type === ActionSpec.actionTargets.mask) {
-    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) + parseFloat(this.finalStatus.get(markId)[chartIdx]['height']);
-    //                 }
-    //                 break;
-    //             case 'startAngle':
-    //             case 'innerRadius':
-    //                 resultValue = {
-    //                     'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
-    //                     'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
-    //                     'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']),
-    //                     'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']),
-    //                     'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
-    //                     'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
-    //                 }
-    //                 break;
-    //             default://numeric attribute values
-    //                 if (typeof this.finalStatus.get(markId)[chartIdx] !== 'undefined') {
-    //                     resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
-    //                 }
-    //         }
-    //     }
-    //     return resultValue;
-    // }
+                    resultValue = {
+                        'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
+                        'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
+                        'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']),
+                        'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) + 2,
+                        'startAngle': tmpAngle,
+                        'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
+                    }
+                    break;
+                case 'innerRadius':
+                    let startRadius = parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']);
+                    let endRadius = parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']);
+                    let tmpRadius = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (endRadius - startRadius);
+                    if (tmpRadius < 0) {
+                        resultValue = {
+                            'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
+                            'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
+                            'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']) + 2,
+                            'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) - tmpRadius + 2,
+                            'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
+                            'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
+                        }
+                    } else {
+                        resultValue = {
+                            'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
+                            'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
+                            'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']) + tmpRadius + 2,
+                            'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']) + 2,
+                            'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
+                            'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
+                        }
+                    }
+                    break;
+                case 'stroke-dashoffset':
+                    let startDashOffset = 0;
+                    let finalDashOffset = parseFloat(this.finalStatus.get(markId)[chartIdx]['stroke-dasharray']);
+                    resultValue = startDashOffset - (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (startDashOffset - finalDashOffset);
+                    break;
+                case 'd':
+                    if (a.type === ActionSpec.actionTargets.mark) {
+                        if (Array.isArray(a.attribute.to)) {//changing from one status to the other
+                            let startValue = '', finalValue = '', startDiscretVal = '', finalDiscretVal = '';
+                            for (let j = 0; j < a.attribute.to.length; j++) {
+                                if (a.attribute.to[j][0] === markId && a.attribute.from[j][1] && a.attribute.to[j][1]) {
+                                    startValue = a.attribute.from[j][1];
+                                    finalValue = a.attribute.to[j][1];
+                                    startDiscretVal = a.attribute.from[j][2];
+                                    finalDiscretVal = a.attribute.to[j][2];
+                                    break;
+                                }
+                            }
+                            resultValue = Util.calTransD(startValue, finalValue, ratio, startDiscretVal, finalDiscretVal);
+                        }
+                    }
+                    break;
+                default://numeric attribute values
+                    let startValue = parseFloat(this.minStatus.get(a.attribute.attrName));
+                    let finalValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+                    if (startValue < 0) {
+                        resultValue = startValue + (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * (finalValue - startValue);
+                    } else {
+                        resultValue = (parseFloat(a.attribute.to - a.attribute.from) * ratio + a.attribute.from) * finalValue;
+                    }
+            }
+        } else if (a.startTime + a.duration < timePoint) {//past actions
+            switch (a.attribute.attrName) {
+                case 'fill':
+                case 'stroke':
+                    if (a.type === ActionSpec.actionTargets.mark) {
+                        if (Array.isArray(a.attribute.to)) {
+                            for (let j = 0; j < a.attribute.to.length; j++) {
+                                if (a.attribute.to[j][0] === markId && typeof a.attribute.to[j][1] === 'string') {
+                                    resultValue = a.attribute.to[j][1];
+                                    break;
+                                }
+                            }
+                        } else {
+                            resultValue = this.finalStatus.get(markId)[chartIdx][a.attribute.attrName];
+                        }
+                    }
+                    break;
+                case 'textContent':
+                    if (a.type === ActionSpec.actionTargets.mark) {
+                        if (Array.isArray(a.attribute.to)) {
+                            let startValue = 0;
+                            for (let j = 0; j < a.attribute.to.length; j++) {
+                                if (a.attribute.to[j][0] === markId && (!isNaN(a.attribute.to[j][1]) || typeof a.attribute.to[j][1] === 'string')) {
+                                    startValue = a.attribute.to[j][1];
+                                    break;
+                                }
+                            }
+                            resultValue = startValue;
+                        }
+                    }
+                    break;
+                case 'width':
+                case 'height':
+                case 'r':
+                    if (a.type === ActionSpec.actionTargets.mark) {
+                        if (Array.isArray(a.attribute.to)) {//changing from one status to the other
+                            let finalValue = 0;
+                            for (let j = 0; j < a.attribute.to.length; j++) {
+                                if (a.attribute.to[j][0] === markId) {
+                                    finalValue = a.attribute.to[j][1];
+                                    break;
+                                }
+                            }
+                            resultValue = finalValue;
+                        } else {
+                            resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+                        }
+                    } else {
+                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+                    }
+                    break;
+                case 'y':
+                case 'y1':
+                case 'y2':
+                case 'cy':
+                    if (a.type === ActionSpec.actionTargets.mark) {
+                        if (Array.isArray(a.attribute.to)) {//changing from one status to the other
+                            let finalValue = 0;
+                            for (let j = 0; j < a.attribute.to.length; j++) {
+                                if (a.attribute.to[j][0] === markId) {
+                                    finalValue = a.attribute.to[j][1];
+                                    break;
+                                }
+                            }
+                            resultValue = finalValue;
+                        } else {
+                            resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+                        }
+                    } else if (a.type === ActionSpec.actionTargets.mask) {
+                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) + parseFloat(this.finalStatus.get(markId)[chartIdx]['height']);
+                    }
+                    break;
+                case 'x':
+                case 'x1':
+                case 'x2':
+                case 'cx':
+                    if (a.type === ActionSpec.actionTargets.mark) {
+                        if (Array.isArray(a.attribute.to)) {//changing from one status to the other
+                            let finalValue = 0;
+                            for (let j = 0; j < a.attribute.to.length; j++) {
+                                if (a.attribute.to[j][0] === markId) {
+                                    finalValue = a.attribute.to[j][1];
+                                    break;
+                                }
+                            }
+                            resultValue = finalValue;
+                        } else {
+                            resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+                        }
+                    } else if (a.type === ActionSpec.actionTargets.mask) {
+                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]) + parseFloat(this.finalStatus.get(markId)[chartIdx]['height']);
+                    }
+                    break;
+                case 'startAngle':
+                case 'innerRadius':
+                    resultValue = {
+                        'cx': parseFloat(this.finalStatus.get(markId)[chartIdx]['cx']),
+                        'cy': parseFloat(this.finalStatus.get(markId)[chartIdx]['cy']),
+                        'innerRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['innerRadius']),
+                        'outterRadius': parseFloat(this.finalStatus.get(markId)[chartIdx]['outterRadius']),
+                        'startAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['startAngle']),
+                        'endAngle': parseFloat(this.finalStatus.get(markId)[chartIdx]['endAngle'])
+                    }
+                    break;
+                default://numeric attribute values
+                    if (typeof this.finalStatus.get(markId)[chartIdx] !== 'undefined') {
+                        resultValue = parseFloat(this.finalStatus.get(markId)[chartIdx][a.attribute.attrName]);
+                    }
+            }
+        }
+        return resultValue;
+    }
 
     // static calRatio(percentage, easingType) {
     //     let ratio = 0;

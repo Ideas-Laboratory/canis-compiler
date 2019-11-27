@@ -245,8 +245,6 @@ class ActionSpec extends TimingSpec {
                     }];
                     break;
                 case ActionSpec.actionTypes.circle:
-                    // tmpObj.reference = TimingSpec.timingRef.previousStart;
-                    // tmpObj.offset = 0;
                     tmpObj.animationType = ActionSpec.targetAnimationType.circle;
                     tmpObj.maskType = ActionSpec.maskType.mask;
                     tmpObj.attribute = [
@@ -261,148 +259,121 @@ class ActionSpec extends TimingSpec {
                             to: 1
                         }
                     ];
-                    tmpObj.targetEffect = 1;
-
-                    // tmpObj2 = {
-                    //     chartIdx: actionJson.chartIdx,
-                    //     easing: actionJson.easing,
-                    //     duration: typeof actionJson.duration === 'undefined' ? 300 : actionJson.duration,
-                    //     reference: actionJson.reference,//timingSpec offset reference
-                    //     offset: actionJson.offset,
-                    //     type: ActionSpec.actionTargets.mask,
-                    //     maskType: ActionSpec.maskType.mask,
-                    //     animationType: ActionSpec.targetAnimationType.circle,
-                    //     attribute: {
-                    //         attrName: 'scaleY',
-                    //         from: 0,
-                    //         to: 1
-                    //     }
-                    // };
-                    // actionJsonArr.push(tmpObj2);
                     break;
                 case ActionSpec.actionTypes.circleOut:
-                    tmpObj.reference = TimingSpec.timingRef.previousStart;
-                    tmpObj.offset = 0;
                     tmpObj.animationType = ActionSpec.targetAnimationType.circle;
                     tmpObj.maskType = ActionSpec.maskType.mask;
-                    tmpObj.attribute = {
-                        attrName: 'scaleX',
-                        from: 1,
-                        to: 0
-                    };
-
-                    tmpObj2 = {
-                        chartIdx: actionJson.chartIdx,
-                        easing: actionJson.easing,
-                        duration: typeof actionJson.duration === 'undefined' ? 300 : actionJson.duration,
-                        reference: actionJson.reference,//timingSpec offset reference
-                        offset: actionJson.offset,
-                        type: ActionSpec.actionTargets.mask,
-                        maskType: ActionSpec.maskType.mask,
-                        animationType: ActionSpec.targetAnimationType.circle,
-                        attribute: {
+                    tmpObj.attribute = [
+                        {
+                            attrName: 'scaleX',
+                            from: 1,
+                            to: 0
+                        },
+                        {
                             attrName: 'scaleY',
                             from: 1,
                             to: 0
                         }
-                    };
-                    actionJsonArr.push(tmpObj2);
+                    ];
                     break;
 
 
 
 
-                case ActionSpec.actionTypes.wheel:
-                    tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
-                    tmpObj.attribute = {
-                        attrName: 'startAngle',
-                        from: 0,
-                        to: 1
-                    };
-                    break;
-                case ActionSpec.actionTypes.wheelOut:
-                    tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
-                    tmpObj.attribute = {
-                        attrName: 'startAngle',
-                        from: 1,
-                        to: 0
-                    };
-                    break;
+                // case ActionSpec.actionTypes.wheel:
+                //     tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
+                //     tmpObj.attribute = {
+                //         attrName: 'startAngle',
+                //         from: 0,
+                //         to: 1
+                //     };
+                //     break;
+                // case ActionSpec.actionTypes.wheelOut:
+                //     tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
+                //     tmpObj.attribute = {
+                //         attrName: 'startAngle',
+                //         from: 1,
+                //         to: 0
+                //     };
+                //     break;
 
-                case ActionSpec.actionTypes.grow:
-                    tmpObj.type = ActionSpec.actionTargets.mark;
-                    tmpObj.animationType = ActionSpec.targetAnimationType.grow;
-                    tmpObj.attribute = {
-                        attrName: 'stroke-dashoffset',
-                        from: 1,
-                        to: 0
-                    };
-                    break;
-                case ActionSpec.actionTypes.degrow:
-                    tmpObj.type = ActionSpec.actionTargets.mark;
-                    tmpObj.animationType = ActionSpec.targetAnimationType.grow;
-                    tmpObj.attribute = {
-                        attrName: 'stroke-dashoffset',
-                        from: 0,
-                        to: 1
-                    };
-                    break;
+                // case ActionSpec.actionTypes.grow:
+                //     tmpObj.type = ActionSpec.actionTargets.mark;
+                //     tmpObj.animationType = ActionSpec.targetAnimationType.grow;
+                //     tmpObj.attribute = {
+                //         attrName: 'stroke-dashoffset',
+                //         from: 1,
+                //         to: 0
+                //     };
+                //     break;
+                // case ActionSpec.actionTypes.degrow:
+                //     tmpObj.type = ActionSpec.actionTargets.mark;
+                //     tmpObj.animationType = ActionSpec.targetAnimationType.grow;
+                //     tmpObj.attribute = {
+                //         attrName: 'stroke-dashoffset',
+                //         from: 0,
+                //         to: 1
+                //     };
+                //     break;
                 case ActionSpec.actionTypes.appear:
                     tmpObj.duration = 1000 / TimingSpec.FRAME_RATE;
                     tmpObj.animationType = ActionSpec.targetAnimationType.fade;
                     tmpObj.type = ActionSpec.actionTargets.mark;
-                    tmpObj.attribute = {
-                        attrName: 'opacity',
-                        from: 1,
-                        to: 0
-                    };
-                    break;
-                case ActionSpec.actionTypes.zoom:
-                    tmpObj.type = ActionSpec.actionTargets.mark;
-                    tmpObj.reference = TimingSpec.timingRef.previousStart;
-                    tmpObj.offset = 0;
-                    tmpObj.animationType = ActionSpec.targetAnimationType.wipe;
-                    tmpObj.attribute = {
-                        attrName: 'width',
-                        from: 0,
-                        to: 1
-                    };
-
-                    let tmpObj2 = {
-                        chartIdx: actionJson.chartIdx,
-                        easing: actionJson.easing,
-                        duration: typeof actionJson.duration === 'undefined' ? 300 : actionJson.duration,
-                        reference: actionJson.reference,//timingSpec offset reference
-                        offset: actionJson.offset,
-                        type: ActionSpec.actionTargets.mask,
-                        animationType: ActionSpec.targetAnimationType.wipe,
-                        attribute: {
-                            attrName: 'height',
+                    tmpObj.attribute = [
+                        {
+                            attrName: 'opacity',
                             from: 1,
                             to: 0
                         }
-                    };
-                    actionJsonArr.push(tmpObj2);
+                    ];
+                    break;
+                // case ActionSpec.actionTypes.zoom:
+                //     tmpObj.type = ActionSpec.actionTargets.mark;
+                //     tmpObj.reference = TimingSpec.timingRef.previousStart;
+                //     tmpObj.offset = 0;
+                //     tmpObj.animationType = ActionSpec.targetAnimationType.wipe;
+                //     tmpObj.attribute = {
+                //         attrName: 'width',
+                //         from: 0,
+                //         to: 1
+                //     };
 
-                    break;
-                case ActionSpec.actionTypes.custom:
-                    tmpObj.type = ActionSpec.actionTargets.mark;
-                    tmpObj.animationType = ActionSpec.targetAnimationType.custom;
-                    tmpObj.attribute = {};
-                    if (typeof actionJson.attribute !== 'undefined') {
-                        tmpObj.attribute = [{
-                            attrName: actionJson.attribute.attrName,
-                            from: actionJson.attribute.from,
-                            to: actionJson.attribute.to
-                        }]
-                    }
-                    break;
+                //     let tmpObj2 = {
+                //         chartIdx: actionJson.chartIdx,
+                //         easing: actionJson.easing,
+                //         duration: typeof actionJson.duration === 'undefined' ? 300 : actionJson.duration,
+                //         reference: actionJson.reference,//timingSpec offset reference
+                //         offset: actionJson.offset,
+                //         type: ActionSpec.actionTargets.mask,
+                //         animationType: ActionSpec.targetAnimationType.wipe,
+                //         attribute: {
+                //             attrName: 'height',
+                //             from: 1,
+                //             to: 0
+                //         }
+                //     };
+                //     actionJsonArr.push(tmpObj2);
+
+                //     break;
+                // case ActionSpec.actionTypes.custom:
+                //     tmpObj.type = ActionSpec.actionTargets.mark;
+                //     tmpObj.animationType = ActionSpec.targetAnimationType.custom;
+                //     tmpObj.attribute = {};
+                //     if (typeof actionJson.attribute !== 'undefined') {
+                //         tmpObj.attribute = [{
+                //             attrName: actionJson.attribute.attrName,
+                //             from: actionJson.attribute.from,
+                //             to: actionJson.attribute.to
+                //         }]
+                //     }
+                //     break;
             }
             actionJsonArr.push(tmpObj);
         }
 
         return actionJsonArr;
     }
+
 
     /**
      * calculate the total duration of all the actions
@@ -491,13 +462,18 @@ class ActionSpec extends TimingSpec {
         switch (easingName) {
             case ActionSpec.easingType.easeLinear:
                 return EasingFactory.linear();
-            // easeInQuad: 'easeInQuad',
-            // easeOutQuad: 'easeOutQuad',
-            // easeInOutQuad: 'easeInOutQuad',
-            // easeInCubic: 'easeInCubic',
-            // easeOutCubic: 'easeOutCubic',
-            // easeInOutCubic: 'easeInOutCubic',
-            // easeOutBounce: 'easeOutBounce'  
+            case ActionSpec.easingType.easeInQuad:
+                return EasingFactory.easeInQuad();
+            case ActionSpec.easingType.easeOutQuad:
+                return EasingFactory.easeOutQuad();
+            case ActionSpec.easingType.easeInOutQuad:
+                return EasingFactory.easeInOutQuad();
+            case ActionSpec.easingType.easeInCubic:
+                return EasingFactory.easeInCubic();
+            case ActionSpec.easingType.easeOutCubic:
+                return EasingFactory.easeOutCubic();
+            case ActionSpec.easingType.easeInOutCubic:
+                return EasingFactory.easeInOutCubic();
         }
     }
 }

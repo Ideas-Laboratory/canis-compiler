@@ -202,7 +202,9 @@ class ChartSpec {
         ChartSpec.changedAttrs = [];
         let attrNamesCopy = Util.deepClone(attrNames);
         markStatus.forEach(function (statusArr, markId) {
+            console.log(statusArr);
             for (let i = 0; i < attrNamesCopy.length; i++) {
+                console.log(attrNamesCopy[i]);
                 let flag = true;
                 let compareStatus;
                 for (let j = 0; j < statusArr.length; j++) {
@@ -213,6 +215,7 @@ class ChartSpec {
                 }
                 for (let j = 0; j < statusArr.length; j++) {
                     if (typeof statusArr[j] !== 'undefined') {
+                        console.log(attrNamesCopy[i], statusArr[j][attrNamesCopy[i]], compareStatus[attrNamesCopy[i]]);
                         if (statusArr[j][attrNamesCopy[i]] !== compareStatus[attrNamesCopy[i]]) {
                             ChartSpec.changedAttrs.push(attrNamesCopy[i]);
                             flag = false;
@@ -222,7 +225,7 @@ class ChartSpec {
                 }
                 if (!flag) {
                     attrNamesCopy.splice(i, 1);
-                    break;
+                    continue;
                 }
             }
         })
@@ -232,6 +235,7 @@ class ChartSpec {
         if (ChartSpec.changedAttrs.indexOf('d') >= 0) {
             diffCmds = Util.findDiffCmds(markStatus);
         }
+        console.log('changed attributes: ', ChartSpec.changedAttrs);
 
         //add missing marks to each chart
         allMarks = Array.from(allMarks);
