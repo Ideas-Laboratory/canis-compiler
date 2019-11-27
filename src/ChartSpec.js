@@ -383,7 +383,7 @@ class ChartSpec {
                 globalVar.markLayers.set(t.getAttribute('id'), globalVar.jsMovin.addLayer(t));
             } else {
                 // if(t.tagName === 'line')
-                // globalVar.jsMovin.addLayer(t)
+                globalVar.jsMovin.addLayer(t)
             }
             // t.classList.contains('mark') ? globalVar.markLayers.set(t.getAttribute('id'), globalVar.jsMovin.addLayer(t)) : globalVar.jsMovin.addLayer(t);
             // globalVar.markLayers.set(t.getAttribute('id'), globalVar.jsMovin.addLayer(t));

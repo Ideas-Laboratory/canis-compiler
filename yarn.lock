@@ -751,23 +751,6 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@types/node@*":
-  version "12.12.14"
-  resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-12.12.14.tgz?cache=0&sync_timestamp=1574727466064&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fnode%2Fdownload%2F%40types%2Fnode-12.12.14.tgz#1c1d6e3c75dba466e0326948d56e8bd72a1903d2"
-  integrity sha1-HB1uPHXbpGbgMmlI1W6L1yoZA9I=
-
-"@types/svg-path-parser@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.npm.taobao.org/@types/svg-path-parser/download/@types/svg-path-parser-1.1.0.tgz#7db9a84f9e4f9bd40dc05331adc64a7dc18ec588"
-  integrity sha1-fbmoT55Pm9QNwFMxrcZKfcGOxYg=
-
-"@types/uuid@^3.4.6":
-  version "3.4.6"
-  resolved "https://registry.npm.taobao.org/@types/uuid/download/@types/uuid-3.4.6.tgz#d2c4c48eb85a757bf2927f75f939942d521e3016"
-  integrity sha1-0sTEjrhadXvykn91+TmULVIeMBY=
-  dependencies:
-    "@types/node" "*"
-
 "@webassemblyjs/ast@1.8.5":
   version "1.8.5"
   resolved "https://registry.npm.taobao.org/@webassemblyjs/ast/download/@webassemblyjs/ast-1.8.5.tgz#51b1c5fe6576a34953bf4b253df9f0d490d9e359"
@@ -3993,11 +3976,9 @@ jsesc@~0.5.0:
   integrity sha1-597mbjXW/Bb3EP6R1c9p9w8IkR0=
 
 "jsmovin@https://github.com/z-jack/jsmovin.git":
-  version "0.2.2"
-  resolved "https://github.com/z-jack/jsmovin.git#6ddf3fbd8b194c2a027fa635c7f3147bd63d91de"
+  version "0.3.1"
+  resolved "https://github.com/z-jack/jsmovin.git#74f4429eb5681ff97bc4834fdec6e615d48cccc5"
   dependencies:
-    "@types/svg-path-parser" "^1.1.0"
-    "@types/uuid" "^3.4.6"
     svg-path-parser "^1.1.0"
     uuid "^3.3.3"
 

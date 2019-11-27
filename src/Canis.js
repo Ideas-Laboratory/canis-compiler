@@ -5,7 +5,7 @@ import Animation from "./AnimationSpec.js";
 import { Util } from './util/Util.js';
 import { globalVar } from './util/GlobalVar.js';
 
-class AniChart {
+class Canis {
     constructor() {
         this.chartSpecs;
         this.facet;
@@ -59,18 +59,18 @@ class AniChart {
 
     init(spec) {
         this.chartSpecs = [];
-        let aniChartObj = spec;
-        aniChartObj.charts = ChartSpec.chartPreProcessing(aniChartObj.charts);
+        let canisObj = spec;
+        canisObj.charts = ChartSpec.chartPreProcessing(canisObj.charts);
         //deal with input charts
-        for (let i = 0; i < aniChartObj.charts.length; i++) {
-            let chartName = typeof aniChartObj.charts[i].id === 'undefined' ? 'chart' + i : aniChartObj.charts[i].id;
-            let tmpChart = new ChartSpec(chartName, aniChartObj.charts[i].source);
+        for (let i = 0; i < canisObj.charts.length; i++) {
+            let chartName = typeof canisObj.charts[i].id === 'undefined' ? 'chart' + i : canisObj.charts[i].id;
+            let tmpChart = new ChartSpec(chartName, canisObj.charts[i].source);
             this.chartSpecs.push(tmpChart);
         }
 
         //init facet
-        if (aniChartObj.facet) {
-            this.facet = new FacetSpec(aniChartObj.facet.type, aniChartObj.facet.views);
+        if (canisObj.facet) {
+            this.facet = new FacetSpec(canisObj.facet.type, canisObj.facet.views);
         }
 
         ChartSpec.loadCharts(this.chartSpecs, this.facet);
@@ -91,7 +91,7 @@ class AniChart {
         //set framerate for jsmovin
         globalVar.jsMovin.setFrameRate(TimingSpec.FRAME_RATE);
         //deal with animations
-        this.animations = aniChartObj.animations;
+        this.animations = canisObj.animations;
 
         if (Array.isArray(this.animations)) {
             let lastAnimation;
@@ -195,8 +195,9 @@ class AniChart {
 
         //export lottie JSON
         let lottieJSON = globalVar.jsMovin.toJSON();
-        console.log(lottieJSON);
+        // console.log(typeof lottieJSON);
+        return JSON.parse(lottieJSON);
     }
 }
 
-export default AniChart;
+export default Canis;

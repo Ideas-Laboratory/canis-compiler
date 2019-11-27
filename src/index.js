@@ -1,20 +1,20 @@
 let TimingSpec = require('./TimingSpec.js');
 let Animation = require('./AnimationSpec.js');
-let AniChart = require('./Canis.js');
+let Canis = require('./Canis.js');
 let Renderer = require('./AniRenderer.js');
 
-window.aniChart = {
+window.canis = {
     frameRate: TimingSpec.FRAME_RATE,
     duration: () => {
         return Animation.wholeEndTime;
     },
     loadSpec: (url, callback) => {
-        AniChart.loadSpec(url, callback);
+        Canis.loadSpec(url, callback);
     },
     renderSpec: (spec) => {
-        let aniChartObj = new AniChart();
-        aniChartObj.init(spec);
-        aniChartObj.render();
+        let canisObj = new Canis();
+        canisObj.init(spec);
+        return canisObj.render();
     },
     play: () => {
         Renderer.play();
