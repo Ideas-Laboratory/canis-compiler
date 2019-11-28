@@ -4,6 +4,7 @@ import GroupingSpec from './GroupingSpec.js';
 import TimingSpec from './TimingSpec.js';
 import { Util } from './util/Util.js';
 import { globalVar } from './util/GlobalVar.js';
+import { getBoundingBox } from 'jsmovin/bin/helper';
 import { LayerFactory } from 'jsmovin';
 
 class Animation extends TimingSpec {
@@ -418,6 +419,8 @@ class Animation extends TimingSpec {
                     } else if (tmpActionSpec.type === ActionSpec.actionTargets.mask) {
                         let targetMark = document.getElementById(markId);//TODO: pass dom here
                         let maskLayer;
+                        const tmpBbox = getBoundingBox(targetMark);
+                        let r = Math.sqrt(Math.pow(tmpBbox[2] / 2, 2) + Math.pow(tmpBbox[3] / 2, 2));
                         switch (tmpActionSpec.animationType) {
                             //create rect mask
                             case ActionSpec.targetAnimationType.wipe:
@@ -427,15 +430,20 @@ class Animation extends TimingSpec {
                                 break;
                             //create circle mask
                             case ActionSpec.targetAnimationType.circle:
-                                const tmpBbox = LayerFactory.getBoundingBox(targetMark);
-                                const r = Math.sqrt(Math.pow(tmpBbox[2] / 2, 2) + Math.pow(tmpBbox[3] / 2, 2));
                                 maskLayer = LayerFactory.ellipse(tmpBbox[0] + tmpBbox[2], tmpBbox[1] + tmpBbox[3], r, r);
                                 maskLayer.setStaticProperty('anchorX', tmpBbox[2] / 2);
                                 maskLayer.setStaticProperty('anchorY', tmpBbox[3] / 2);
                                 break;
-                            //create path mask
+                            //create circle mask with thick border
                             case ActionSpec.targetAnimationType.wheel:
+                                r /= 2;
+                                maskLayer = LayerFactory.ellipse(tmpBbox[0] + tmpBbox[2], tmpBbox[1] + tmpBbox[3], r, r);
+                                maskLayer.setStaticProperty('anchorX', tmpBbox[2] / 2);
+                                maskLayer.setStaticProperty('anchorY', tmpBbox[3] / 2);
+                                maskLayer.setStaticProperty('strokeWidth', 2 * r);
+                                maskLayer.setStaticProperty('trimStart', 0);
                                 break;
+                            //create path mask
                         }
                         let startFrame = Math.ceil(tmpActionSpec.startTime / (1000 / TimingSpec.FRAME_RATE));
                         let endFrame = Math.ceil((tmpActionSpec.startTime + tmpActionSpec.duration) / (1000 / TimingSpec.FRAME_RATE));
@@ -449,7 +457,8 @@ class Animation extends TimingSpec {
                                 ActionSpec.transToLottieAction(tmpActionSpec.easing)
                             );
                         })
-                        globalVar.jsMovin.addMask(maskLayer, globalVar.markLayers.get(markId));
+                        console.log('adding mask: ', tmpActionSpec.maskType);
+                        globalVar.jsMovin.addMask(maskLayer, globalVar.markLayers.get(markId), tmpActionSpec.maskType);
 
 
 
@@ -457,7 +466,7 @@ class Animation extends TimingSpec {
 
 
                         // console.log('in mask: ', tmpActionSpec.attribute);
-                        // let tmpBbox = LayerFactory.getBoundingBox(document.getElementById(markId));
+                        // let tmpBbox = getBoundingBox(document.getElementById(markId));
                         // let markStr = `<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="2000">
                         //     <rect x="${tmpBbox[0]}" y="${tmpBbox[1]}" width="${tmpBbox[2]}" height="${tmpBbox[3]}"></rect>
                         // </svg>`;

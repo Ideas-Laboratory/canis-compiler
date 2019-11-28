@@ -1,6 +1,6 @@
 import TimingSpec from './TimingSpec.js';
 import { globalVar } from './util/GlobalVar.js';
-import { EasingFactory } from 'jsmovin';
+import { EasingFactory, MaskType } from 'jsmovin';
 
 class ActionSpec extends TimingSpec {
     constructor() {
@@ -66,6 +66,7 @@ class ActionSpec extends TimingSpec {
         this.chartIdx = actionJson.chartIdx;
         this.type = actionJson.type;//action type
         this.animationType = actionJson.animationType;//animation type
+        this.maskType = typeof actionJson.maskType === 'undefined' ? MaskType.Alpha : actionJson.maskType;
         this.reference = actionJson.reference;//timingSpec reference
         this.offset = actionJson.offset;//timingSpec delay
         this.duration = actionJson.duration;//action duration
@@ -148,22 +149,25 @@ class ActionSpec extends TimingSpec {
                 reference: actionJson.reference,//timingSpec offset reference
                 offset: actionJson.offset,
                 easing: actionJson.easing,
-                duration: typeof actionJson.duration === 'undefined' ? 300 : actionJson.duration,
+                duration: typeof actionJson.duration === 'undefined' ? TimingSpec.FRAME_RATE : actionJson.duration,
                 type: ActionSpec.actionTargets.mask
             };
-            let tmpObj2;
+            // let tmpObj2;
 
             switch (actionJson.type) {
-                case ActionSpec.actionTypes.fade:
+                case ActionSpec.actionTypes.appear:
+                    tmpObj.duration = 1000 / TimingSpec.FRAME_RATE;
                     tmpObj.animationType = ActionSpec.targetAnimationType.fade;
                     tmpObj.type = ActionSpec.actionTargets.mark;
-                    tmpObj.attribute = [{
-                        attrName: 'opacity',
-                        from: 1,
-                        to: 0
-                    }];
+                    tmpObj.attribute = [
+                        {
+                            attrName: 'opacity',
+                            from: 1,
+                            to: 0
+                        }
+                    ];
                     break;
-                case ActionSpec.actionTypes.fadeOut:
+                case ActionSpec.actionTypes.fade:
                     tmpObj.animationType = ActionSpec.targetAnimationType.fade;
                     tmpObj.type = ActionSpec.actionTargets.mark;
                     tmpObj.attribute = [{
@@ -172,9 +176,36 @@ class ActionSpec extends TimingSpec {
                         to: 1
                     }];
                     break;
+                case ActionSpec.actionTypes.fadeOut:
+                    tmpObj.animationType = ActionSpec.targetAnimationType.fade;
+                    tmpObj.type = ActionSpec.actionTargets.mark;
+                    tmpObj.attribute = [{
+                        attrName: 'opacity',
+                        from: 1,
+                        to: 0
+                    }];
+                    break;
+                case ActionSpec.actionTypes.grow:
+                    tmpObj.type = ActionSpec.actionTargets.mark;
+                    tmpObj.animationType = ActionSpec.targetAnimationType.grow;
+                    tmpObj.attribute = [{
+                        attrName: 'trimEnd',
+                        from: 0,
+                        to: 1
+                    }];
+                    break;
+                case ActionSpec.actionTypes.degrow:
+                    tmpObj.type = ActionSpec.actionTargets.mark;
+                    tmpObj.animationType = ActionSpec.targetAnimationType.grow;
+                    tmpObj.attribute = [{
+                        attrName: 'trimEnd',
+                        from: 1,
+                        to: 0
+                    }];
+                    break;
                 case ActionSpec.actionTypes.wipeBottom:
                     tmpObj.animationType = ActionSpec.targetAnimationType.wipe;
-                    tmpObj.maskType = ActionSpec.maskType.reverseMask;
+                    tmpObj.maskType = MaskType.InvertAlpha;
                     tmpObj.attribute = [{
                         attrName: 'scaleY',
                         from: 1,
@@ -183,7 +214,7 @@ class ActionSpec extends TimingSpec {
                     break;
                 case ActionSpec.actionTypes.wipeOutFromTop:
                     tmpObj.animationType = ActionSpec.targetAnimationType.wipe;
-                    tmpObj.maskType = ActionSpec.maskType.reverseMask;
+                    tmpObj.maskType = MaskType.InvertAlpha;
                     tmpObj.attribute = [{
                         attrName: 'scaleY',
                         from: 0,
@@ -191,8 +222,8 @@ class ActionSpec extends TimingSpec {
                     }];
                     break;
                 case ActionSpec.actionTypes.wipeTop:
-                    tmpObj.animationType = ActionSpec.targetAnimationType.move;
-                    tmpObj.maskType = ActionSpec.maskType.mask;
+                    tmpObj.animationType = ActionSpec.targetAnimationType.wipe;
+                    tmpObj.maskType = MaskType.Alpha;
                     tmpObj.attribute = [{
                         attrName: 'scaleY',
                         from: 0,
@@ -200,8 +231,8 @@ class ActionSpec extends TimingSpec {
                     }];
                     break;
                 case ActionSpec.actionTypes.wipeOutFromBottom:
-                    tmpObj.animationType = ActionSpec.targetAnimationType.move;
-                    tmpObj.maskType = ActionSpec.maskType.mask;
+                    tmpObj.animationType = ActionSpec.targetAnimationType.wipe;
+                    tmpObj.maskType = MaskType.Alpha;
                     tmpObj.attribute = [{
                         attrName: 'scaleY',
                         from: 1,
@@ -209,8 +240,8 @@ class ActionSpec extends TimingSpec {
                     }];
                     break;
                 case ActionSpec.actionTypes.wipeLeft:
-                    tmpObj.animationType = ActionSpec.targetAnimationType.move;
-                    tmpObj.maskType = ActionSpec.maskType.mask;
+                    tmpObj.animationType = ActionSpec.targetAnimationType.wipe;
+                    tmpObj.maskType = MaskType.Alpha;
                     tmpObj.attribute = [{
                         attrName: 'scaleX',
                         from: 0,
@@ -218,8 +249,8 @@ class ActionSpec extends TimingSpec {
                     }];
                     break;
                 case ActionSpec.actionTypes.wipeOutFromRight:
-                    tmpObj.animationType = ActionSpec.targetAnimationType.move;
-                    tmpObj.maskType = ActionSpec.maskType.mask;
+                    tmpObj.animationType = ActionSpec.targetAnimationType.wipe;
+                    tmpObj.maskType = MaskType.Alpha;
                     tmpObj.attribute = [{
                         attrName: 'scaleX',
                         from: 1,
@@ -228,7 +259,7 @@ class ActionSpec extends TimingSpec {
                     break;
                 case ActionSpec.actionTypes.wipeRight:
                     tmpObj.animationType = ActionSpec.targetAnimationType.wipe;
-                    tmpObj.maskType = ActionSpec.maskType.reverseMask;
+                    tmpObj.maskType = MaskType.InvertAlpha;
                     tmpObj.attribute = [{
                         attrName: 'scaleX',
                         from: 1,
@@ -237,7 +268,7 @@ class ActionSpec extends TimingSpec {
                     break;
                 case ActionSpec.actionTypes.wipeOutFromLeft:
                     tmpObj.animationType = ActionSpec.targetAnimationType.wipe;
-                    tmpObj.maskType = ActionSpec.maskType.reverseMask;
+                    tmpObj.maskType = MaskType.InvertAlpha;
                     tmpObj.attribute = [{
                         attrName: 'scaleX',
                         from: 0,
@@ -246,7 +277,7 @@ class ActionSpec extends TimingSpec {
                     break;
                 case ActionSpec.actionTypes.circle:
                     tmpObj.animationType = ActionSpec.targetAnimationType.circle;
-                    tmpObj.maskType = ActionSpec.maskType.mask;
+                    tmpObj.maskType = MaskType.Alpha;
                     tmpObj.attribute = [
                         {
                             attrName: 'scaleX',
@@ -262,7 +293,7 @@ class ActionSpec extends TimingSpec {
                     break;
                 case ActionSpec.actionTypes.circleOut:
                     tmpObj.animationType = ActionSpec.targetAnimationType.circle;
-                    tmpObj.maskType = ActionSpec.maskType.mask;
+                    tmpObj.maskType = MaskType.Alpha;
                     tmpObj.attribute = [
                         {
                             attrName: 'scaleX',
@@ -278,55 +309,27 @@ class ActionSpec extends TimingSpec {
                     break;
 
 
-
-
-                // case ActionSpec.actionTypes.wheel:
-                //     tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
-                //     tmpObj.attribute = {
-                //         attrName: 'startAngle',
-                //         from: 0,
-                //         to: 1
-                //     };
-                //     break;
-                // case ActionSpec.actionTypes.wheelOut:
-                //     tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
-                //     tmpObj.attribute = {
-                //         attrName: 'startAngle',
-                //         from: 1,
-                //         to: 0
-                //     };
-                //     break;
-
-                // case ActionSpec.actionTypes.grow:
-                //     tmpObj.type = ActionSpec.actionTargets.mark;
-                //     tmpObj.animationType = ActionSpec.targetAnimationType.grow;
-                //     tmpObj.attribute = {
-                //         attrName: 'stroke-dashoffset',
-                //         from: 1,
-                //         to: 0
-                //     };
-                //     break;
-                // case ActionSpec.actionTypes.degrow:
-                //     tmpObj.type = ActionSpec.actionTargets.mark;
-                //     tmpObj.animationType = ActionSpec.targetAnimationType.grow;
-                //     tmpObj.attribute = {
-                //         attrName: 'stroke-dashoffset',
-                //         from: 0,
-                //         to: 1
-                //     };
-                //     break;
-                case ActionSpec.actionTypes.appear:
-                    tmpObj.duration = 1000 / TimingSpec.FRAME_RATE;
-                    tmpObj.animationType = ActionSpec.targetAnimationType.fade;
-                    tmpObj.type = ActionSpec.actionTargets.mark;
-                    tmpObj.attribute = [
-                        {
-                            attrName: 'opacity',
-                            from: 1,
-                            to: 0
-                        }
-                    ];
+                case ActionSpec.actionTypes.wheel:
+                    tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
+                    tmpObj.maskType = MaskType.Alpha;
+                    tmpObj.attribute = [{
+                        attrName: 'trimEnd',
+                        from: 0,
+                        to: 1
+                    }];
                     break;
+                case ActionSpec.actionTypes.wheelOut:
+                    tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
+                    tmpObj.maskType = MaskType.Alpha;
+                    tmpObj.attribute = [{
+                        attrName: 'trimEnd',
+                        from: 1,
+                        to: 0
+                    }];
+                    break;
+
+
+
                 // case ActionSpec.actionTypes.zoom:
                 //     tmpObj.type = ActionSpec.actionTargets.mark;
                 //     tmpObj.reference = TimingSpec.timingRef.previousStart;
@@ -506,11 +509,6 @@ ActionSpec.actionTypes = {
 ActionSpec.actionTargets = {
     mark: 'mark',
     mask: 'mask'
-}
-
-ActionSpec.maskType = {
-    mask: 'mask',
-    reverseMask: 'reverseMask'
 }
 
 ActionSpec.targetAnimationType = {
