@@ -85,6 +85,10 @@ export class Util {
         return [r, g, b, a];
     }
 
+    static toLotieRGBA(color) {
+        return this.color2RGB(color).map((c) => c / 255);
+    }
+
     static toJSON(node) {
         node = node || this;
         let obj = {
@@ -523,7 +527,22 @@ export class Util {
             }
         }
     }
+
+    static splitPath(d) {
+        let tmpPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        let tmpPathLen = tmpPath.getTotalLength();
+        let stepNum = 300, pathStepLen = tmpPathLen / stepNum;
+        let discritPath = '';
+        for (let i = 0; i < stepNum; i++) {
+            let tmpPnt = tmpPath.getPointAtLength(pathStepLen * i);
+            i === 0 ? discritPath += 'M' + tmpPnt.x + ',' + tmpPnt.y : discritPath += 'L' + tmpPnt.x + ',' + tmpPnt.y
+        }
+        discritPath += 'Z';
+        return discritPath;
+    }
+
     static transDToLottieSpec(d) {
+        // d = this.splitPath(d);
         d = d.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
         let cmdRegExp = new RegExp(/[mMlLhHvVcCsSqQtTaAzZ][^mMlLhHvVcCsSqQtTaAzZ]*/g);
         let cmds = d.match(cmdRegExp);
@@ -535,7 +554,6 @@ export class Util {
                 switch (cmdName) {
                     case 'M':
                     case 'm':
-                        console.log(...cmdValue.split(',').map(n => parseFloat(n)));
                         pm.moveTo(...cmdValue.split(',').map(n => parseFloat(n)));
                         break;
                     case 'H':

@@ -357,8 +357,9 @@ class Animation extends TimingSpec {
             case 'textContent':
                 return ['text'];
             case 'fill':
+                return ['fillColor'];
             case 'stroke':
-                break;
+                return ['strokeColor'];
         }
     }
 
@@ -386,14 +387,15 @@ class Animation extends TimingSpec {
                                         }
                                     }
                                     lottieChannels.forEach((lc) => {
-                                        if (lc === 'd') {
+                                        if (lc === 'shape') {
                                             //transform the start d and end d to shape specification
-                                            console.log('before process: ', fromValue, toValue);
                                             fromValue = Util.transDToLottieSpec(fromValue);
                                             toValue = Util.transDToLottieSpec(toValue);
-                                            console.log('after process: ', fromValue, toValue);
+                                        } else if (lc === 'fillColor') {
+                                            fromValue = Util.toLotieRGBA(fromValue);
+                                            toValue = Util.toLotieRGBA(toValue);
+                                            console.log('color changing from: ', fromValue, toValue);
                                         }
-                                        
                                         globalVar.markLayers.get(markId).setAnimatableProperty(
                                             lc,
                                             startFrame,
@@ -451,7 +453,7 @@ class Animation extends TimingSpec {
                                 maskLayer.setStaticProperty('anchorX', tmpBbox[2] / 2);
                                 maskLayer.setStaticProperty('anchorY', tmpBbox[3] / 2);
                                 maskLayer.setStaticProperty('strokeWidth', 2 * r);
-                                maskLayer.setStaticProperty('trimStart', 0);
+                                // maskLayer.setStaticProperty('fillOpacity', 0);
                                 break;
                             //create path mask
                         }
@@ -467,7 +469,6 @@ class Animation extends TimingSpec {
                                 ActionSpec.transToLottieAction(tmpActionSpec.easing)
                             );
                         })
-                        console.log('adding mask: ', tmpActionSpec.maskType);
                         globalVar.jsMovin.addMask(maskLayer, globalVar.markLayers.get(markId), tmpActionSpec.maskType);
 
 

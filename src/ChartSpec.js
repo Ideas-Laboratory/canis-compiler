@@ -380,7 +380,6 @@ class ChartSpec {
 
     static addLottieMarkLayers(t) {
         if (t.tagName !== 'g' && t.tagName !== 'svg') {
-            console.log(t.tagName);
             if (t.classList.contains('mark')) {
                 globalVar.markLayers.set(t.getAttribute('id'), globalVar.jsMovin.addLayer(t));
             } else {

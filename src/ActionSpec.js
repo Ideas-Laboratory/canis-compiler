@@ -311,20 +311,20 @@ class ActionSpec extends TimingSpec {
 
                 case ActionSpec.actionTypes.wheel:
                     tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
-                    tmpObj.maskType = MaskType.Alpha;
-                    tmpObj.attribute = [{
-                        attrName: 'trimEnd',
-                        from: 0,
-                        to: 1
-                    }];
-                    break;
-                case ActionSpec.actionTypes.wheelOut:
-                    tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
-                    tmpObj.maskType = MaskType.Alpha;
+                    tmpObj.maskType = MaskType.InvertAlpha;
                     tmpObj.attribute = [{
                         attrName: 'trimEnd',
                         from: 1,
                         to: 0
+                    }];
+                    break;
+                case ActionSpec.actionTypes.wheelOut:
+                    tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
+                    tmpObj.maskType = MaskType.InvertAlpha;
+                    tmpObj.attribute = [{
+                        attrName: 'trimEnd',
+                        from: 0,
+                        to: 1
                     }];
                     break;
 

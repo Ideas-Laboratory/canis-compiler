@@ -195,7 +195,7 @@ class Canis {
 
         //export lottie JSON
         let lottieJSON = globalVar.jsMovin.toJSON();
-        // console.log(typeof lottieJSON);
+        console.log(lottieJSON);
         return JSON.parse(lottieJSON);
     }
 }
