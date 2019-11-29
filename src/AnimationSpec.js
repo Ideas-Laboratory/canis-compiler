@@ -353,7 +353,9 @@ class Animation extends TimingSpec {
             case 'x2':
             case 'y1':
             case 'y2':
+                return ['shape'];
             case 'textContent':
+                return ['text'];
             case 'fill':
             case 'stroke':
                 break;
@@ -384,6 +386,14 @@ class Animation extends TimingSpec {
                                         }
                                     }
                                     lottieChannels.forEach((lc) => {
+                                        if (lc === 'd') {
+                                            //transform the start d and end d to shape specification
+                                            console.log('before process: ', fromValue, toValue);
+                                            fromValue = Util.transDToLottieSpec(fromValue);
+                                            toValue = Util.transDToLottieSpec(toValue);
+                                            console.log('after process: ', fromValue, toValue);
+                                        }
+                                        
                                         globalVar.markLayers.get(markId).setAnimatableProperty(
                                             lc,
                                             startFrame,

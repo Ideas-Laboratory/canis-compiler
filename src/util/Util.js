@@ -1,3 +1,5 @@
+import { PathMaker } from 'jsmovin';
+
 export class Util {
     constructor() { }
 
@@ -521,6 +523,65 @@ export class Util {
             }
         }
     }
+    static transDToLottieSpec(d) {
+        d = d.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
+        let cmdRegExp = new RegExp(/[mMlLhHvVcCsSqQtTaAzZ][^mMlLhHvVcCsSqQtTaAzZ]*/g);
+        let cmds = d.match(cmdRegExp);
+        let pm = new PathMaker();
+        if (cmds) {
+            cmds.forEach((cmdStr) => {
+                const cmdName = cmdStr.substring(0, 1),
+                    cmdValue = cmdStr.substring(1);
+                switch (cmdName) {
+                    case 'M':
+                    case 'm':
+                        console.log(...cmdValue.split(',').map(n => parseFloat(n)));
+                        pm.moveTo(...cmdValue.split(',').map(n => parseFloat(n)));
+                        break;
+                    case 'H':
+                        pm.horizontalTo(parseFloat(cmdValue));
+                        break;
+                    case 'h':
+                        pm.horizontalToRelative(parseFloat(cmdValue));
+                        break;
+                    case 'V':
+                        pm.verticalTo(parseFloat(cmdValue));
+                        break;
+                    case 'v':
+                        pm.verticalToRelative(parseFloat(cmdValue));
+                        break;
+                    case 'L':
+                        pm.lineTo(...cmdValue.split(',').map(n => parseFloat(n)));
+                        break;
+                    case 'l':
+                        pm.lineToRelative(...cmdValue.split(',').map(n => parseFloat(n)));
+                        break;
+                    case 'C':
+                        pm.cubicBezierCurveTo(...cmdValue.split(',').map(n => parseFloat(n)));
+                        break;
+                    case 'c':
+                        pm.cubicBezierCurveToRelative(...cmdValue.split(',').map(n => parseFloat(n)));
+                        break;
+                    case 'Q':
+                        pm.quadraticBezierCurveTo(...cmdValue.split(',').map(n => parseFloat(n)));
+                        break;
+                    case 'q':
+                        pm.quadraticBezierCurveToRelative(...cmdValue.split(',').map(n => parseFloat(n)));
+                        break;
+                    case 'A':
+                        pm.arcTo(...cmdValue.split(',').map(n => parseFloat(n)));
+                        break;
+                    case 'a':
+                        pm.arcToRelative(...cmdValue.split(',').map(n => parseFloat(n)));
+                        break;
+                }
+            })
+            pm.uniform();
+            return pm.path;
+        }
+        return {};
+    }
+
     static setPathDValue(d, reset, tx = 0, ty = 0, diffCmds = new Map()) {
         d = d.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
         let cmdRegExp = new RegExp(/[mMlLhHvVcCsSqQtTaAzZ][^mMlLhHvVcCsSqQtTaAzZ]*/g);
