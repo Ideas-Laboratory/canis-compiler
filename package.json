@@ -7,7 +7,7 @@
         "test:watch": "mocha --require babel-register --colors -w ./test/*.spec.js",
         "test:cover": "cross-env NODE_ENV=test nyc mocha --require babel-register --colors test/*.js",
         "repl": "node -i -e \"$(< ./lib/webpack-library-starter.js)\"",
-        "webtest": "npm run build && copy .\\lib\\anichart.js c:\\programs\\tomcat\\apache-tomcat-8.5.8-windows-x64\\apache-tomcat-8.5.8\\webapps\\aniSpecRender.2.2\\js\\lib\\anichart.js && copy .\\lib\\anichart.min.js c:\\programs\\tomcat\\apache-tomcat-8.5.8-windows-x64\\apache-tomcat-8.5.8\\webapps\\aniSpecRender.2.2\\js\\lib\\anichart.min.js"
+        "webtest": "npm run build && copy .\\lib\\anichart.js c:\\programs\\tomcat\\apache-tomcat-8.5.8-windows-x64\\apache-tomcat-8.5.8\\webapps\\canis-editor-new\\js\\lib\\anichart.js && copy .\\lib\\anichart.min.js c:\\programs\\tomcat\\apache-tomcat-8.5.8-windows-x64\\apache-tomcat-8.5.8\\webapps\\canis-editor-new\\js\\lib\\anichart.min.js"
     },
     "author": "Tong Ge",
     "devDependencies": {

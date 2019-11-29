@@ -3976,8 +3976,8 @@ jsesc@~0.5.0:
   integrity sha1-597mbjXW/Bb3EP6R1c9p9w8IkR0=
 
 "jsmovin@https://github.com/z-jack/jsmovin.git":
-  version "0.5.0"
-  resolved "https://github.com/z-jack/jsmovin.git#95d1b7df24c37cbe121de2ba413adec452ea41ec"
+  version "0.5.1"
+  resolved "https://github.com/z-jack/jsmovin.git#f9eea582416f59031ac14e6ff1260c52adb40873"
   dependencies:
     svg-path-parser "^1.1.0"
     uuid "^3.3.3"

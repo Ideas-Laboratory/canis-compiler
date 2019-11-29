@@ -530,6 +530,7 @@ export class Util {
 
     static splitPath(d) {
         let tmpPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        tmpPath.setAttributeNS(null, 'd', d);
         let tmpPathLen = tmpPath.getTotalLength();
         let stepNum = 300, pathStepLen = tmpPathLen / stepNum;
         let discritPath = '';
@@ -542,7 +543,7 @@ export class Util {
     }
 
     static transDToLottieSpec(d) {
-        // d = this.splitPath(d);
+        d = this.splitPath(d);
         d = d.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
         let cmdRegExp = new RegExp(/[mMlLhHvVcCsSqQtTaAzZ][^mMlLhHvVcCsSqQtTaAzZ]*/g);
         let cmds = d.match(cmdRegExp);

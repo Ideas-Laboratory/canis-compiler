@@ -396,6 +396,7 @@ class Animation extends TimingSpec {
                                             toValue = Util.toLotieRGBA(toValue);
                                             console.log('color changing from: ', fromValue, toValue);
                                         }
+                                        console.log(lc, startFrame, endFrame, fromValue, toValue, ActionSpec.transToLottieAction(tmpActionSpec.easing));
                                         globalVar.markLayers.get(markId).setAnimatableProperty(
                                             lc,
                                             startFrame,
