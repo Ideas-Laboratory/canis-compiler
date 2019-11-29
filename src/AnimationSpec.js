@@ -454,7 +454,7 @@ class Animation extends TimingSpec {
                                 maskLayer.setStaticProperty('anchorX', tmpBbox[2] / 2);
                                 maskLayer.setStaticProperty('anchorY', tmpBbox[3] / 2);
                                 maskLayer.setStaticProperty('strokeWidth', 2 * r);
-                                // maskLayer.setStaticProperty('fillOpacity', 0);
+                                maskLayer.setStaticProperty('fillOpacity', 0);
                                 break;
                             //create path mask
                         }
