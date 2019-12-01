@@ -196,7 +196,14 @@ class Animation extends TimingSpec {
                         tmpActionSpec[attr] = a[attr].get(markId);
                     }
                 }
-                tmpObj.actionAttrs.push(tmpActionSpec);
+                //if the animation type is custom then judge if the attribute in the action about to add is a valid property of the target mark
+                if (tmpActionSpec.animationType === ActionSpec.targetAnimationType.custom) {
+                    if (Util.checkValidProp(that.domMarks.get(markId)['tagName'], tmpActionSpec.attribute[0].attrName)) {
+                        tmpObj.actionAttrs.push(tmpActionSpec);
+                    }
+                } else {
+                    tmpObj.actionAttrs.push(tmpActionSpec);
+                }
             }
 
             markAni.set(markId, tmpObj);
@@ -369,6 +376,7 @@ class Animation extends TimingSpec {
                 let tmpActionSpec = value.actionAttrs[i];
                 if (tmpActionSpec.duration > 0) {
                     console.log('type: ', tmpActionSpec.type);
+                    let targetMark = document.getElementById(markId);//TODO: pass dom here
                     if (tmpActionSpec.type === ActionSpec.actionTargets.mark) {
                         //TODO: consider 'custom'
                         let startFrame = Math.ceil(tmpActionSpec.startTime / (1000 / TimingSpec.FRAME_RATE));
@@ -389,8 +397,25 @@ class Animation extends TimingSpec {
                                     lottieChannels.forEach((lc) => {
                                         if (lc === 'shape') {
                                             //transform the start d and end d to shape specification
-                                            fromValue = Util.transDToLottieSpec(fromValue);
-                                            toValue = Util.transDToLottieSpec(toValue);
+                                            let fromPosi = [0, 0], toPosi = [0, 0];
+                                            [fromPosi, fromValue] = Util.transDToLottieSpec(fromValue);
+                                            [toPosi, toValue] = Util.transDToLottieSpec(toValue);
+                                            globalVar.markLayers.get(markId).setAnimatableProperty(
+                                                'x',
+                                                startFrame,
+                                                endFrame,
+                                                fromPosi[0],
+                                                toPosi[0],
+                                                ActionSpec.transToLottieAction(tmpActionSpec.easing)
+                                            );
+                                            globalVar.markLayers.get(markId).setAnimatableProperty(
+                                                'y',
+                                                startFrame,
+                                                endFrame,
+                                                fromPosi[1],
+                                                toPosi[1],
+                                                ActionSpec.transToLottieAction(tmpActionSpec.easing)
+                                            );
                                         } else if (lc === 'fillColor') {
                                             fromValue = Util.toLotieRGBA(fromValue);
                                             toValue = Util.toLotieRGBA(toValue);
@@ -430,7 +455,6 @@ class Animation extends TimingSpec {
                             }
                         })
                     } else if (tmpActionSpec.type === ActionSpec.actionTargets.mask) {
-                        let targetMark = document.getElementById(markId);//TODO: pass dom here
                         let maskLayer;
                         const tmpBbox = getBoundingBox(targetMark);
                         let r = Math.sqrt(Math.pow(tmpBbox[2] / 2, 2) + Math.pow(tmpBbox[3] / 2, 2));

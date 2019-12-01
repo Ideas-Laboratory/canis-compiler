@@ -240,6 +240,7 @@ class ChartSpec {
         for (let i = 0; i < ChartSpec.charts.length; i++) {
             for (let j = 0; j < allMarks.length; j++) {
                 if (ChartSpec.charts[i].querySelectorAll('#' + allMarks[j]).length === 0) {//chart i does not have mark j
+                    console.log('chart ' + i + ' doesnt have mark' + allMarks[j]);
                     let markStr = markTempletes.get(allMarks[j]);
                     let tmpDiv = document.createElement('div');
                     tmpDiv.innerHTML = markStr;

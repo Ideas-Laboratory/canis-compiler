@@ -1,4 +1,5 @@
 import { PathMaker } from 'jsmovin';
+import { parseSVG } from 'svg-path-parser'
 
 export class Util {
     constructor() { }
@@ -542,7 +543,80 @@ export class Util {
         return discritPath;
     }
 
+    static getPathOffset(d){
+        const pathData = d
+        const pathDataSeries = parseSVG(pathData)
+        const pathMaker = new PathMaker()
+        let pathDataWithType;
+        pathDataSeries.forEach(pathDataItem => {
+            switch (pathDataItem.code) {
+                case 'M':
+                    pathDataWithType = pathDataItem
+                    pathMaker.moveTo(pathDataWithType.x, pathDataWithType.y)
+                    break
+                case 'L':
+                    pathDataWithType = pathDataItem
+                    pathMaker.lineTo(pathDataWithType.x, pathDataWithType.y)
+                    break
+                case 'l':
+                    pathDataWithType = pathDataItem
+                    pathMaker.lineToRelative(pathDataWithType.x, pathDataWithType.y)
+                    break
+                case 'H':
+                    pathDataWithType = pathDataItem
+                    pathMaker.horizontalTo(pathDataWithType.x)
+                    break
+                case 'h':
+                    pathDataWithType = pathDataItem
+                    pathMaker.horizontalToRelative(pathDataWithType.x)
+                    break
+                case 'V':
+                    pathDataWithType = pathDataItem
+                    pathMaker.verticalTo(pathDataWithType.y)
+                    break
+                case 'v':
+                    pathDataWithType = pathDataItem
+                    pathMaker.verticalToRelative(pathDataWithType.y)
+                    break
+                case 'C':
+                    pathDataWithType = pathDataItem
+                    pathMaker.cubicBezierCurveTo(pathDataWithType.x1, pathDataWithType.y1, pathDataWithType.x2, pathDataWithType.y2, pathDataWithType.x, pathDataWithType.y)
+                    break
+                case 'c':
+                    pathDataWithType = pathDataItem
+                    pathMaker.cubicBezierCurveToRelative(pathDataWithType.x1, pathDataWithType.y1, pathDataWithType.x2, pathDataWithType.y2, pathDataWithType.x, pathDataWithType.y)
+                    break
+                case 'Q':
+                    pathDataWithType = pathDataItem
+                    pathMaker.quadraticBezierCurveTo(pathDataWithType.x1, pathDataWithType.y1, pathDataWithType.x, pathDataWithType.y)
+                    break
+                case 'q':
+                    pathDataWithType = pathDataItem
+                    pathMaker.quadraticBezierCurveToRelative(pathDataWithType.x1, pathDataWithType.y1, pathDataWithType.x, pathDataWithType.y)
+                    break
+                case 'A':
+                    pathDataWithType = pathDataItem
+                    pathMaker.arcTo(pathDataWithType.rx, pathDataWithType.ry, pathDataWithType.xAxisRotation, ~~pathDataWithType.largeArc, ~~pathDataWithType.sweep, pathDataWithType.x, pathDataWithType.y)
+                    break
+                case 'a':
+                    pathDataWithType = pathDataItem
+                    pathMaker.arcToRelative(pathDataWithType.rx, pathDataWithType.ry, pathDataWithType.xAxisRotation, ~~pathDataWithType.largeArc, ~~pathDataWithType.sweep, pathDataWithType.x, pathDataWithType.y)
+                    break
+                case 'Z':
+                case 'z':
+                    pathMaker.closePath()
+                    break
+                default:
+                    console.error(pathDataItem)
+                    throw new Error('No implementation found for this path command.')
+            }
+        })
+        console.log('path marker offset: ', pathMaker.offsetX, pathMaker.offsetY);
+        return [pathMaker.offsetX, pathMaker.offsetY];
+    }
+
     static transDToLottieSpec(d) {
+        let posiOffset = this.getPathOffset(d);
         d = this.splitPath(d);
         d = d.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
         let cmdRegExp = new RegExp(/[mMlLhHvVcCsSqQtTaAzZ][^mMlLhHvVcCsSqQtTaAzZ]*/g);
@@ -596,9 +670,9 @@ export class Util {
                 }
             })
             pm.uniform();
-            return pm.path;
+            return [posiOffset, pm.path];
         }
-        return {};
+        return [posiOffset, {}];
     }
 
     static setPathDValue(d, reset, tx = 0, ty = 0, diffCmds = new Map()) {
@@ -885,6 +959,35 @@ export class Util {
             return { transNums: [parseFloat(transPosiStr[0]), parseFloat(transPosiStr[1])], scaleNum: parseFloat(scaleNumStr) };
         }
         return { transNums: [0.0, 0.0], scaleNum: 1.0 };
+    }
+
+    /**
+     * check if the input prop is a valid property of the input tag
+     * @param {*} tagName 
+     * @param {*} propName 
+     */
+    static checkValidProp(tagName, propName) {
+        switch (tagName) {
+            case 'circle':
+                return ['cx', 'cy', 'r', 'stroke', 'stroke-width', 'fill'].includes(propName);
+            case 'ellipse':
+                return ['cx', 'cy', 'rx', 'ry', 'stroke', 'stroke-width', 'fill'].includes(propName);
+            case 'image':
+                return ['x', 'y', 'width', 'height', 'href', 'xlink:href', 'preserveAspectRatio'].includes(propName);
+            case 'line':
+                return ['x1', 'x2', 'y1', 'y2', 'stroke', 'stroke-width', 'fill'].includes(propName);
+            case 'path':
+                return ['d', 'stroke', 'stroke-width', 'fill'].includes(propName);
+            case 'polygon':
+            case 'polyline':
+                return ['points', 'stroke', 'stroke-width', 'fill'].includes(propName);
+            case 'rect':
+                return ['x', 'y', 'width', 'height', 'rx', 'ry', 'stroke', 'stroke-width', 'fill'].includes(propName);
+            case 'text':
+                return ['x', 'y', 'dx', 'dy', 'stroke', 'stroke-width', 'textContent'].includes(propName);
+            default:
+                return false;
+        }
     }
 
     /**

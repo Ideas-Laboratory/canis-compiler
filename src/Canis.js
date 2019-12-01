@@ -173,6 +173,7 @@ class Canis {
                                 dataDatumAttrValue = dataDatumAttrValue[0];
                             }
                             tmpDomAttrObj['data-datum'] = dataDatumAttrValue;
+                            tmpDomAttrObj['tagName'] = mark.tagName;
                             if (mark.tagName === 'path' || mark.tagName === 'line') {
                                 tmpDomAttrObj['stroke-dasharray'] = document.getElementById(markId).getTotalLength();
                                 tmpDomAttrObj['stroke-dashoffset'] = document.getElementById(markId).getTotalLength();
@@ -195,7 +196,7 @@ class Canis {
 
         //export lottie JSON
         let lottieJSON = globalVar.jsMovin.toJSON();
-        console.log(lottieJSON);
+        // console.log(lottieJSON);
         return JSON.parse(lottieJSON);
     }
 }
