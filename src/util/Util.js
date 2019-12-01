@@ -543,7 +543,7 @@ export class Util {
         return discritPath;
     }
 
-    static getPathOffset(d){
+    static getPathOffset(d) {
         const pathData = d
         const pathDataSeries = parseSVG(pathData)
         const pathMaker = new PathMaker()
@@ -611,7 +611,6 @@ export class Util {
                     throw new Error('No implementation found for this path command.')
             }
         })
-        console.log('path marker offset: ', pathMaker.offsetX, pathMaker.offsetY);
         return [pathMaker.offsetX, pathMaker.offsetY];
     }
 
@@ -1009,5 +1008,51 @@ export class Viewport {
     setViewport(w, h) {
         this.chartWidth = w;
         this.chartHeight = h;
+    }
+}
+
+export class AssetTemplate {
+    construcor(tagName, visualProps, animateProps, boundingBox, jsMovinLayerIdx) {
+        //use to compare
+        this.tagName = tagName;
+        this.visualProps = visualProps;
+        this.animateProps = animateProps;
+        //use to calculate offsets and reference
+        this.boundingBox = boundingBox;
+        this.jsMovinLayerIdx = jsMovinLayerIdx;
+    }
+
+    /**
+     * compare the new asset template with the existing tempalte 
+     * @param {*} candidateAt : candidate asset template
+     * @param {*} at : asset template
+     */
+    static compareTemplate(candidateAt, at) {
+        if (candidateAt.tagName !== at.tagName) {
+            return false;
+        }
+        if (!this.compareVisualProps(candidateAt.visualProps, at.visualProps)) {
+            return false;
+        }
+    }
+
+    static compareVisualProps(p1, p2) {
+        const safeProps = ['x', 'y', 'width', 'height', 'r', 'opacity', 'd']
+        const allKeys = [...Object.keys(p1), ...Object.keys(p2)];
+        const differentKeys = allKeys.filter((k) => {
+            typeof p1[k] === 'undefined' || typeof p2[k] === 'undefined' || p1[k] !== p2[k];
+        })
+
+        if (differentKeys.includes('d')) {
+            const removeNumRegExp = new RegExp(/[0-9\.,\s]/g);
+            const s1 = 'M0,0L0,0';
+            const s2 = 'M 0,0 L 0,0';
+            const s3 = 'M 0.5,0 L 0,0.9';
+            const s4 = 'M0.5,0L0,0.9';
+            console.log(s1.replace(removeNumRegExp, ''), s2.replace(removeNumRegExp, ''), s3.replace(removeNumRegExp, ''), s4.replace(removeNumRegExp, ''));
+            return p1['d'].replace(removeNumRegExp, '') === p2['d'].replace(removeNumRegExp, '');
+        }
+
+        return differentKeys.every((k) => safeProps.indexOf(k) >= 0);
     }
 }

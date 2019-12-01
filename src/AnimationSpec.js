@@ -375,7 +375,6 @@ class Animation extends TimingSpec {
             for (let i = 0; i < value.actionAttrs.length; i++) {
                 let tmpActionSpec = value.actionAttrs[i];
                 if (tmpActionSpec.duration > 0) {
-                    console.log('type: ', tmpActionSpec.type);
                     let targetMark = document.getElementById(markId);//TODO: pass dom here
                     if (tmpActionSpec.type === ActionSpec.actionTargets.mark) {
                         //TODO: consider 'custom'
@@ -419,9 +418,7 @@ class Animation extends TimingSpec {
                                         } else if (lc === 'fillColor') {
                                             fromValue = Util.toLotieRGBA(fromValue);
                                             toValue = Util.toLotieRGBA(toValue);
-                                            console.log('color changing from: ', fromValue, toValue);
                                         }
-                                        console.log(lc, startFrame, endFrame, fromValue, toValue, ActionSpec.transToLottieAction(tmpActionSpec.easing));
                                         globalVar.markLayers.get(markId).setAnimatableProperty(
                                             lc,
                                             startFrame,

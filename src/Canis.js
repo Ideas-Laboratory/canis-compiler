@@ -83,6 +83,7 @@ class Canis {
         document.getElementById('chartContainer').innerHTML = '';
         document.getElementById('chartContainer').appendChild(svgChart);
         ChartSpec.addLottieMarkLayers(svgChart);
+
         // let bBoxes = ChartSpec.getBBoxes();
         // let animateChart = ChartSpec.processAnimateChart(document.getElementById('chartContainer').innerHTML, bBoxes);
         // document.getElementById('videoContainer').innerHTML = '';

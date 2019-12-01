@@ -5,4 +5,5 @@ import JSMovin from 'jsmovin';
 export let globalVar = {
     jsMovin: new JSMovin(),
     markLayers: new Map()
+    // assets: 
 };

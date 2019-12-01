@@ -384,11 +384,8 @@ class ChartSpec {
             if (t.classList.contains('mark')) {
                 globalVar.markLayers.set(t.getAttribute('id'), globalVar.jsMovin.addLayer(t));
             } else {
-                // if(t.tagName === 'line')
                 globalVar.jsMovin.addLayer(t)
             }
-            // t.classList.contains('mark') ? globalVar.markLayers.set(t.getAttribute('id'), globalVar.jsMovin.addLayer(t)) : globalVar.jsMovin.addLayer(t);
-            // globalVar.markLayers.set(t.getAttribute('id'), globalVar.jsMovin.addLayer(t));
         }
         if (t.children.length > 0) {
             for (let i = 0; i < t.children.length; i++) {
