@@ -117,22 +117,46 @@ class Animation extends TimingSpec {
                             tmpObj[vAttr] = this.domMarks.get(markId)['bbY'];
                             break;
                         case 'cx'://use the center of the bounding box 
-                            tmpObj[vAttr] = this.domMarks.get(markId)['bbX'] + this.domMarks.get(markId)['bbWidth'] / 2;
+                            if (typeof this.domMarks.get(markId)['cx'] !== 'undefined') {
+                                tmpObj[vAttr] = this.domMarks.get(markId)['cx'];
+                            } else {
+                                tmpObj[vAttr] = this.domMarks.get(markId)['bbX'] + this.domMarks.get(markId)['bbWidth'] / 2;
+                            }
                             break;
                         case 'cy'://use the center of the bounding box 
-                            tmpObj[vAttr] = this.domMarks.get(markId)['bbY'] + this.domMarks.get(markId)['bbHeight'] / 2;
+                            if (typeof this.domMarks.get(markId)['cy'] !== 'undefined') {
+                                tmpObj[vAttr] = this.domMarks.get(markId)['cy'];
+                            } else {
+                                tmpObj[vAttr] = this.domMarks.get(markId)['bbY'] + this.domMarks.get(markId)['bbHeight'] / 2;
+                            }
                             break;
                         case 'innerRadius'://give default inner radius 0
-                            tmpObj[vAttr] = 0
+                            if (typeof this.domMarks.get(markId)['innerRadius'] !== 'undefined') {
+                                tmpObj[vAttr] = this.domMarks.get(markId)['innerRadius'];
+                            } else {
+                                tmpObj[vAttr] = 0
+                            }
                             break;
                         case 'outterRadius'://use half of the diagonal line of the bounding box
-                            tmpObj[vAttr] = Math.sqrt(Math.pow(this.domMarks.get(markId)['bbWidth'] / 2, 2) + Math.pow(this.domMarks.get(markId)['bbHeight'] / 2, 2));
+                            if (typeof this.domMarks.get(markId)['outterRadius'] !== 'undefined') {
+                                tmpObj[vAttr] = this.domMarks.get(markId)['outterRadius'];
+                            } else {
+                                tmpObj[vAttr] = Math.sqrt(Math.pow(this.domMarks.get(markId)['bbWidth'] / 2, 2) + Math.pow(this.domMarks.get(markId)['bbHeight'] / 2, 2)) + 1;
+                            }
                             break;
                         case 'startAngle':
-                            tmpObj[vAttr] = 0;
+                            if (typeof this.domMarks.get(markId)['startAngle'] !== 'undefined') {
+                                tmpObj[vAttr] = this.domMarks.get(markId)['startAngle'];
+                            } else {
+                                tmpObj[vAttr] = 0;
+                            }
                             break;
                         case 'endAngle':
-                            tmpObj[vAttr] = Math.PI * 2;
+                            if (typeof this.domMarks.get(markId)['endAngle'] !== 'undefined') {
+                                tmpObj[vAttr] = this.domMarks.get(markId)['endAngle'];
+                            } else {
+                                tmpObj[vAttr] = Math.PI * 2;
+                            }
                             break;
                     }
                 } else {
@@ -371,6 +395,7 @@ class Animation extends TimingSpec {
     }
 
     static mapToLottieSpec() {
+        let that = this;
         this.allMarkAni.forEach(function (value, markId) {
             for (let i = 0; i < value.actionAttrs.length; i++) {
                 let tmpActionSpec = value.actionAttrs[i];
@@ -382,6 +407,15 @@ class Animation extends TimingSpec {
                         let endFrame = Math.ceil((tmpActionSpec.startTime + tmpActionSpec.duration) / (1000 / TimingSpec.FRAME_RATE));
                         tmpActionSpec.attribute.forEach((attr) => {
                             if (tmpActionSpec.animationType === ActionSpec.targetAnimationType.custom) {
+                                //set anchor for r and text position changings
+                                if (attr.attrName === 'r') {
+                                    const tmpBbox = getBoundingBox(targetMark);
+                                    globalVar.markLayers.get(markId).setStaticProperty('anchorX', tmpBbox[2] / 2);
+                                    globalVar.markLayers.get(markId).setStaticProperty('anchorY', tmpBbox[3] / 2);
+                                } else if (document.getElementById(markId).tagName === 'text') {
+                                    globalVar.markLayers.get(markId).setStaticProperty('anchorY', 0);
+                                }
+
                                 //translate visual channels to lottie channels
                                 let lottieChannels = Animation.translateToLottieChannel(attr.attrName);
                                 if (Array.isArray(attr.to)) {//doing transition
@@ -393,6 +427,7 @@ class Animation extends TimingSpec {
                                             break;
                                         }
                                     }
+
                                     lottieChannels.forEach((lc) => {
                                         if (lc === 'shape') {
                                             //transform the start d and end d to shape specification
@@ -419,6 +454,7 @@ class Animation extends TimingSpec {
                                             fromValue = Util.toLotieRGBA(fromValue);
                                             toValue = Util.toLotieRGBA(toValue);
                                         }
+                                        console.log(markId, 'setting', lc, fromValue, toValue);
                                         globalVar.markLayers.get(markId).setAnimatableProperty(
                                             lc,
                                             startFrame,
@@ -454,7 +490,8 @@ class Animation extends TimingSpec {
                     } else if (tmpActionSpec.type === ActionSpec.actionTargets.mask) {
                         let maskLayer;
                         const tmpBbox = getBoundingBox(targetMark);
-                        let r = Math.sqrt(Math.pow(tmpBbox[2] / 2, 2) + Math.pow(tmpBbox[3] / 2, 2));
+                        // let r = Math.sqrt(Math.pow(tmpBbox[2] / 2, 2) + Math.pow(tmpBbox[3] / 2, 2));
+                        let r = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['outterRadius'];
                         switch (tmpActionSpec.animationType) {
                             //create rect mask
                             case ActionSpec.targetAnimationType.wipe:
@@ -470,10 +507,19 @@ class Animation extends TimingSpec {
                                 break;
                             //create circle mask with thick border
                             case ActionSpec.targetAnimationType.wheel:
-                                r /= 2;
-                                maskLayer = LayerFactory.ellipse(tmpBbox[0] + tmpBbox[2], tmpBbox[1] + tmpBbox[3], r, r);
-                                maskLayer.setStaticProperty('anchorX', tmpBbox[2] / 2);
-                                maskLayer.setStaticProperty('anchorY', tmpBbox[3] / 2);
+
+                                let pathOffset = Util.getPathOffset(targetMark.getAttribute('d'));
+                                let tmpOffsetX = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cx'] + tmpBbox[0] - pathOffset[0];
+                                let tmpOffsetY = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cy'] + tmpBbox[1] - pathOffset[1];
+                                console.log(markId, tmpOffsetX, tmpOffsetY, that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cx'], that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cy'], tmpBbox, r, pathOffset);
+                                maskLayer = LayerFactory.ellipse(tmpOffsetX, tmpOffsetY, r, r);
+
+                                let tmpStartAngle = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['startAngle'];
+                                let tmpEndAngle = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['endAngle'];
+                                maskLayer.setStaticProperty('trimOffset', -tmpStartAngle / Math.PI / 2 * 360 - 360 / 4);
+                                tmpActionSpec.attribute[0].to = 1 - ((tmpEndAngle - tmpStartAngle) % (Math.PI * 2)) / (Math.PI * 2);
+                                console.log(tmpActionSpec.attribute);
+
                                 maskLayer.setStaticProperty('strokeWidth', 2 * r);
                                 maskLayer.setStaticProperty('fillOpacity', 0);
                                 break;

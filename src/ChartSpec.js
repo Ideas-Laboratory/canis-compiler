@@ -115,17 +115,22 @@ class ChartSpec {
             let viewBoxH = parseFloat(viewBoxNums[3]);
 
             let chartTransForm = Util.getTransformAttrs(tmpCharts[0].children[0]);
-            tmpCharts[0].children[0].setAttribute('transform', 'translate(' + chartTransForm.transNums[0] + ',' + chartTransForm.transNums[1] + ') ' + 'scale(' + chartTransForm.scaleNum / facetNum + ')');
+            // tmpCharts[0].children[0].setAttribute('transform', 'translate(' + chartTransForm.transNums[0] + ',' + chartTransForm.transNums[1] + ') ' + 'scale(' + chartTransForm.scaleNum / facetNum + ')');
+            tmpCharts[0].children[0].setAttribute('transform', 'translate(' + chartTransForm.transNums[0] + ',' + chartTransForm.transNums[1] + ')');
             switch (facetType) {
                 case FacetSpec.facetType.row:
-                    oriHeight += chartMargin * tmpCharts.length;
-                    tmpCharts[0].setAttribute('height', oriHeight);
-                    tmpCharts[0].setAttribute('viewBox', '0 0 ' + viewBoxW + ' ' + (viewBoxH + chartMargin * tmpCharts.length));
+                    // oriHeight += chartMargin * tmpCharts.length;
+                    // tmpCharts[0].setAttribute('height', oriHeight);
+                    // tmpCharts[0].setAttribute('viewBox', '0 0 ' + viewBoxW + ' ' + (viewBoxH + chartMargin * tmpCharts.length));
+                    tmpCharts[0].setAttribute('height', oriHeight * tmpCharts.length);
+                    tmpCharts[0].setAttribute('viewBox', '0 0 ' + viewBoxW + ' ' + oriHeight * tmpCharts.length);
                     break;
                 case FacetSpec.facetType.col:
-                    oriWidth += chartMargin * tmpCharts.length;
-                    tmpCharts[0].setAttribute('width', oriWidth);
-                    tmpCharts[0].setAttribute('viewBox', '0 0 ' + (viewBoxW + chartMargin * tmpCharts.length) + ' ' + viewBoxH);
+                    // oriWidth += chartMargin * tmpCharts.length;
+                    // tmpCharts[0].setAttribute('width', oriWidth);
+                    // tmpCharts[0].setAttribute('viewBox', '0 0 ' + (viewBoxW + chartMargin * tmpCharts.length) + ' ' + viewBoxH);
+                    tmpCharts[0].setAttribute('width', oriWidth * tmpCharts.length);
+                    tmpCharts[0].setAttribute('viewBox', '0 0 ' + oriWidth * tmpCharts.length + ' ' + viewBoxH);
                     break;
             }
 
@@ -142,15 +147,15 @@ class ChartSpec {
                     let chartChildren = chartContentG.children;
                     for (let m = 0; m < chartChildren.length; m++) {
                         let tmpDom = chartChildren[m];
-                        let transformAttrs = Util.getTransformAttrs(tmpDom);
-                        switch (facetType) {
-                            case FacetSpec.facetType.row:
-                                tmpDom.setAttribute('transform', 'translate(' + transformAttrs.transNums[0] + ',' + (transformAttrs.transNums[1] + (viewBoxH + chartMargin) * j) + ') ' + 'scale(' + transformAttrs.scaleNum + ')');
-                                break;
-                            case FacetSpec.facetType.col:
-                                tmpDom.setAttribute('transform', 'translate(' + (transformAttrs.transNums[0] + (viewBoxW + chartMargin) * j) + ',' + transformAttrs.transNums[1] + ') ' + 'scale(' + transformAttrs.scaleNum + ')');
-                                break;
-                        }
+                        // let transformAttrs = Util.getTransformAttrs(tmpDom);
+                        // switch (facetType) {
+                        //     case FacetSpec.facetType.row:
+                        //         tmpDom.setAttribute('transform', 'translate(' + transformAttrs.transNums[0] + ',' + (transformAttrs.transNums[1] + (viewBoxH + chartMargin) * j) + ') ' + 'scale(' + transformAttrs.scaleNum + ')');
+                        //         break;
+                        //     case FacetSpec.facetType.col:
+                        //         tmpDom.setAttribute('transform', 'translate(' + (transformAttrs.transNums[0] + (viewBoxW + chartMargin) * j) + ',' + transformAttrs.transNums[1] + ') ' + 'scale(' + transformAttrs.scaleNum + ')');
+                        //         break;
+                        // }
                         tmpCharts[0].children[0].appendChild(tmpDom);
                     }
                 }
@@ -176,8 +181,6 @@ class ChartSpec {
             if (marks.length > 0) {
                 [].forEach.call(marks, (m) => {
                     let markId = m.getAttribute('id');
-
-                    // globalVar.markLayers.set(markId, globalVar.jsMovin.addLayer(m));
 
                     allMarks.add(markId);
                     let statusObj = {};//status of one mark in chart i
@@ -306,7 +309,12 @@ class ChartSpec {
             for (let si = 0; si < statusArr.length; si++) {
                 let tmpStatus = {};
                 for (let a = 0; a < ChartSpec.changedAttrs.length; a++) {
-                    tmpStatus[ChartSpec.changedAttrs[a]] = statusArr[si][ChartSpec.changedAttrs[a]];
+                    if (['width', 'height', 'r'].includes(ChartSpec.changedAttrs[a])) {
+                        // console.log(statusArr[si][ChartSpec.changedAttrs[a]], typeof statusArr[si][ChartSpec.changedAttrs[a]]);
+                        tmpStatus[ChartSpec.changedAttrs[a]] = 100 * statusArr[si][ChartSpec.changedAttrs[a]] / statusArr[0][ChartSpec.changedAttrs[a]];
+                    } else {
+                        tmpStatus[ChartSpec.changedAttrs[a]] = statusArr[si][ChartSpec.changedAttrs[a]];
+                    }
                 }
                 dataTransArr.push(tmpStatus);//mark status in charts
             }
@@ -319,6 +327,10 @@ class ChartSpec {
         return ChartSpec.charts[0];
     }
 
+    static transToLottieFromTo() {
+
+    }
+
     static getBBoxes() {
         let svg = document.getElementById('chartContainer').children[0];
         let marks = svg.querySelectorAll('[id^="mark"]');
@@ -326,8 +338,6 @@ class ChartSpec {
         if (marks.length > 0) {
             [].forEach.call(marks, (m) => {
                 let markId = m.getAttribute('id');
-
-                // globalVar.markLayers.set(markId, globalVar.jsMovin.addLayer(m));
 
                 let bBox;
                 if (m.tagName === 'text') {

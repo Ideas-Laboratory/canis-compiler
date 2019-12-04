@@ -246,12 +246,15 @@ export class Util {
                     return prev = secondPoint.map((v, i) => v + x.parameters[i])
                 }
                 secondPoint = secondPoint.map((v, i) => v + x.parameters[i + 5])
-                circles.push({
-                    ...Util.svgArcToCenterParam.apply(null, firstPoint.concat(x.parameters.slice(0, 5)).concat(secondPoint)),
-                    rx: x.parameters[0],
-                    ry: x.parameters[1],
-                    rotate: x.parameters[2]
-                })
+                let tmp = Util.svgArcToCenterParam.apply(null, firstPoint.concat(x.parameters.slice(0, 5)).concat(secondPoint));
+                if (!isNaN(tmp.cx) && !isNaN(tmp.cy)) {
+                    circles.push({
+                        ...tmp,
+                        rx: x.parameters[0],
+                        ry: x.parameters[1],
+                        rotate: x.parameters[2]
+                    })
+                }
                 prev = secondPoint
             })
             if (circles.length <= 0 || !circles.every(x => ['cx', 'cy'].reduce((p, c) => p + Math.abs(x[c] - circles[0][c]), 0) < 1e-1)) valid = false
@@ -268,6 +271,7 @@ export class Util {
                         cy: c.cy,
                         startAngle: c.startAngle,
                         endAngle: c.endAngle,
+                        clockwise: c.clockwise,
                         radius: circles.map(x => {
                             return {
                                 rx: x.rx,
@@ -304,9 +308,9 @@ export class Util {
         if (ry < 0) {
             ry = -ry;
         }
-        if (rx == 0.0 || ry == 0.0) { // invalid arguments
-            throw Error('rx and ry can not be 0');
-        }
+        // if (rx == 0.0 || ry == 0.0) { // invalid arguments
+        //     throw Error('rx and ry can not be 0');
+        // }
 
         var s_phi = Math.sin(phi);
         var c_phi = Math.cos(phi);
@@ -331,9 +335,9 @@ export class Util {
         var rxy1_ = rx * y1_;
         var ryx1_ = ry * x1_;
         var sum_of_sq = rxy1_ * rxy1_ + ryx1_ * ryx1_; // sum of square
-        if (!sum_of_sq) {
-            throw Error('start point can not be same as end point');
-        }
+        // if (!sum_of_sq) {
+        //     throw Error('start point can not be same as end point');
+        // }
         var coe = Math.sqrt(Math.abs((rxry * rxry - sum_of_sq) / sum_of_sq));
         if (fA == fS) {
             coe = -coe;

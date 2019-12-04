@@ -82,6 +82,7 @@ class Canis {
         let svgChart = ChartSpec.removeTransAndMerge();
         document.getElementById('chartContainer').innerHTML = '';
         document.getElementById('chartContainer').appendChild(svgChart);
+        console.log('processed input chart: ', svgChart);
         ChartSpec.addLottieMarkLayers(svgChart);
 
         // let bBoxes = ChartSpec.getBBoxes();
@@ -178,6 +179,27 @@ class Canis {
                             if (mark.tagName === 'path' || mark.tagName === 'line') {
                                 tmpDomAttrObj['stroke-dasharray'] = document.getElementById(markId).getTotalLength();
                                 tmpDomAttrObj['stroke-dashoffset'] = document.getElementById(markId).getTotalLength();
+                                if (mark.tagName === 'path') {
+                                    let discD = Util.discretizeD(mark.getAttribute('d'), '#000');
+                                    console.log('test', discD);
+                                    if (typeof discD !== 'undefined' && discD) {
+                                        if (discD.type === 'pies') {
+                                            console.log(discD);
+                                            tmpDomAttrObj['cx'] = discD.data.cx;
+                                            tmpDomAttrObj['cy'] = discD.data.cy;
+                                            tmpDomAttrObj['startAngle'] = (discD.data.clockwise ? discD.data.startAngle : discD.data.endAngle) - 1 / (Math.PI * 2);
+                                            tmpDomAttrObj['endAngle'] = (!discD.data.clockwise ? discD.data.startAngle : discD.data.endAngle) + Math.PI * 4 + 1 / (Math.PI * 2);
+                                            if (discD.data.radius.length > 1) {
+                                                tmpDomAttrObj['innerRadius'] = discD.data.radius[0].rx > discD.data.radius[1].rx ? discD.data.radius[1].rx : discD.data.radius[0].rx;
+                                                tmpDomAttrObj['outterRadius'] = discD.data.radius[0].rx > discD.data.radius[1].rx ? discD.data.radius[0].rx : discD.data.radius[1].rx;
+                                                tmpDomAttrObj['outterRadius']++;
+                                            } else {
+                                                tmpDomAttrObj['innerRadius'] = 0;
+                                                tmpDomAttrObj['outterRadius'] = discD.data.radius[0].rx + 1;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                             animation.domMarks.set(markId, tmpDomAttrObj);
                         }
@@ -197,7 +219,7 @@ class Canis {
 
         //export lottie JSON
         let lottieJSON = globalVar.jsMovin.toJSON();
-        // console.log(lottieJSON);
+        console.log(lottieJSON);
         return JSON.parse(lottieJSON);
     }
 }

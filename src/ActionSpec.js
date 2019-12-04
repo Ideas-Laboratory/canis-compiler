@@ -123,6 +123,11 @@ class ActionSpec extends TimingSpec {
                     } else {
                         fromArr.push([markId, parseFloat(transArr[chartIdx][changedAttr])]);
                         toArr.push([markId, parseFloat(transArr[chartIdx + 1][changedAttr])]);
+                        // if (changedAttr === 'width' || changedAttr === 'height' || changedAttr === 'r') {
+                        //     console.log(fromArr[fromArr.length - 1], fromArr[0])
+                        //     fromArr[fromArr.length - 1][1] = 100 * fromArr[fromArr.length - 1][1] / fromArr[0][1];
+                        //     toArr[toArr.length - 1][1] = 100 * toArr[toArr.length - 1][1] / toArr[0][1];
+                        // }
                     }
                 }
             })
