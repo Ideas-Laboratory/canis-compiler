@@ -12,6 +12,7 @@ class Canis {
         this._animations;
         this.chartWidth;
         this.chartHeight;
+        this.lottieJson;
     }
 
     set animations(aniJson) {
@@ -181,10 +182,8 @@ class Canis {
                                 tmpDomAttrObj['stroke-dashoffset'] = document.getElementById(markId).getTotalLength();
                                 if (mark.tagName === 'path') {
                                     let discD = Util.discretizeD(mark.getAttribute('d'), '#000');
-                                    console.log('test', discD);
                                     if (typeof discD !== 'undefined' && discD) {
                                         if (discD.type === 'pies') {
-                                            console.log(discD);
                                             tmpDomAttrObj['cx'] = discD.data.cx;
                                             tmpDomAttrObj['cy'] = discD.data.cy;
                                             tmpDomAttrObj['startAngle'] = (discD.data.clockwise ? discD.data.startAngle : discD.data.endAngle) - 1 / (Math.PI * 2);
@@ -219,8 +218,9 @@ class Canis {
 
         //export lottie JSON
         let lottieJSON = globalVar.jsMovin.toJSON();
-        console.log(lottieJSON);
-        return JSON.parse(lottieJSON);
+        this.lottieJson = lottieJSON;
+        // console.log(this.lottieJson);
+        return JSON.parse(this.lottieJson);
     }
 }
 

@@ -362,7 +362,7 @@ class Animation extends TimingSpec {
                 }
             }
         })
-        console.log('all mark ani: ', this.allMarkAni);
+        // console.log('all mark ani: ', this.allMarkAni);
     }
 
     static translateToLottieChannel(attrName) {
@@ -454,7 +454,6 @@ class Animation extends TimingSpec {
                                             fromValue = Util.toLotieRGBA(fromValue);
                                             toValue = Util.toLotieRGBA(toValue);
                                         }
-                                        console.log(markId, 'setting', lc, fromValue, toValue);
                                         globalVar.markLayers.get(markId).setAnimatableProperty(
                                             lc,
                                             startFrame,
@@ -507,18 +506,15 @@ class Animation extends TimingSpec {
                                 break;
                             //create circle mask with thick border
                             case ActionSpec.targetAnimationType.wheel:
-
                                 let pathOffset = Util.getPathOffset(targetMark.getAttribute('d'));
                                 let tmpOffsetX = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cx'] + tmpBbox[0] - pathOffset[0];
                                 let tmpOffsetY = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cy'] + tmpBbox[1] - pathOffset[1];
-                                console.log(markId, tmpOffsetX, tmpOffsetY, that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cx'], that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cy'], tmpBbox, r, pathOffset);
                                 maskLayer = LayerFactory.ellipse(tmpOffsetX, tmpOffsetY, r, r);
 
                                 let tmpStartAngle = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['startAngle'];
                                 let tmpEndAngle = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['endAngle'];
                                 maskLayer.setStaticProperty('trimOffset', -tmpStartAngle / Math.PI / 2 * 360 - 360 / 4);
                                 tmpActionSpec.attribute[0].to = 1 - ((tmpEndAngle - tmpStartAngle) % (Math.PI * 2)) / (Math.PI * 2);
-                                console.log(tmpActionSpec.attribute);
 
                                 maskLayer.setStaticProperty('strokeWidth', 2 * r);
                                 maskLayer.setStaticProperty('fillOpacity', 0);

@@ -313,7 +313,6 @@ class ActionSpec extends TimingSpec {
                     ];
                     break;
 
-
                 case ActionSpec.actionTypes.wheel:
                     tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
                     tmpObj.maskType = MaskType.InvertAlpha;
