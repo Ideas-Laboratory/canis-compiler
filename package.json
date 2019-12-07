@@ -36,6 +36,7 @@
         "yargs": "^10.0.3"
     },
     "dependencies": {
+        "babel-polyfill": "^6.26.0",
         "jsmovin": "https://github.com/z-jack/jsmovin.git"
     }
 }

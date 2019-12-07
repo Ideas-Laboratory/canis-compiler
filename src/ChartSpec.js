@@ -105,30 +105,29 @@ class ChartSpec {
     static combineCharts(facetType, facetNum, chartsToCombine) {
         let resultCharts = [],
             chartMargin = 20,
-            oriWidth = 0, oriHeight = 0;
+            oriWidth = 0, oriHeight = 0,
+            widthAfterFacet = oriWidth,
+            heightAfterFacet = oriHeight;
         for (let i = 0; i < chartsToCombine.length; i++) {
             let tmpCharts = chartsToCombine[i];
             oriWidth = parseFloat(tmpCharts[0].getAttribute('width'));
             oriHeight = parseFloat(tmpCharts[0].getAttribute('height'));
+            widthAfterFacet = oriWidth;
+            heightAfterFacet = oriHeight;
             let viewBoxNums = tmpCharts[0].getAttribute('viewBox').split(' ');
             let viewBoxW = parseFloat(viewBoxNums[2]);
             let viewBoxH = parseFloat(viewBoxNums[3]);
 
             let chartTransForm = Util.getTransformAttrs(tmpCharts[0].children[0]);
-            // tmpCharts[0].children[0].setAttribute('transform', 'translate(' + chartTransForm.transNums[0] + ',' + chartTransForm.transNums[1] + ') ' + 'scale(' + chartTransForm.scaleNum / facetNum + ')');
             tmpCharts[0].children[0].setAttribute('transform', 'translate(' + chartTransForm.transNums[0] + ',' + chartTransForm.transNums[1] + ')');
             switch (facetType) {
                 case FacetSpec.facetType.row:
-                    // oriHeight += chartMargin * tmpCharts.length;
-                    // tmpCharts[0].setAttribute('height', oriHeight);
-                    // tmpCharts[0].setAttribute('viewBox', '0 0 ' + viewBoxW + ' ' + (viewBoxH + chartMargin * tmpCharts.length));
+                    heightAfterFacet *= tmpCharts.length;
                     tmpCharts[0].setAttribute('height', oriHeight * tmpCharts.length);
                     tmpCharts[0].setAttribute('viewBox', '0 0 ' + viewBoxW + ' ' + oriHeight * tmpCharts.length);
                     break;
                 case FacetSpec.facetType.col:
-                    // oriWidth += chartMargin * tmpCharts.length;
-                    // tmpCharts[0].setAttribute('width', oriWidth);
-                    // tmpCharts[0].setAttribute('viewBox', '0 0 ' + (viewBoxW + chartMargin * tmpCharts.length) + ' ' + viewBoxH);
+                    widthAfterFacet *= tmpCharts.length;
                     tmpCharts[0].setAttribute('width', oriWidth * tmpCharts.length);
                     tmpCharts[0].setAttribute('viewBox', '0 0 ' + oriWidth * tmpCharts.length + ' ' + viewBoxH);
                     break;
@@ -147,15 +146,15 @@ class ChartSpec {
                     let chartChildren = chartContentG.children;
                     for (let m = 0; m < chartChildren.length; m++) {
                         let tmpDom = chartChildren[m];
-                        // let transformAttrs = Util.getTransformAttrs(tmpDom);
-                        // switch (facetType) {
-                        //     case FacetSpec.facetType.row:
-                        //         tmpDom.setAttribute('transform', 'translate(' + transformAttrs.transNums[0] + ',' + (transformAttrs.transNums[1] + (viewBoxH + chartMargin) * j) + ') ' + 'scale(' + transformAttrs.scaleNum + ')');
-                        //         break;
-                        //     case FacetSpec.facetType.col:
-                        //         tmpDom.setAttribute('transform', 'translate(' + (transformAttrs.transNums[0] + (viewBoxW + chartMargin) * j) + ',' + transformAttrs.transNums[1] + ') ' + 'scale(' + transformAttrs.scaleNum + ')');
-                        //         break;
-                        // }
+                        let transformAttrs = Util.getTransformAttrs(tmpDom);
+                        switch (facetType) {
+                            case FacetSpec.facetType.row:
+                                tmpDom.setAttribute('transform', 'translate(' + transformAttrs.transNums[0] + ',' + (transformAttrs.transNums[1] + (oriHeight + chartMargin) * j) + ') ' + 'scale(' + transformAttrs.scaleNum + ')');
+                                break;
+                            case FacetSpec.facetType.col:
+                                tmpDom.setAttribute('transform', 'translate(' + (transformAttrs.transNums[0] + (oriWidth + chartMargin) * j) + ',' + transformAttrs.transNums[1] + ') ' + 'scale(' + transformAttrs.scaleNum + ')');
+                                break;
+                        }
                         tmpCharts[0].children[0].appendChild(tmpDom);
                     }
                 }
@@ -163,14 +162,14 @@ class ChartSpec {
             resultCharts.push(tmpCharts[0]);
         }
         ChartSpec.charts = resultCharts;
-        this.viewport.setViewport(oriWidth, oriHeight);
+        this.viewport.setViewport(widthAfterFacet, heightAfterFacet);
     }
 
     static mergeCharts() {
         let allMarks = new Set();
         let markStatus = new Map();
         let markTempletes = new Map();
-        let attrNames = ['x', 'y', 'cx', 'cy', 'x1', 'y1', 'x2', 'y2', 'd', 'r', 'width', 'height', 'textContent', 'fill', 'stroke'];
+        let attrNames = ['x', 'y', 'cx', 'cy', 'x1', 'y1', 'x2', 'y2', 'd', 'r', 'width', 'height', 'textContent', 'fill', 'stroke', 'opacity'];
         let nullStatus = {};
         for (let j = 0; j < attrNames.length; j++) {
             nullStatus[attrNames[j]] = null;
@@ -235,7 +234,7 @@ class ChartSpec {
         if (ChartSpec.changedAttrs.indexOf('d') >= 0) {
             diffCmds = Util.findDiffCmds(markStatus);
         }
-        console.log('changed attributes: ', ChartSpec.changedAttrs);
+        // console.log('changed attributes: ', ChartSpec.changedAttrs);
 
         //add missing marks to each chart
         allMarks = Array.from(allMarks);
@@ -243,7 +242,6 @@ class ChartSpec {
         for (let i = 0; i < ChartSpec.charts.length; i++) {
             for (let j = 0; j < allMarks.length; j++) {
                 if (ChartSpec.charts[i].querySelectorAll('#' + allMarks[j]).length === 0) {//chart i does not have mark j
-                    console.log('chart ' + i + ' doesnt have mark' + allMarks[j]);
                     let markStr = markTempletes.get(allMarks[j]);
                     let tmpDiv = document.createElement('div');
                     tmpDiv.innerHTML = markStr;
@@ -310,7 +308,6 @@ class ChartSpec {
                 let tmpStatus = {};
                 for (let a = 0; a < ChartSpec.changedAttrs.length; a++) {
                     if (['width', 'height', 'r'].includes(ChartSpec.changedAttrs[a])) {
-                        // console.log(statusArr[si][ChartSpec.changedAttrs[a]], typeof statusArr[si][ChartSpec.changedAttrs[a]]);
                         tmpStatus[ChartSpec.changedAttrs[a]] = 100 * statusArr[si][ChartSpec.changedAttrs[a]] / statusArr[0][ChartSpec.changedAttrs[a]];
                     } else {
                         tmpStatus[ChartSpec.changedAttrs[a]] = statusArr[si][ChartSpec.changedAttrs[a]];
@@ -325,10 +322,6 @@ class ChartSpec {
         }
 
         return ChartSpec.charts[0];
-    }
-
-    static transToLottieFromTo() {
-
     }
 
     static getBBoxes() {

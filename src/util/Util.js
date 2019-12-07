@@ -86,7 +86,7 @@ export class Util {
         return [r, g, b, a];
     }
 
-    static toLotieRGBA(color) {
+    static toLottieRGBA(color) {
         return this.color2RGB(color).map((c) => c / 255);
     }
 
@@ -620,62 +620,9 @@ export class Util {
 
     static transDToLottieSpec(d) {
         let posiOffset = this.getPathOffset(d);
-        d = this.splitPath(d);
-        d = d.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
-        let cmdRegExp = new RegExp(/[mMlLhHvVcCsSqQtTaAzZ][^mMlLhHvVcCsSqQtTaAzZ]*/g);
-        let cmds = d.match(cmdRegExp);
-        let pm = new PathMaker();
-        if (cmds) {
-            cmds.forEach((cmdStr) => {
-                const cmdName = cmdStr.substring(0, 1),
-                    cmdValue = cmdStr.substring(1);
-                switch (cmdName) {
-                    case 'M':
-                    case 'm':
-                        pm.moveTo(...cmdValue.split(',').map(n => parseFloat(n)));
-                        break;
-                    case 'H':
-                        pm.horizontalTo(parseFloat(cmdValue));
-                        break;
-                    case 'h':
-                        pm.horizontalToRelative(parseFloat(cmdValue));
-                        break;
-                    case 'V':
-                        pm.verticalTo(parseFloat(cmdValue));
-                        break;
-                    case 'v':
-                        pm.verticalToRelative(parseFloat(cmdValue));
-                        break;
-                    case 'L':
-                        pm.lineTo(...cmdValue.split(',').map(n => parseFloat(n)));
-                        break;
-                    case 'l':
-                        pm.lineToRelative(...cmdValue.split(',').map(n => parseFloat(n)));
-                        break;
-                    case 'C':
-                        pm.cubicBezierCurveTo(...cmdValue.split(',').map(n => parseFloat(n)));
-                        break;
-                    case 'c':
-                        pm.cubicBezierCurveToRelative(...cmdValue.split(',').map(n => parseFloat(n)));
-                        break;
-                    case 'Q':
-                        pm.quadraticBezierCurveTo(...cmdValue.split(',').map(n => parseFloat(n)));
-                        break;
-                    case 'q':
-                        pm.quadraticBezierCurveToRelative(...cmdValue.split(',').map(n => parseFloat(n)));
-                        break;
-                    case 'A':
-                        pm.arcTo(...cmdValue.split(',').map(n => parseFloat(n)));
-                        break;
-                    case 'a':
-                        pm.arcToRelative(...cmdValue.split(',').map(n => parseFloat(n)));
-                        break;
-                }
-            })
-            pm.uniform();
-            return [posiOffset, pm.path];
-        }
-        return [posiOffset, {}];
+        let pm = new PathMaker(d);
+        pm.uniform();
+        return [posiOffset, pm];
     }
 
     static setPathDValue(d, reset, tx = 0, ty = 0, diffCmds = new Map()) {
@@ -724,7 +671,7 @@ export class Util {
                                 resultCmd = this.calNumTrans(resultCmd, diffCmds, i, cmdName, nums[ni], reset, resetY, ty);
                             }
                             if (ni !== nums.length - 1) {
-                                resultCmd += ',';
+                                resultCmd += ' ';
                             }
                         }
                         break;
@@ -738,7 +685,7 @@ export class Util {
                         for (let ni = 0; ni < nums2.length; ni++) {
                             resultCmd = this.calNumTrans(resultCmd, diffCmds, i, cmdName, nums2[ni], reset, '0', 0);
                             if (ni !== nums2.length - 1 && nums2[ni] !== '') {
-                                resultCmd += ',';
+                                resultCmd += ' ';
                             }
                         }
                         break;
@@ -972,22 +919,22 @@ export class Util {
     static checkValidProp(tagName, propName) {
         switch (tagName) {
             case 'circle':
-                return ['cx', 'cy', 'r', 'stroke', 'stroke-width', 'fill'].includes(propName);
+                return ['opacity', 'cx', 'cy', 'r', 'stroke', 'stroke-width', 'fill'].includes(propName);
             case 'ellipse':
-                return ['cx', 'cy', 'rx', 'ry', 'stroke', 'stroke-width', 'fill'].includes(propName);
+                return ['opacity', 'cx', 'cy', 'rx', 'ry', 'stroke', 'stroke-width', 'fill'].includes(propName);
             case 'image':
                 return ['x', 'y', 'width', 'height', 'href', 'xlink:href', 'preserveAspectRatio'].includes(propName);
             case 'line':
-                return ['x1', 'x2', 'y1', 'y2', 'stroke', 'stroke-width', 'fill'].includes(propName);
+                return ['opacity', 'x1', 'x2', 'y1', 'y2', 'stroke', 'stroke-width', 'fill'].includes(propName);
             case 'path':
-                return ['d', 'stroke', 'stroke-width', 'fill'].includes(propName);
+                return ['opacity', 'd', 'stroke', 'stroke-width', 'fill'].includes(propName);
             case 'polygon':
             case 'polyline':
-                return ['points', 'stroke', 'stroke-width', 'fill'].includes(propName);
+                return ['opacity', 'points', 'stroke', 'stroke-width', 'fill'].includes(propName);
             case 'rect':
-                return ['x', 'y', 'width', 'height', 'rx', 'ry', 'stroke', 'stroke-width', 'fill'].includes(propName);
+                return ['opacity', 'x', 'y', 'width', 'height', 'rx', 'ry', 'stroke', 'stroke-width', 'fill'].includes(propName);
             case 'text':
-                return ['x', 'y', 'dx', 'dy', 'stroke', 'stroke-width', 'textContent'].includes(propName);
+                return ['opacity', 'x', 'y', 'dx', 'dy', 'textContent'].includes(propName);
             default:
                 return false;
         }
@@ -1053,7 +1000,7 @@ export class AssetTemplate {
             const s2 = 'M 0,0 L 0,0';
             const s3 = 'M 0.5,0 L 0,0.9';
             const s4 = 'M0.5,0L0,0.9';
-            console.log(s1.replace(removeNumRegExp, ''), s2.replace(removeNumRegExp, ''), s3.replace(removeNumRegExp, ''), s4.replace(removeNumRegExp, ''));
+            // console.log(s1.replace(removeNumRegExp, ''), s2.replace(removeNumRegExp, ''), s3.replace(removeNumRegExp, ''), s4.replace(removeNumRegExp, ''));
             return p1['d'].replace(removeNumRegExp, '') === p2['d'].replace(removeNumRegExp, '');
         }
 

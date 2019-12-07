@@ -8,25 +8,20 @@ window.canis = {
     duration: () => {
         return Animation.wholeEndTime;
     },
-    loadSpec: (url, callback) => {
-        Canis.loadSpec(url, callback);
-    },
-    renderSpec: (spec) => {
+    renderSpec: (spec, callback) => {
         let canisObj = new Canis();
-        canisObj.init(spec);
-        return canisObj.render();
-    },
-    play: () => {
-        Renderer.play();
-    },
-    renderFrame: (time) => {//render frame of a specific timepoint
-        return Renderer.renderFrame(time);
+        return canisObj.init(spec).then(()=>{
+            return canisObj.render(callback);
+        })
     },
     reset: function () {
         Renderer.resetCover();
         Animation.resetAll();
     },
-    test: function(spec) {
+    exportJSON: function () {
+        return Canis.lottieJSON;
+    },
+    test: function (spec) {
         console.log('this is a test! ', spec);
     }
 }

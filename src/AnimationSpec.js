@@ -367,6 +367,8 @@ class Animation extends TimingSpec {
 
     static translateToLottieChannel(attrName) {
         switch (attrName) {
+            case 'opacity':
+                return ['opacity']
             case 'x':
             case 'cx':
                 return ['x'];
@@ -429,6 +431,7 @@ class Animation extends TimingSpec {
                                     }
 
                                     lottieChannels.forEach((lc) => {
+                                        // console.log('changing to animate: ', markId, lc, fromValue, toValue);
                                         if (lc === 'shape') {
                                             //transform the start d and end d to shape specification
                                             let fromPosi = [0, 0], toPosi = [0, 0];
@@ -450,10 +453,19 @@ class Animation extends TimingSpec {
                                                 toPosi[1],
                                                 ActionSpec.transToLottieAction(tmpActionSpec.easing)
                                             );
-                                        } else if (lc === 'fillColor') {
-                                            fromValue = Util.toLotieRGBA(fromValue);
-                                            toValue = Util.toLotieRGBA(toValue);
+                                        } else if (lc === 'fillColor' || lc === 'strokeColor') {
+                                            if (fromValue && toValue && fromValue !== 'none' && toValue !== 'none') {
+                                                fromValue = Util.toLottieRGBA(fromValue);
+                                                toValue = Util.toLottieRGBA(toValue);
+                                            } else {
+                                                fromValue = toValue = [0, 0, 0, 0];
+                                            }
+
+                                        } else if (lc === 'opacity'){
+                                            fromValue *= 100;
+                                            toValue *= 100;
                                         }
+
                                         globalVar.markLayers.get(markId).setAnimatableProperty(
                                             lc,
                                             startFrame,

@@ -4,6 +4,7 @@ import TimingSpec from './TimingSpec.js';
 import Animation from "./AnimationSpec.js";
 import { Util } from './util/Util.js';
 import { globalVar } from './util/GlobalVar.js';
+import 'babel-polyfill';
 
 class Canis {
     constructor() {
@@ -12,7 +13,6 @@ class Canis {
         this._animations;
         this.chartWidth;
         this.chartHeight;
-        this.lottieJson;
     }
 
     set animations(aniJson) {
@@ -58,7 +58,7 @@ class Canis {
         }
     }
 
-    init(spec) {
+    preprocessCharts(spec) {
         this.chartSpecs = [];
         let canisObj = spec;
         canisObj.charts = ChartSpec.chartPreProcessing(canisObj.charts);
@@ -78,14 +78,19 @@ class Canis {
         globalVar.jsMovin.clearLayers();
 
         //set viewport for jsmovin
+        console.log(ChartSpec.viewport.chartWidth, ChartSpec.viewport.chartHeight);
         globalVar.jsMovin.setViewport(ChartSpec.viewport.chartWidth, ChartSpec.viewport.chartHeight);
 
         let svgChart = ChartSpec.removeTransAndMerge();
         document.getElementById('chartContainer').innerHTML = '';
         document.getElementById('chartContainer').appendChild(svgChart);
-        console.log('processed input chart: ', svgChart);
-        ChartSpec.addLottieMarkLayers(svgChart);
+        return [canisObj, svgChart];
+    }
 
+    async init(spec) {
+        let [canisObj, svgChart] = await this.preprocessCharts(spec);
+
+        ChartSpec.addLottieMarkLayers(svgChart);
         // let bBoxes = ChartSpec.getBBoxes();
         // let animateChart = ChartSpec.processAnimateChart(document.getElementById('chartContainer').innerHTML, bBoxes);
         // document.getElementById('videoContainer').innerHTML = '';
@@ -211,17 +216,19 @@ class Canis {
         }
     }
 
-    render() {
+    render(callback) {
         Animation.renderAnimation();
         //map animation keyframes to lottie spec
         Animation.mapToLottieSpec();
 
         //export lottie JSON
         let lottieJSON = globalVar.jsMovin.toJSON();
-        this.lottieJson = lottieJSON;
-        // console.log(this.lottieJson);
-        return JSON.parse(this.lottieJson);
+        Canis.lottieJSON = lottieJSON;
+        callback();
+        return JSON.parse(lottieJSON);
     }
 }
+
+Canis.lottieJSON = '';
 
 export default Canis;
