@@ -694,11 +694,11 @@ export class Util {
                         for (let ni = 0; ni < anums.length; ni++) {
                             if (ni === anums.length - 2) {//x
                                 resultCmd = this.calNumTrans(resultCmd, diffCmds, i, cmdName, anums[ni], reset, parseFloat(resetX) + 1, tx);
-                                resultCmd += ',';
+                                resultCmd += ' ';
                             } else if (ni === anums.length - 1) {//y
                                 resultCmd = this.calNumTrans(resultCmd, diffCmds, i, cmdName, anums[ni], reset, parseFloat(resetY) + 1, ty);
                             } else {
-                                resultCmd += anums[ni] + ',';
+                                resultCmd += anums[ni] + ' ';
                             }
                         }
                         break;
@@ -707,11 +707,11 @@ export class Util {
                         for (let ni = 0; ni < anums2.length; ni++) {
                             if (ni === anums2.length - 2) {//x
                                 resultCmd = this.calNumTrans(resultCmd, diffCmds, i, cmdName, anums2[ni], reset, '1', 0);
-                                resultCmd += ',';
+                                resultCmd += ' ';
                             } else if (ni === anums2.length - 1) {//y
                                 resultCmd = this.calNumTrans(resultCmd, diffCmds, i, cmdName, anums2[ni], reset, '1', 0);
                             } else {
-                                resultCmd += anums2[ni] + ',';
+                                resultCmd += anums2[ni] + ' ';
                             }
                         }
                         break;
