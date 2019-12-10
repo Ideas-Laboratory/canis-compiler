@@ -1,5 +1,5 @@
 {
-    "name": "anichart",
+    "name": "canis_toolkit",
     "scripts": {
         "build": "webpack --env dev && webpack --env build",
         "dev": "webpack --progress --colors --watch --env dev",
@@ -7,7 +7,7 @@
         "test:watch": "mocha --require babel-register --colors -w ./test/*.spec.js",
         "test:cover": "cross-env NODE_ENV=test nyc mocha --require babel-register --colors test/*.js",
         "repl": "node -i -e \"$(< ./lib/webpack-library-starter.js)\"",
-        "webtest": "npm run build && copy .\\lib\\anichart.js c:\\programs\\tomcat\\apache-tomcat-8.5.8-windows-x64\\apache-tomcat-8.5.8\\webapps\\canis-editor\\js\\lib\\anichart.js && copy .\\lib\\anichart.min.js c:\\programs\\tomcat\\apache-tomcat-8.5.8-windows-x64\\apache-tomcat-8.5.8\\webapps\\canis-editor\\js\\lib\\anichart.min.js"
+        "webtest": "npm run build && copy .\\lib\\canis_toolkit.js c:\\programs\\tomcat\\apache-tomcat-8.5.8-windows-x64\\apache-tomcat-8.5.8\\webapps\\canis-editor\\js\\lib\\canis_toolkit.js && copy .\\lib\\canis_toolkit.min.js c:\\programs\\tomcat\\apache-tomcat-8.5.8-windows-x64\\apache-tomcat-8.5.8\\webapps\\canis-editor\\js\\lib\\canis_toolkit.min.js"
     },
     "author": "Tong Ge",
     "devDependencies": {

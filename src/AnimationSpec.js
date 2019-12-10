@@ -30,6 +30,7 @@ class Animation extends TimingSpec {
             this.chartIdx = animationJson.chartIdx;
             this.selection = animationJson.selection;//init selection
             this.reference = animationJson.reference;
+            console.log('animation ref: ', animationJson.reference);
             this.offset = animationJson.offset;
             if (typeof animationJson.grouping !== 'undefined') {//init grouping
                 this.grouping.initGrouping(animationJson.grouping);
@@ -362,7 +363,7 @@ class Animation extends TimingSpec {
                 }
             }
         })
-        // console.log('all mark ani: ', this.allMarkAni);
+        console.log('all mark ani: ', this.allMarkAni);
     }
 
     static translateToLottieChannel(attrName) {
@@ -403,6 +404,8 @@ class Animation extends TimingSpec {
                 let tmpActionSpec = value.actionAttrs[i];
                 if (tmpActionSpec.duration > 0) {
                     let targetMark = document.getElementById(markId);//TODO: pass dom here
+                    // if (markId === 'mark11')
+                    //     console.log(tmpActionSpec)
                     if (tmpActionSpec.type === ActionSpec.actionTargets.mark) {
                         //TODO: consider 'custom'
                         let startFrame = Math.ceil(tmpActionSpec.startTime / (1000 / TimingSpec.FRAME_RATE));
@@ -461,7 +464,8 @@ class Animation extends TimingSpec {
                                                 fromValue = toValue = [0, 0, 0, 0];
                                             }
 
-                                        } else if (lc === 'opacity'){
+                                        } else if (lc === 'opacity') {
+                                            // console.log(markId, toValue, typeof toValue);
                                             fromValue *= 100;
                                             toValue *= 100;
                                         }
@@ -488,6 +492,7 @@ class Animation extends TimingSpec {
                                     })
                                 }
                             } else {//if not custom, then attrName is already lottie channels
+                                console.log(markId, startFrame, endFrame, attr.from, attr.to);
                                 globalVar.markLayers.get(markId).setAnimatableProperty(
                                     attr.attrName,
                                     startFrame,
