@@ -434,7 +434,6 @@ class Animation extends TimingSpec {
                                     }
 
                                     lottieChannels.forEach((lc) => {
-                                        // console.log('changing to animate: ', markId, lc, fromValue, toValue);
                                         if (lc === 'shape') {
                                             //transform the start d and end d to shape specification
                                             let fromPosi = [0, 0], toPosi = [0, 0];
@@ -470,6 +469,10 @@ class Animation extends TimingSpec {
                                             toValue *= 100;
                                         }
 
+                                        // if (markId === 'mark11' && lc==='opacity') {
+                                        //     fromValue = 0;
+                                        //     console.log(markId, lc, startFrame, endFrame, fromValue, toValue);
+                                        // }
                                         globalVar.markLayers.get(markId).setAnimatableProperty(
                                             lc,
                                             startFrame,
@@ -492,7 +495,6 @@ class Animation extends TimingSpec {
                                     })
                                 }
                             } else {//if not custom, then attrName is already lottie channels
-                                console.log(markId, startFrame, endFrame, attr.from, attr.to);
                                 globalVar.markLayers.get(markId).setAnimatableProperty(
                                     attr.attrName,
                                     startFrame,
@@ -551,31 +553,6 @@ class Animation extends TimingSpec {
                             );
                         })
                         globalVar.jsMovin.addMask(maskLayer, globalVar.markLayers.get(markId), tmpActionSpec.maskType);
-
-
-
-
-
-
-                        // console.log('in mask: ', tmpActionSpec.attribute);
-                        // let tmpBbox = getBoundingBox(document.getElementById(markId));
-                        // let markStr = `<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="2000">
-                        //     <rect x="${tmpBbox[0]}" y="${tmpBbox[1]}" width="${tmpBbox[2]}" height="${tmpBbox[3]}"></rect>
-                        // </svg>`;
-                        // let parser = new DOMParser();
-                        // let svgMask = parser.parseFromString(markStr, "image/svg+xml").lastChild.children[0];
-                        // const maskLayer = LayerFactory.hierarchy(svgMask);
-                        // let startFrame = Math.ceil(tmpActionSpec.startTime / (1000 / TimingSpec.FRAME_RATE));
-                        // let endFrame = Math.ceil((tmpActionSpec.startTime + tmpActionSpec.duration) / (1000 / TimingSpec.FRAME_RATE));
-                        // maskLayer.setAnimatableProperty(
-                        //     tmpActionSpec.attribute.attrName,
-                        //     startFrame,
-                        //     endFrame,
-                        //     tmpActionSpec.attribute.from * 100,
-                        //     tmpActionSpec.attribute.to * 100,
-                        //     tmpActionSpec.easing
-                        // );
-                        // globalVar.jsMovin.addMask(maskLayer, globalVar.markLayers.get(markId));
                     } else {
                         console.error('unkonwn actions target: ', tmpActionSpec.type);
                     }
