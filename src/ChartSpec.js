@@ -397,65 +397,6 @@ class ChartSpec {
         }
 
     }
-
-    // static getMarkBBox(svg) {
-    //     let markBoundingRects = new Map();
-    //     let marks = svg.querySelectorAll('[id^="mark"]');
-    //     if (marks.length > 0) {
-    //         [].forEach.call(marks, function (m) {
-    //             if (m.tagName !== 'text') {
-    //                 markBoundingRects.set(m.getAttribute('id'), m.getBBox());
-    //             } else {//text tag, the bounding box coords is the bottom left corner
-    //                 let bBox = m.getBBox();
-    //                 bBox.y -= bBox.height;
-    //                 bBox.width += 10;
-    //                 markBoundingRects.set(m.getAttribute('id'), bBox);
-    //             }
-    //         });
-    //     }
-    //     return markBoundingRects;
-    // }
-
-    // static processAnimateChart(chartStr, bBoxes) {
-    //     let tmpDiv = document.createElement('div');
-    //     tmpDiv.innerHTML = chartStr;
-    //     let aniSvg = tmpDiv.children[0];
-
-    //     aniSvg.setAttribute('id', 'visAnimation');
-    //     aniSvg.querySelector('#chartContent').setAttribute('id', 'aniChartContent');
-    //     let aniMarks = aniSvg.querySelectorAll('[id^="mark"]');
-    //     if (aniMarks.length > 0) {
-    //         [].forEach.call(aniMarks, function (am) {
-    //             let markId = am.getAttribute('id');
-    //             let idIndex = markId.substring(4);
-    //             am.setAttribute('id', 'ani' + markId);
-
-    //             //create corresponding mask
-    //             let mask = document.createElementNS('http://www.w3.org/2000/svg', 'mask');
-    //             mask.setAttributeNS(null, 'id', 'animaskmark' + idIndex);
-    //             let rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    //             rect.setAttributeNS(null, 'id', 'animaskBgmark' + idIndex);
-    //             rect.setAttributeNS(null, 'x', bBoxes.get(markId).x - 1);
-    //             rect.setAttributeNS(null, 'y', bBoxes.get(markId).y - 1);
-    //             rect.setAttributeNS(null, 'width', bBoxes.get(markId).width + 2);
-    //             rect.setAttributeNS(null, 'height', bBoxes.get(markId).height + 2);
-    //             rect.setAttributeNS(null, 'fill', '#fff');
-    //             mask.appendChild(rect);
-
-    //             let rect2 = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    //             rect2.setAttributeNS(null, 'x', -10000);
-    //             rect2.setAttributeNS(null, 'y', -10000);
-    //             rect2.setAttributeNS(null, 'width', 20000);
-    //             rect2.setAttributeNS(null, 'height', 20000);
-    //             rect2.setAttributeNS(null, 'fill', '#fff');
-    //             mask.appendChild(rect2);
-
-    //             aniSvg.appendChild(mask);
-    //             am.setAttribute('mask', 'url(#animaskmark' + idIndex + ')');
-    //         });
-    //     }
-    //     return aniSvg;
-    // }
 }
 
 ChartSpec.charts = [];

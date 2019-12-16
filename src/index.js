@@ -1,7 +1,6 @@
-let TimingSpec = require('./TimingSpec.js');
-let Animation = require('./AnimationSpec.js');
-let Canis = require('./Canis.js');
-let Renderer = require('./AniRenderer.js');
+import TimingSpec from './TimingSpec';
+import Animation from './AnimationSpec';
+import Canis from './Canis';
 
 window.canis = {
     frameRate: TimingSpec.FRAME_RATE,
@@ -15,7 +14,6 @@ window.canis = {
         })
     },
     reset: function () {
-        Renderer.resetCover();
         Animation.resetAll();
     },
     exportJSON: function () {

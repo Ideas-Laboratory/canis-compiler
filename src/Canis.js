@@ -78,7 +78,6 @@ class Canis {
         globalVar.jsMovin.clearLayers();
 
         //set viewport for jsmovin
-        console.log(ChartSpec.viewport.chartWidth, ChartSpec.viewport.chartHeight);
         globalVar.jsMovin.setViewport(ChartSpec.viewport.chartWidth, ChartSpec.viewport.chartHeight);
 
         let svgChart = ChartSpec.removeTransAndMerge();
@@ -91,11 +90,6 @@ class Canis {
         let [canisObj, svgChart] = await this.preprocessCharts(spec);
 
         ChartSpec.addLottieMarkLayers(svgChart);
-        // let bBoxes = ChartSpec.getBBoxes();
-        // let animateChart = ChartSpec.processAnimateChart(document.getElementById('chartContainer').innerHTML, bBoxes);
-        // document.getElementById('videoContainer').innerHTML = '';
-        // document.getElementById('videoContainer').appendChild(animateChart);
-
         //set framerate for jsmovin
         globalVar.jsMovin.setFrameRate(TimingSpec.FRAME_RATE);
         //deal with animations

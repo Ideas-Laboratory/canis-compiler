@@ -17,7 +17,7 @@ if (env === 'build') {
 const config = {
     mode: mode,
     entry: __dirname + '/src/index.js',
-    devtool: 'source-map',
+    devtool: 'inline-source-map',//track errors in the source file instead of in bundles
     output: {
         path: __dirname + '/lib',
         filename: outputFile,
