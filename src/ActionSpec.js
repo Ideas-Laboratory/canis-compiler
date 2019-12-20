@@ -167,6 +167,18 @@ class ActionSpec extends TimingSpec {
                     tmpObj.attribute = [
                         {
                             attrName: 'opacity',
+                            from: 0,
+                            to: 1
+                        }
+                    ];
+                    break;
+                case ActionSpec.actionTypes.disappear:
+                    tmpObj.duration = 1000 / TimingSpec.FRAME_RATE;
+                    tmpObj.animationType = ActionSpec.targetAnimationType.fade;
+                    tmpObj.type = ActionSpec.actionTargets.mark;
+                    tmpObj.attribute = [
+                        {
+                            attrName: 'opacity',
                             from: 1,
                             to: 0
                         }
@@ -331,37 +343,6 @@ class ActionSpec extends TimingSpec {
                         to: 1
                     }];
                     break;
-
-
-
-                // case ActionSpec.actionTypes.zoom:
-                //     tmpObj.type = ActionSpec.actionTargets.mark;
-                //     tmpObj.reference = TimingSpec.timingRef.previousStart;
-                //     tmpObj.offset = 0;
-                //     tmpObj.animationType = ActionSpec.targetAnimationType.wipe;
-                //     tmpObj.attribute = {
-                //         attrName: 'width',
-                //         from: 0,
-                //         to: 1
-                //     };
-
-                //     let tmpObj2 = {
-                //         chartIdx: actionJson.chartIdx,
-                //         easing: actionJson.easing,
-                //         duration: typeof actionJson.duration === 'undefined' ? 300 : actionJson.duration,
-                //         reference: actionJson.reference,//timingSpec offset reference
-                //         offset: actionJson.offset,
-                //         type: ActionSpec.actionTargets.mask,
-                //         animationType: ActionSpec.targetAnimationType.wipe,
-                //         attribute: {
-                //             attrName: 'height',
-                //             from: 1,
-                //             to: 0
-                //         }
-                //     };
-                //     actionJsonArr.push(tmpObj2);
-
-                //     break;
                 // case ActionSpec.actionTypes.custom:
                 //     tmpObj.type = ActionSpec.actionTargets.mark;
                 //     tmpObj.animationType = ActionSpec.targetAnimationType.custom;
@@ -493,6 +474,7 @@ ActionSpec.actionTypes = {
     wipeRight: 'wipe right',
     wheel: 'wheel',
     appear: 'appear',
+    disappear: 'disappear',
     circle: 'circle',
     grow: 'grow',
     custom: 'custom',

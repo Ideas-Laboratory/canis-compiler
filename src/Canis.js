@@ -2,12 +2,13 @@ import ChartSpec from './ChartSpec.js';
 import FacetSpec from './FacetSpec.js';
 import TimingSpec from './TimingSpec.js';
 import Animation from "./AnimationSpec.js";
-import { Util } from './util/Util.js';
+import { CanisUtil } from './util/Util.js';
 import { globalVar } from './util/GlobalVar.js';
 import 'babel-polyfill';
 
 class Canis {
     constructor() {
+        this.currentSpec = {};
         this.chartSpecs;
         this.facet;
         this._animations;
@@ -28,7 +29,7 @@ class Canis {
         }
         if (chartNum > 1) {//more than 1 input chart
             for (let i = 1; i < chartNum - 1; i++) {
-                let tmpAniJson = Util.deepClone(aniJson);
+                let tmpAniJson = CanisUtil.deepClone(aniJson);
                 tmpAniJson[0].reference = TimingSpec.timingRef.previousEnd;
                 let tmpIdxAniJson = tmpAniJson.map(tmpAni => {
                     tmpAni.chartIdx = i;
@@ -59,6 +60,7 @@ class Canis {
     }
 
     preprocessCharts(spec) {
+        console.time('prepeocess charts');
         this.chartSpecs = [];
         let canisObj = spec;
         canisObj.charts = ChartSpec.chartPreProcessing(canisObj.charts);
@@ -80,15 +82,27 @@ class Canis {
         //set viewport for jsmovin
         globalVar.jsMovin.setViewport(ChartSpec.viewport.chartWidth, ChartSpec.viewport.chartHeight);
 
-        let svgChart = ChartSpec.removeTransAndMerge();
+        ChartSpec.removeTransAndMerge();
         document.getElementById('chartContainer').innerHTML = '';
-        document.getElementById('chartContainer').appendChild(svgChart);
-        return [canisObj, svgChart];
+        document.getElementById('chartContainer').appendChild(ChartSpec.svgChart);
+        console.timeEnd('prepeocess charts');
+        return [canisObj, ChartSpec.svgChart];
+    }
+
+    compareSpec(spec) {
+        console.log(spec, this.currentSpec);
+        console.log(JSON.stringify(spec.charts), JSON.stringify(spec.animations));
+        
+    }
+
+    compareAnimation(ani, currentAni) {
+
     }
 
     async init(spec) {
+        this.compareSpec(spec);
         let [canisObj, svgChart] = await this.preprocessCharts(spec);
-
+        console.time('other init process');
         ChartSpec.addLottieMarkLayers(svgChart);
         //set framerate for jsmovin
         globalVar.jsMovin.setFrameRate(TimingSpec.FRAME_RATE);
@@ -97,14 +111,18 @@ class Canis {
 
         if (Array.isArray(this.animations)) {
             let lastAnimation;
+
             for (let aniIdx = 0; aniIdx < this.animations.length; aniIdx++) {
                 let animationJson = this.animations[aniIdx];
-
+                console.log(aniIdx);
+                console.time('using dom');
                 //use the selection in animation to select marks and record dom attrs
+                console.time('query dom');
                 let tmpContainer = document.createElement('div');
                 document.body.appendChild(tmpContainer);
                 tmpContainer.innerHTML = ChartSpec.charts[animationJson.chartIdx].outerHTML;
                 let marks = tmpContainer.querySelectorAll(animationJson.selection);
+                console.timeEnd('query dom');
 
                 let usedChangedAttrs = [];
                 for (let i = 0; i < ChartSpec.changedAttrs.length; i++) {
@@ -113,104 +131,114 @@ class Canis {
 
                 let animation = new Animation();
                 animation.translate(animationJson, usedChangedAttrs);//translate from json obj to Animation obj
+                console.timeEnd('using dom');
 
                 let markIds = [];//record all ids of selected marks
 
                 if (marks.length > 0) {
+                    console.time('extract mark dom');
+                    // console.log('before', Animation.domMarks);
                     [].forEach.call(marks, function (mark) {
                         if (mark.classList.contains('mark')) {
                             let markId = mark.getAttribute('id');
                             markIds.push(markId);
+                            if (typeof Animation.domMarks.get(markId) === 'undefined') {
+                                //process path
+                                if (mark.tagName === 'path') {//consider the linkage shape later
+                                    let markJSON = CanisUtil.toJSON(mark);
+                                    let transformedAttrs = CanisUtil.discretizePath(markJSON);
 
-                            //process path
-                            if (mark.tagName === 'path') {//consider the linkage shape later
-                                let markJSON = Util.toJSON(mark);
-                                let transformedAttrs = Util.discretizePath(markJSON);
+                                    if (transformedAttrs) {
+                                        if (transformedAttrs.type === 'lines') {
+                                            for (let i = 0; i < transformedAttrs.data.length; i++) {
+                                                markJSON.attr['x' + (1 + 2 * i)] = transformedAttrs.data[i][0][0];
+                                                markJSON.attr['y' + (1 + 2 * i)] = transformedAttrs.data[i][0][1];
+                                                markJSON.attr['x' + (2 + 2 * i)] = transformedAttrs.data[i][1][0];
+                                                markJSON.attr['y' + (2 + 2 * i)] = transformedAttrs.data[i][1][1];
+                                            }
+                                        } else {
+                                            let tfAttrsDataKeys = Object.keys(transformedAttrs.data);
 
-                                if (transformedAttrs) {
-                                    if (transformedAttrs.type === 'lines') {
-                                        for (let i = 0; i < transformedAttrs.data.length; i++) {
-                                            markJSON.attr['x' + (1 + 2 * i)] = transformedAttrs.data[i][0][0];
-                                            markJSON.attr['y' + (1 + 2 * i)] = transformedAttrs.data[i][0][1];
-                                            markJSON.attr['x' + (2 + 2 * i)] = transformedAttrs.data[i][1][0];
-                                            markJSON.attr['y' + (2 + 2 * i)] = transformedAttrs.data[i][1][1];
-                                        }
-                                    } else {
-                                        let tfAttrsDataKeys = Object.keys(transformedAttrs.data);
-
-                                        for (let i = 0; i < tfAttrsDataKeys.length; i++) {
-                                            let tAttr = tfAttrsDataKeys[i];
-                                            if (tAttr === 'radius') {
-                                                if (transformedAttrs.data[tAttr].length > 1) {
-                                                    markJSON.attr.innerRadius = transformedAttrs.data[tAttr][0].rx + 1;
-                                                    markJSON.attr.outterRadius = transformedAttrs.data[tAttr][1].rx - 1;
+                                            for (let i = 0; i < tfAttrsDataKeys.length; i++) {
+                                                let tAttr = tfAttrsDataKeys[i];
+                                                if (tAttr === 'radius') {
+                                                    if (transformedAttrs.data[tAttr].length > 1) {
+                                                        markJSON.attr.innerRadius = transformedAttrs.data[tAttr][0].rx + 1;
+                                                        markJSON.attr.outterRadius = transformedAttrs.data[tAttr][1].rx - 1;
+                                                    } else {
+                                                        markJSON.attr.innerRadius = 0;
+                                                        markJSON.attr.outterRadius = transformedAttrs.data[tAttr][0].rx - 1;
+                                                    }
                                                 } else {
-                                                    markJSON.attr.innerRadius = 0;
-                                                    markJSON.attr.outterRadius = transformedAttrs.data[tAttr][0].rx - 1;
+                                                    markJSON.attr[tAttr] = transformedAttrs.data[tAttr];
                                                 }
-                                            } else {
-                                                markJSON.attr[tAttr] = transformedAttrs.data[tAttr];
+                                            }
+                                        }
+                                        // console.log(markJSON);
+                                        mark = CanisUtil.toDOM(markJSON);
+                                    }
+                                }
+
+                                let tmpDomAttrObj = {};
+                                let attrArr = [...mark.attributes];
+                                for (let i = 0; i < attrArr.length; i++) {
+                                    let attrName = attrArr[i];
+                                    tmpDomAttrObj[attrName.name] = mark.getAttribute(attrName.name);
+                                }
+                                let markDom = document.getElementById(markId);
+                                tmpDomAttrObj['bbWidth'] = markDom.getBBox().width;
+                                tmpDomAttrObj['bbHeight'] = markDom.getBBox().height;
+                                tmpDomAttrObj['bbX'] = markDom.getBBox().x;
+                                tmpDomAttrObj['bbY'] = markDom.getBBox().y;
+                                tmpDomAttrObj['content'] = mark.textContent;
+                                tmpDomAttrObj['id'] = markId;
+                                let dataDatumAttrValue = JSON.parse(mark.getAttribute('data-datum'));
+                                if (Array.isArray(dataDatumAttrValue)) {
+                                    dataDatumAttrValue = dataDatumAttrValue[0];
+                                }
+                                tmpDomAttrObj['data-datum'] = dataDatumAttrValue;
+                                tmpDomAttrObj['tagName'] = mark.tagName;
+                                if (mark.tagName === 'path' || mark.tagName === 'line') {
+                                    tmpDomAttrObj['stroke-dasharray'] = document.getElementById(markId).getTotalLength();
+                                    tmpDomAttrObj['stroke-dashoffset'] = document.getElementById(markId).getTotalLength();
+                                    if (mark.tagName === 'path') {
+                                        let discD = CanisUtil.discretizeD(mark.getAttribute('d'), '#000');
+                                        if (typeof discD !== 'undefined' && discD) {
+                                            if (discD.type === 'pies') {
+                                                tmpDomAttrObj['cx'] = discD.data.cx;
+                                                tmpDomAttrObj['cy'] = discD.data.cy;
+                                                tmpDomAttrObj['startAngle'] = (discD.data.clockwise ? discD.data.startAngle : discD.data.endAngle) - 1 / (Math.PI * 2);
+                                                tmpDomAttrObj['endAngle'] = (!discD.data.clockwise ? discD.data.startAngle : discD.data.endAngle) + Math.PI * 4 + 1 / (Math.PI * 2);
+                                                if (discD.data.radius.length > 1) {
+                                                    tmpDomAttrObj['innerRadius'] = discD.data.radius[0].rx > discD.data.radius[1].rx ? discD.data.radius[1].rx : discD.data.radius[0].rx;
+                                                    tmpDomAttrObj['outterRadius'] = discD.data.radius[0].rx > discD.data.radius[1].rx ? discD.data.radius[0].rx : discD.data.radius[1].rx;
+                                                    tmpDomAttrObj['outterRadius']++;
+                                                } else {
+                                                    tmpDomAttrObj['innerRadius'] = 0;
+                                                    tmpDomAttrObj['outterRadius'] = discD.data.radius[0].rx + 1;
+                                                }
                                             }
                                         }
                                     }
-                                    mark = Util.toDOM(markJSON);
                                 }
+                                Animation.domMarks.set(markId, tmpDomAttrObj);
                             }
 
-                            let tmpDomAttrObj = {};
-                            let attrArr = [...mark.attributes];
-                            for (let i = 0; i < attrArr.length; i++) {
-                                let attrName = attrArr[i];
-                                tmpDomAttrObj[attrName.name] = mark.getAttribute(attrName.name);
-                            }
-                            let markDom = document.getElementById(markId);
-                            tmpDomAttrObj['bbWidth'] = markDom.getBBox().width;
-                            tmpDomAttrObj['bbHeight'] = markDom.getBBox().height;
-                            tmpDomAttrObj['bbX'] = markDom.getBBox().x;
-                            tmpDomAttrObj['bbY'] = markDom.getBBox().y;
-                            tmpDomAttrObj['content'] = mark.textContent;
-                            tmpDomAttrObj['id'] = markId;
-                            let dataDatumAttrValue = JSON.parse(mark.getAttribute('data-datum'));
-                            if (Array.isArray(dataDatumAttrValue)) {
-                                dataDatumAttrValue = dataDatumAttrValue[0];
-                            }
-                            tmpDomAttrObj['data-datum'] = dataDatumAttrValue;
-                            tmpDomAttrObj['tagName'] = mark.tagName;
-                            if (mark.tagName === 'path' || mark.tagName === 'line') {
-                                tmpDomAttrObj['stroke-dasharray'] = document.getElementById(markId).getTotalLength();
-                                tmpDomAttrObj['stroke-dashoffset'] = document.getElementById(markId).getTotalLength();
-                                if (mark.tagName === 'path') {
-                                    let discD = Util.discretizeD(mark.getAttribute('d'), '#000');
-                                    if (typeof discD !== 'undefined' && discD) {
-                                        if (discD.type === 'pies') {
-                                            tmpDomAttrObj['cx'] = discD.data.cx;
-                                            tmpDomAttrObj['cy'] = discD.data.cy;
-                                            tmpDomAttrObj['startAngle'] = (discD.data.clockwise ? discD.data.startAngle : discD.data.endAngle) - 1 / (Math.PI * 2);
-                                            tmpDomAttrObj['endAngle'] = (!discD.data.clockwise ? discD.data.startAngle : discD.data.endAngle) + Math.PI * 4 + 1 / (Math.PI * 2);
-                                            if (discD.data.radius.length > 1) {
-                                                tmpDomAttrObj['innerRadius'] = discD.data.radius[0].rx > discD.data.radius[1].rx ? discD.data.radius[1].rx : discD.data.radius[0].rx;
-                                                tmpDomAttrObj['outterRadius'] = discD.data.radius[0].rx > discD.data.radius[1].rx ? discD.data.radius[0].rx : discD.data.radius[1].rx;
-                                                tmpDomAttrObj['outterRadius']++;
-                                            } else {
-                                                tmpDomAttrObj['innerRadius'] = 0;
-                                                tmpDomAttrObj['outterRadius'] = discD.data.radius[0].rx + 1;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            animation.domMarks.set(markId, tmpDomAttrObj);
                         }
                     })
+                    // console.log('after', Animation.domMarks);
+                    console.timeEnd('extract mark dom');
                 }
                 animation.calAniTime(markIds, lastAnimation);
                 lastAnimation = animation;
                 document.body.removeChild(tmpContainer);
             }
         }
+        console.timeEnd('other init process');
     }
 
     render(callback) {
+        console.time('rendering');
         Animation.renderAnimation();
         //map animation keyframes to lottie spec
         Animation.mapToLottieSpec();
@@ -218,6 +246,7 @@ class Canis {
         //export lottie JSON
         let lottieJSON = globalVar.jsMovin.toJSON();
         Canis.lottieJSON = lottieJSON;
+        console.timeEnd('rendering');
         callback();
         return JSON.parse(lottieJSON);
     }

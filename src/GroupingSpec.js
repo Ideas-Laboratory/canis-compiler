@@ -13,7 +13,7 @@ class GroupingSpec extends TimingSpec {
                 this.expr;
             }
         }
-
+        this.root = {};
         this.grouping;//optional, another GroupingSpec object indicating more groupings
     }
 
@@ -83,18 +83,22 @@ class GroupingSpec extends TimingSpec {
     }
 
     arrangeOrder(markIds, domMarks) {
-        let root = {};
-        root.groupRef = 'root';
-        root.children = [];
-        root.marks = markIds;
-        this.generateTree(root, domMarks);
+        // let root = {};
+        this.root.groupRef = 'root';
+        this.root.children = [];
+        this.root.marks = markIds;
+        this.root.timingRef = TimingSpec.timingRef.previousStart;
+        this.root.delay = 0;
+        this.generateTree(this.root, domMarks);
 
-        let orderedMarks = this.getMarkOrder(root);
+        let orderedMarks = this.getMarkOrder(this.root);
         return orderedMarks;
     }
     generateTree(t, domMarks) {
-        let groupByRef = this.groupBy;
-
+        const groupByRef = this.groupBy;
+        const timingRef = this.reference;
+        const delay = this.delay;
+        // console.log('group ref:', groupByRef);
         let nodesThisLevel = new Map();
         for (let i = 0, markId; i < t.marks.length | (markId = t.marks[i]); i++) {
             let datum = domMarks.get(markId)['data-datum'];//datum stored in the tag
@@ -114,6 +118,8 @@ class GroupingSpec extends TimingSpec {
                 let tmpObj = {};
                 tmpObj.groupRef = groupByRef;
                 tmpObj.refValue = refValue;
+                tmpObj.timingRef = timingRef;
+                tmpObj.delay = delay;
                 tmpObj.children = [];
                 tmpObj.marks = [markId];
                 nodesThisLevel.set(refValue, tmpObj);
@@ -254,103 +260,37 @@ class GroupingSpec extends TimingSpec {
         return orderedMarks;
     }
 
-    /**
-     * from bottom up, calculate the time specs of marks recursively
-     * @param {GroupingSpec} groupingSpec 
-     * @param {Map} markAni : key:markId, value:time & action specs of the corresponding mark
-     * @param {Map} groupByM : key:markId, value:group reference
-     */
-    calTimeInGrouping(markAni, domMarks) {
-        let groupByRef = this.groupBy;
-
-        let groupByMap = new Map();//record the result of groupBy in this level. key:markId, value:group reference
-        markAni.forEach(function (ani, markId) {
-            let datum = domMarks.get(markId)['data-datum'];//datum stored in the tag
-            if (typeof domMarks.get(markId)[groupByRef] !== 'undefined') {
-                groupByMap.set(markId, domMarks.get(markId)[groupByRef]);
-            } else if (typeof domMarks.get(markId)[groupByRef] === 'undefined' && typeof datum[groupByRef] !== 'undefined') {
-                groupByMap.set(markId, datum[groupByRef]);
-            } else {
-                console.log('error: grouping by an unknown attribute');
-            }
-        })
-        if (typeof this.grouping !== 'undefined') {
-            this.grouping.calTimeInGrouping(markAni, domMarks);
-
-            //update time with upper grouping specs
-            let groupByArr = [...groupByMap];
-            let currentGroupRef = '';
-            let firstItemLastGroup, lastItemLastGroup;
-            let currentGroup = new Array();//record marks belong to current group
-            let lastGroup = new Map();
-            for (let i = 0; i < groupByArr.length; i++) {
-                let markId = groupByArr[i][0];
-                let groupRef = groupByArr[i][1];
-                if (groupRef !== currentGroupRef) {//come to the end of one group
-                    this.updateGroupingTime(firstItemLastGroup, lastItemLastGroup, lastGroup, currentGroup, markAni);
-                    firstItemLastGroup = currentGroup[0];
-                    lastItemLastGroup = currentGroup[currentGroup.length - 1];
-                    lastGroup = currentGroup;
-                    currentGroup = [];
-                    currentGroupRef = groupRef;
+    calTimeWithTree(t, lastGroupStart, lastGroupEnd, markAni) {
+        if (t.children.length > 0) {
+            for (let i = 0; i < t.children.length; i++) {
+                if (i > 0) {
+                    this.calTimeWithTree(t.children[i], t.children[i - 1].start, t.children[i - 1].end, markAni);
+                } else {
+                    this.calTimeWithTree(t.children[i], -1, -1, markAni);
                 }
-                currentGroup.push(markId);
-            }
-
-            //deal with the last group
-            this.updateGroupingTime(firstItemLastGroup, lastItemLastGroup, lastGroup, currentGroup, markAni);
-        } else {//has come to the lowest level
-            let markAniArr = [...markAni.entries()];
-            markAniArr[0][1].startTime = 0;
-            for (let i = 1; i < markAniArr.length; i++) {
-                let tmpStart,
-                    previousStartTime = markAniArr[i - 1][1].startTime,
-                    previousEndTime = previousStartTime + markAniArr[i - 1][1].totalDuration;
-                switch (this.reference) {
-                    case TimingSpec.timingRef.previousStart:
-                        tmpStart = previousStartTime + this.delay;
-                        break;
-                    case TimingSpec.timingRef.previousEnd:
-                        tmpStart = previousEndTime + this.delay;
-                        break;
-                    case TimingSpec.timingRef.absolute:
-                        tmpStart = this.delay;
-                        break;
-                    default:
-                        tmpStart = previousStartTime + this.delay;
-                }
-                markAniArr[i][1].startTime = tmpStart;
-                markAni.set(markAniArr[i][0], markAniArr[i][1]);
             }
         }
-    }
-
-    updateGroupingTime(firstItemLastGroup, lastItemLastGroup, lastGroup, currentGroup, markAni) {
-        let maxDuration = -10000, maxDurationItemLastGroup;
-        for (let i = 0, itemLastGroup; i < lastGroup.length | (itemLastGroup = lastGroup[i]); i++) {
-            if (markAni.get(itemLastGroup).startTime + markAni.get(itemLastGroup).totalDuration > maxDuration) {
-                maxDuration = markAni.get(itemLastGroup).startTime + markAni.get(itemLastGroup).totalDuration;
-                maxDurationItemLastGroup = itemLastGroup;
-            }
+        switch (t.timingRef) {
+            case TimingSpec.timingRef.previousStart:
+                t.start = lastGroupStart + t.delay;
+                break;
+            case TimingSpec.timingRef.previousEnd:
+                t.start = lastGroupEnd + t.delay;
+                break;
+            case TimingSpec.timingRef.absolute:
+                t.start = t.delay;
+                break;
+            default:
+                t.start = lastGroupStart + t.delay;
         }
-
-
-        //update time acording to delay from the second group
-        if (typeof firstItemLastGroup !== 'undefined' && typeof maxDurationItemLastGroup !== 'undefined') {
-            let timeDiff = 0;
-            switch (this.reference) {
-                case TimingSpec.timingRef.previousStart:
-                    timeDiff = markAni.get(firstItemLastGroup).startTime - markAni.get(currentGroup[0]).startTime + this.delay;
-                    break;
-                case TimingSpec.timingRef.previousEnd:
-                    timeDiff = markAni.get(maxDurationItemLastGroup).startTime + markAni.get(maxDurationItemLastGroup).totalDuration - markAni.get(currentGroup[0]).startTime + this.delay;
-                    break;
-                case TimingSpec.timingRef.absolute:
-                    timeDiff = this.delay - markAni.get(currentGroup[0]).startTime;
-                    break;
-            }
-            for (let i = 0, markId; i < currentGroup.length | (markId = currentGroup[i]); i++) {
-                markAni.get(markId).startTime += timeDiff;
+        if (lastGroupStart === -1){
+            t.start = 0;
+        }
+        t.end = 0;
+        for (let i = 0; i < t.marks.length; i++) {
+            markAni.get(t.marks[i]).startTime += t.start;
+            if (markAni.get(t.marks[i]).startTime + markAni.get(t.marks[i]).totalDuration > t.end) {
+                t.end = markAni.get(t.marks[i]).startTime + markAni.get(t.marks[i]).totalDuration;
             }
         }
     }

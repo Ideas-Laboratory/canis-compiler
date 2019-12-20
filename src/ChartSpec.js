@@ -1,4 +1,4 @@
-import { Util, Viewport } from "./util/Util";
+import { CanisUtil, Viewport } from "./util/Util";
 import FacetSpec from "./FacetSpec";
 import { globalVar } from './util/GlobalVar.js';
 
@@ -76,9 +76,10 @@ class ChartSpec {
             ChartSpec.charts[i].setAttribute('trans', '0,0');
             ChartSpec.removeTransitions(ChartSpec.charts[i].children[0]);
         }
-        let resultChart = ChartSpec.mergeCharts();
+        // let resultChart = ChartSpec.mergeCharts();
+        this.svgChart = ChartSpec.mergeCharts();
 
-        return resultChart;
+        // return resultChart;
     }
 
     static facetViews(nameCharts, facet) {
@@ -118,7 +119,7 @@ class ChartSpec {
             let viewBoxW = parseFloat(viewBoxNums[2]);
             let viewBoxH = parseFloat(viewBoxNums[3]);
 
-            let chartTransForm = Util.getTransformAttrs(tmpCharts[0].children[0]);
+            let chartTransForm = CanisUtil.getTransformAttrs(tmpCharts[0].children[0]);
             tmpCharts[0].children[0].setAttribute('transform', 'translate(' + chartTransForm.transNums[0] + ',' + chartTransForm.transNums[1] + ')');
             switch (facetType) {
                 case FacetSpec.facetType.row:
@@ -146,7 +147,7 @@ class ChartSpec {
                     let chartChildren = chartContentG.children;
                     for (let m = 0; m < chartChildren.length; m++) {
                         let tmpDom = chartChildren[m];
-                        let transformAttrs = Util.getTransformAttrs(tmpDom);
+                        let transformAttrs = CanisUtil.getTransformAttrs(tmpDom);
                         switch (facetType) {
                             case FacetSpec.facetType.row:
                                 tmpDom.setAttribute('transform', 'translate(' + transformAttrs.transNums[0] + ',' + (transformAttrs.transNums[1] + (oriHeight + chartMargin) * j) + ') ' + 'scale(' + transformAttrs.scaleNum + ')');
@@ -202,7 +203,7 @@ class ChartSpec {
 
         //find the changed attributes
         ChartSpec.changedAttrs = [];
-        let attrNamesCopy = Util.deepClone(attrNames);
+        let attrNamesCopy = CanisUtil.deepClone(attrNames);
         markStatus.forEach(function (statusArr, markId) {
             for (let i = 0; i < attrNamesCopy.length; i++) {
                 let flag = true;
@@ -232,7 +233,7 @@ class ChartSpec {
         //find different cmds if there is d in changedAttrs
         let diffCmds = new Map();//key:cmd name, value: {cmdIdx, diffAttrIdxs}
         if (ChartSpec.changedAttrs.indexOf('d') >= 0) {
-            diffCmds = Util.findDiffCmds(markStatus);
+            diffCmds = CanisUtil.findDiffCmds(markStatus);
         }
         // console.log('changed attributes: ', ChartSpec.changedAttrs);
 
@@ -258,7 +259,7 @@ class ChartSpec {
                         } else if (ChartSpec.changedAttrs[a] === 'd') {
                             let resultD;
                             if (mark.getAttribute('d')) {
-                                resultD = Util.setPathDValue(mark.getAttribute('d'), true, 0, 0, diffCmds);
+                                resultD = CanisUtil.setPathDValue(mark.getAttribute('d'), true, 0, 0, diffCmds);
                             }
                             mark.setAttribute('d', resultD);
                             statusObj.d = resultD;
@@ -366,13 +367,13 @@ class ChartSpec {
             if (t.tagName === 'g') {
                 t.setAttribute('trans', (parseFloat(transPosiStr[0]) + parseFloat(parentTrans[0])) + ',' + (parseFloat(transPosiStr[1]) + parseFloat(parentTrans[1])));
             } else {
-                Util.transShape(t, parseFloat(transPosiStr[0]) + parseFloat(parentTrans[0]), parseFloat(transPosiStr[1]) + parseFloat(parentTrans[1]));
+                CanisUtil.transShape(t, parseFloat(transPosiStr[0]) + parseFloat(parentTrans[0]), parseFloat(transPosiStr[1]) + parseFloat(parentTrans[1]));
             }
         } else {
             if (t.tagName === 'g') {
                 t.setAttribute('trans', parentTrans.join(','));
             } else {
-                Util.transShape(t, parseFloat(parentTrans[0]), parseFloat(parentTrans[1]));
+                CanisUtil.transShape(t, parseFloat(parentTrans[0]), parseFloat(parentTrans[1]));
             }
         }
         if (t.children.length > 0) {
@@ -404,5 +405,6 @@ ChartSpec.changedAttrs = [];
 ChartSpec.viewport = new Viewport();
 ChartSpec.dataTrans = new Map();
 ChartSpec.markDoms = new Map();
+ChartSpec.svgChart;
 
 export default ChartSpec;

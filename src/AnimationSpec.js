@@ -2,7 +2,7 @@ import ChartSpec from './ChartSpec.js';
 import ActionSpec from './ActionSpec.js';
 import GroupingSpec from './GroupingSpec.js';
 import TimingSpec from './TimingSpec.js';
-import { Util } from './util/Util.js';
+import { CanisUtil } from './util/Util.js';
 import { globalVar } from './util/GlobalVar.js';
 import { getBoundingBox } from 'jsmovin/bin/helper';
 import { LayerFactory } from 'jsmovin';
@@ -16,7 +16,7 @@ class Animation extends TimingSpec {
         this.actions = [];
 
         //save all dom attrs of the marks selected in this animation
-        this.domMarks = new Map();//key: markId, value: dom attrs
+        // Animation.domMarks = new Map();//key: markId, value: dom attrs
         this.animationStartTime = 1000000;
         this.animationEndTime = 0;
     }
@@ -26,17 +26,21 @@ class Animation extends TimingSpec {
      * @param {JSON obj} animationJson 
      */
     translate(animationJson, usedChangedAttrs) {
+        console.time('translate');
         if (this.checkFormat(animationJson)) {
             this.chartIdx = animationJson.chartIdx;
             this.selection = animationJson.selection;//init selection
             this.reference = animationJson.reference;
             this.offset = animationJson.offset;
             if (typeof animationJson.grouping !== 'undefined') {//init grouping
+                console.time('init grouping');
                 this.grouping.initGrouping(animationJson.grouping);
+                console.timeEnd('init grouping');
             }
 
             //translate action specs in the animation Json
             if (typeof animationJson.actions !== 'undefined') {//init actions
+                console.time('init actions');
                 for (let i = 0, actionJson; i < animationJson.actions.length | (actionJson = animationJson.actions[i]); i++) {
                     actionJson.chartIdx = animationJson.chartIdx;
                     let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, ChartSpec.dataTrans);//translate templates to no-templates
@@ -46,8 +50,10 @@ class Animation extends TimingSpec {
                         this.actions.push(tmpAction);
                     }
                 }
+                console.timeEnd('init actions');
             }
         }
+        console.timeEnd('translate');
     }
 
     /**
@@ -69,6 +75,7 @@ class Animation extends TimingSpec {
      * @param {Animation} lastAnimation : last animation in order to calculate time
      */
     calAniTime(markIds, lastAnimation) {
+        console.time('cal ani time');
         let that = this;
 
         //check whether the durations of the actions are set with the data variables
@@ -77,7 +84,7 @@ class Animation extends TimingSpec {
             let tmpAttrValues = new Map();
             for (let j = 0, action; j < this.actions.length | (action = this.actions[j]); j++) {
                 if (typeof action.duration === 'object') {
-                    let datum = this.domMarks.get(markId)['data-datum'];
+                    let datum = Animation.domMarks.get(markId)['data-datum'];
                     let value = parseFloat(datum[action.duration.field]);
                     let minDuration = typeof action.duration.minDuration == 'undefined' ? 300 : action.duration.minDuration;
                     tmpAttrValues.set(action.duration.field, [value, minDuration]);
@@ -87,10 +94,10 @@ class Animation extends TimingSpec {
         }
 
         //calculate the duration of all actions
-        let [actionsDurations, minValueEachAttr, processedActions] = ActionSpec.calActionDuration(this.actions, durationAttrValues, this.domMarks);
+        let [actionsDurations, minValueEachAttr, processedActions] = ActionSpec.calActionDuration(this.actions, durationAttrValues, Animation.domMarks);
 
         //order the marks according to "sort"
-        let marksInOrder = this.grouping.arrangeOrder(markIds, this.domMarks);
+        let marksInOrder = this.grouping.arrangeOrder(markIds, Animation.domMarks);
 
         let markAni = new Map();//the time specs and action specs of each mark, for now using Map, check later to see whether it is worthy to change to Array
         let groupByMap = new Map();//record the result of groupBy. key:markId, value:group reference
@@ -99,68 +106,68 @@ class Animation extends TimingSpec {
             //record visual status of all marks
             let tmpObj = {};
             for (let j = 0, vAttr; j < Animation.visualAttrs.length | (vAttr = Animation.visualAttrs[j]); j++) {
-                if (typeof this.domMarks.get(markId)[vAttr] === 'undefined') {
+                if (typeof Animation.domMarks.get(markId)[vAttr] === 'undefined') {
                     switch (vAttr) {
                         case 'opacity'://give default opacity 1
                             tmpObj[vAttr] = 1;
                             break;
                         case 'width'://use the width of the bounding box 
-                            tmpObj[vAttr] = this.domMarks.get(markId)['bbWidth'];
+                            tmpObj[vAttr] = Animation.domMarks.get(markId)['bbWidth'];
                             break;
                         case 'height'://use the height of the bounding box 
-                            tmpObj[vAttr] = this.domMarks.get(markId)['bbHeight'];
+                            tmpObj[vAttr] = Animation.domMarks.get(markId)['bbHeight'];
                             break;
                         case 'x'://use the position x of the bounding box 
-                            tmpObj[vAttr] = this.domMarks.get(markId)['bbX'];
+                            tmpObj[vAttr] = Animation.domMarks.get(markId)['bbX'];
                             break;
                         case 'y'://use the position y of the bounding box 
-                            tmpObj[vAttr] = this.domMarks.get(markId)['bbY'];
+                            tmpObj[vAttr] = Animation.domMarks.get(markId)['bbY'];
                             break;
                         case 'cx'://use the center of the bounding box 
-                            if (typeof this.domMarks.get(markId)['cx'] !== 'undefined') {
-                                tmpObj[vAttr] = this.domMarks.get(markId)['cx'];
+                            if (typeof Animation.domMarks.get(markId)['cx'] !== 'undefined') {
+                                tmpObj[vAttr] = Animation.domMarks.get(markId)['cx'];
                             } else {
-                                tmpObj[vAttr] = this.domMarks.get(markId)['bbX'] + this.domMarks.get(markId)['bbWidth'] / 2;
+                                tmpObj[vAttr] = Animation.domMarks.get(markId)['bbX'] + Animation.domMarks.get(markId)['bbWidth'] / 2;
                             }
                             break;
                         case 'cy'://use the center of the bounding box 
-                            if (typeof this.domMarks.get(markId)['cy'] !== 'undefined') {
-                                tmpObj[vAttr] = this.domMarks.get(markId)['cy'];
+                            if (typeof Animation.domMarks.get(markId)['cy'] !== 'undefined') {
+                                tmpObj[vAttr] = Animation.domMarks.get(markId)['cy'];
                             } else {
-                                tmpObj[vAttr] = this.domMarks.get(markId)['bbY'] + this.domMarks.get(markId)['bbHeight'] / 2;
+                                tmpObj[vAttr] = Animation.domMarks.get(markId)['bbY'] + Animation.domMarks.get(markId)['bbHeight'] / 2;
                             }
                             break;
                         case 'innerRadius'://give default inner radius 0
-                            if (typeof this.domMarks.get(markId)['innerRadius'] !== 'undefined') {
-                                tmpObj[vAttr] = this.domMarks.get(markId)['innerRadius'];
+                            if (typeof Animation.domMarks.get(markId)['innerRadius'] !== 'undefined') {
+                                tmpObj[vAttr] = Animation.domMarks.get(markId)['innerRadius'];
                             } else {
                                 tmpObj[vAttr] = 0
                             }
                             break;
                         case 'outterRadius'://use half of the diagonal line of the bounding box
-                            if (typeof this.domMarks.get(markId)['outterRadius'] !== 'undefined') {
-                                tmpObj[vAttr] = this.domMarks.get(markId)['outterRadius'];
+                            if (typeof Animation.domMarks.get(markId)['outterRadius'] !== 'undefined') {
+                                tmpObj[vAttr] = Animation.domMarks.get(markId)['outterRadius'];
                             } else {
-                                tmpObj[vAttr] = Math.sqrt(Math.pow(this.domMarks.get(markId)['bbWidth'] / 2, 2) + Math.pow(this.domMarks.get(markId)['bbHeight'] / 2, 2)) + 1;
+                                tmpObj[vAttr] = Math.sqrt(Math.pow(Animation.domMarks.get(markId)['bbWidth'] / 2, 2) + Math.pow(Animation.domMarks.get(markId)['bbHeight'] / 2, 2)) + 1;
                             }
                             break;
                         case 'startAngle':
-                            if (typeof this.domMarks.get(markId)['startAngle'] !== 'undefined') {
-                                tmpObj[vAttr] = this.domMarks.get(markId)['startAngle'];
+                            if (typeof Animation.domMarks.get(markId)['startAngle'] !== 'undefined') {
+                                tmpObj[vAttr] = Animation.domMarks.get(markId)['startAngle'];
                             } else {
                                 tmpObj[vAttr] = 0;
                             }
                             break;
                         case 'endAngle':
-                            if (typeof this.domMarks.get(markId)['endAngle'] !== 'undefined') {
-                                tmpObj[vAttr] = this.domMarks.get(markId)['endAngle'];
+                            if (typeof Animation.domMarks.get(markId)['endAngle'] !== 'undefined') {
+                                tmpObj[vAttr] = Animation.domMarks.get(markId)['endAngle'];
                             } else {
                                 tmpObj[vAttr] = Math.PI * 2;
                             }
                             break;
                     }
                 } else {
-                    tmpObj[vAttr] = this.domMarks.get(markId)[vAttr];
+                    tmpObj[vAttr] = Animation.domMarks.get(markId)[vAttr];
                 }
 
                 if (tmpObj[vAttr] !== '') {
@@ -186,8 +193,8 @@ class Animation extends TimingSpec {
 
             groupByMap.set(markId, 'allMarks');
         }
-
-        this.grouping.calTimeInGrouping(markAni, this.domMarks);
+        this.grouping.calTimeWithTree(this.grouping.root, -1, -1, markAni);
+        console.log('generated tree: ', this.grouping.root);
 
         //update time according to the time spec of animation
         let tmpAllStart = 10000;
@@ -197,7 +204,7 @@ class Animation extends TimingSpec {
             }
         })
 
-        let timeDiff = typeof lastAnimation === 'undefined' ? this.calOffsetTime(0, 0, tmpAllStart, this.domMarks) : this.calOffsetTime(lastAnimation.animationStartTime, lastAnimation.animationEndTime, tmpAllStart, this.domMarks);
+        let timeDiff = typeof lastAnimation === 'undefined' ? this.calOffsetTime(0, 0, tmpAllStart, Animation.domMarks) : this.calOffsetTime(lastAnimation.animationStartTime, lastAnimation.animationEndTime, tmpAllStart, Animation.domMarks);
 
         markAni.forEach(function (value, markId) {
             let tmpObj = { 'startTime': value.startTime + timeDiff.get(markId), 'totalDuration': value.totalDuration, 'actionAttrs': [] };
@@ -213,7 +220,7 @@ class Animation extends TimingSpec {
                 for (let j = 0, attr; j < keys.length | (attr = keys[j]); j++) {
                     tmpActionSpec[attr] = a[attr];
                     if (attr === '_duration' && typeof a[attr] === 'object') {
-                        let datum = that.domMarks.get(markId)['data-datum'];
+                        let datum = Animation.domMarks.get(markId)['data-datum'];
                         let minAttrValue = minValueEachAttr.get(a[attr].field);
                         tmpActionSpec[attr] = a[attr].minDuration * parseFloat(datum[a[attr].field]) / minAttrValue;
                     } else if (attr === 'offsetStart') {
@@ -222,7 +229,7 @@ class Animation extends TimingSpec {
                 }
                 //if the animation type is custom then judge if the attribute in the action about to add is a valid property of the target mark
                 if (tmpActionSpec.animationType === ActionSpec.targetAnimationType.custom) {
-                    if (Util.checkValidProp(that.domMarks.get(markId)['tagName'], tmpActionSpec.attribute[0].attrName)) {
+                    if (CanisUtil.checkValidProp(Animation.domMarks.get(markId)['tagName'], tmpActionSpec.attribute[0].attrName)) {
                         tmpObj.actionAttrs.push(tmpActionSpec);
                     }
                 } else {
@@ -251,6 +258,7 @@ class Animation extends TimingSpec {
                 Animation.allMarkAni.get(markId).actionAttrs = [...Animation.allMarkAni.get(markId).actionAttrs, ...value.actionAttrs];
             }
         })
+        console.timeEnd('cal ani time');
     }
 
     /**
@@ -346,8 +354,8 @@ class Animation extends TimingSpec {
                                         if (lc === 'shape') {
                                             //transform the start d and end d to shape specification
                                             let fromPosi = [0, 0], toPosi = [0, 0];
-                                            [fromPosi, fromValue] = Util.transDToLottieSpec(fromValue);
-                                            [toPosi, toValue] = Util.transDToLottieSpec(toValue);
+                                            [fromPosi, fromValue] = CanisUtil.transDToLottieSpec(fromValue);
+                                            [toPosi, toValue] = CanisUtil.transDToLottieSpec(toValue);
                                             globalVar.markLayers.get(markId).setAnimatableProperty(
                                                 'x',
                                                 startFrame,
@@ -366,8 +374,8 @@ class Animation extends TimingSpec {
                                             );
                                         } else if (lc === 'fillColor' || lc === 'strokeColor') {
                                             if (fromValue && toValue && fromValue !== 'none' && toValue !== 'none') {
-                                                fromValue = Util.toLottieRGBA(fromValue);
-                                                toValue = Util.toLottieRGBA(toValue);
+                                                fromValue = CanisUtil.toLottieRGBA(fromValue);
+                                                toValue = CanisUtil.toLottieRGBA(toValue);
                                             } else {
                                                 fromValue = toValue = [0, 0, 0, 0];
                                             }
@@ -430,7 +438,7 @@ class Animation extends TimingSpec {
                                 break;
                             //create circle mask with thick border
                             case ActionSpec.targetAnimationType.wheel:
-                                let pathOffset = Util.getPathOffset(targetMark.getAttribute('d'));
+                                let pathOffset = CanisUtil.getPathOffset(targetMark.getAttribute('d'));
                                 let tmpOffsetX = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cx'] + tmpBbox[0] - pathOffset[0];
                                 let tmpOffsetY = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cy'] + tmpBbox[1] - pathOffset[1];
                                 maskLayer = LayerFactory.ellipse(tmpOffsetX, tmpOffsetY, r, r);
@@ -466,9 +474,11 @@ class Animation extends TimingSpec {
         })
     }
 
+    //if the charts changed, then do reset
     static resetAll() {
         this.wholeEndTime = 0;
         this.allMarkAni.clear();
+        // this.domMarks.clear();
         this.minStatus.clear();
         this.finalStatus.clear();
         this.frames.clear();
@@ -480,6 +490,8 @@ Animation.visualAttrs = ['x', 'y', 'cx', 'cy', 'innerRadius', 'outterRadius', 's
 Animation.startY = 0;//start coord of Y
 Animation.startX = 0;//start coord of X
 Animation.endX = 0;//end coord of X
+Animation.animations = [];
+Animation.domMarks = new Map();
 Animation.wholeEndTime = 0;
 Animation.minStatus = new Map();//record the min value of each attribute.
 Animation.finalStatus = new Map();//record the final visual status of each mark, eg: key:mark1, value: {opacity: 1, height: 226}
