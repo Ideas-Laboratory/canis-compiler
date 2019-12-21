@@ -183,7 +183,7 @@ class Animation extends TimingSpec {
         }
         this.grouping.calTimeWithTree(this.grouping.root, -1, -1, markAni);
         console.log('generated tree: ', this.grouping.root);
-        // console.log('wrong mark: ', markAni.get('mark106'));
+        console.log('wrong mark: ', markAni.get('mark109'));
 
         //update time according to the time spec of animation
         let tmpAllStart = 10000;
@@ -272,7 +272,7 @@ class Animation extends TimingSpec {
             }
         })
         // console.log('all mark ani: ', this.allMarkAni);
-        console.log('wrong mark: ', this.allMarkAni.get('mark106'));
+        // console.log('wrong mark: ', this.allMarkAni.get('mark106'));
     }
 
     static translateToLottieChannel(attrName) {

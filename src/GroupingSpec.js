@@ -100,15 +100,28 @@ class GroupingSpec extends TimingSpec {
     updateTree(t, domMarks) {
         if (typeof t !== 'undefined') {
             const groupByRef = this.groupBy;
+            const timingRef = this.reference;
+            const delay = this.delay;
+            const sort = this.sort;
             if (typeof this.grouping !== 'undefined') {
                 let sameGrouping = false;
                 if (typeof t.children[0] !== 'undefined') {
                     sameGrouping = t.children[0].groupRef === groupByRef;
                 }
+                // t.timingRef = timingRef;
+                // t.delay = delay;
+                // t.sort = sort;
+
                 if (sameGrouping) {
+                    let nodesThisLevel = new Map();
                     for (let i = 0, tmpNode; i < t.children.length | (tmpNode = t.children[i]); i++) {
                         this.grouping.updateTree(tmpNode, domMarks);
+                        nodesThisLevel.set(tmpNode.refValue, tmpNode);
+                        tmpNode.timingRef = timingRef;
+                        tmpNode.delay = delay;
                     }
+                    //re-sort the children of t
+                    this.sortNodes(sort, t, nodesThisLevel, domMarks);
                 } else {
                     t.children = [];
                     this.generateTree(t, domMarks);
@@ -144,7 +157,7 @@ class GroupingSpec extends TimingSpec {
                 tmpObj.groupRef = groupByRef;
                 tmpObj.refValue = refValue;
                 tmpObj.timingRef = timingRef;
-                tmpObj.sort = sort;
+                // tmpObj.sort = sort;
                 tmpObj.delay = delay;
                 tmpObj.children = [];
                 tmpObj.marks = [markId];
@@ -163,6 +176,7 @@ class GroupingSpec extends TimingSpec {
     }
 
     sortNodes(specSort, t, nodesThisLevel, domMarks) {
+        t.children = [];
         switch (typeof specSort.order) {
             case 'object'://Array
                 for (let i = 0, refValue; i < specSort.order.length | (refValue = specSort.order[i]); i++) {
