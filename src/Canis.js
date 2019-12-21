@@ -9,6 +9,7 @@ import 'babel-polyfill';
 class Canis {
     constructor() {
         this.currentSpec = {};
+        this.canisObj = {};
         this.chartSpecs;
         this.facet;
         this._animations;
@@ -59,53 +60,65 @@ class Canis {
         }
     }
 
-    preprocessCharts(spec) {
+    preprocessCharts(spec, diffChart) {
         console.time('prepeocess charts');
         this.chartSpecs = [];
         let canisObj = spec;
-        canisObj.charts = ChartSpec.chartPreProcessing(canisObj.charts);
-        //deal with input charts
-        for (let i = 0; i < canisObj.charts.length; i++) {
-            let chartName = typeof canisObj.charts[i].id === 'undefined' ? 'chart' + i : canisObj.charts[i].id;
-            let tmpChart = new ChartSpec(chartName, canisObj.charts[i].source);
-            this.chartSpecs.push(tmpChart);
-        }
 
-        //init facet
-        if (canisObj.facet) {
-            this.facet = new FacetSpec(canisObj.facet.type, canisObj.facet.views);
-        }
+        if (diffChart) {
+            // console.log('using different chart, processing charts');
+            canisObj.charts = ChartSpec.chartPreProcessing(canisObj.charts);
+            //deal with input charts
+            for (let i = 0; i < canisObj.charts.length; i++) {
+                let chartName = typeof canisObj.charts[i].id === 'undefined' ? 'chart' + i : canisObj.charts[i].id;
+                let tmpChart = new ChartSpec(chartName, canisObj.charts[i].source);
+                this.chartSpecs.push(tmpChart);
+            }
+            //init facet
+            if (canisObj.facet) {
+                this.facet = new FacetSpec(canisObj.facet.type, canisObj.facet.views);
+            }
+            ChartSpec.loadCharts(this.chartSpecs, this.facet);
 
-        ChartSpec.loadCharts(this.chartSpecs, this.facet);
+            //set viewport for jsmovin
+            globalVar.jsMovin.setViewport(ChartSpec.viewport.chartWidth, ChartSpec.viewport.chartHeight);
+
+            ChartSpec.removeTransAndMerge();
+            document.getElementById('chartContainer').innerHTML = '';
+            document.getElementById('chartContainer').appendChild(ChartSpec.svgChart);
+        }
         globalVar.jsMovin.clearLayers();
+        ChartSpec.addLottieMarkLayers(ChartSpec.svgChart);
 
-        //set viewport for jsmovin
-        globalVar.jsMovin.setViewport(ChartSpec.viewport.chartWidth, ChartSpec.viewport.chartHeight);
-
-        ChartSpec.removeTransAndMerge();
-        document.getElementById('chartContainer').innerHTML = '';
-        document.getElementById('chartContainer').appendChild(ChartSpec.svgChart);
         console.timeEnd('prepeocess charts');
-        return [canisObj, ChartSpec.svgChart];
+        return canisObj;
     }
 
     compareSpec(spec) {
-        console.log(spec, this.currentSpec);
-        console.log(JSON.stringify(spec.charts), JSON.stringify(spec.animations));
-        
-    }
-
-    compareAnimation(ani, currentAni) {
-
+        let diffChart = false;
+        if ((typeof this.currentSpec.charts !== 'undefined' && JSON.stringify(spec.charts) !== JSON.stringify(this.currentSpec.charts)) ||
+            typeof this.currentSpec.charts === 'undefined' ||
+            (typeof spec.facet !== 'undefined' && typeof this.currentSpec.facet !== 'undefined' && JSON.stringify(spec.facet) !== JSON.stringify(this.currentSpec.facet)) ||
+            ((typeof this.currentSpec.facet === 'undefined' || typeof spec.facet === 'undefined') && !(typeof this.currentSpec.facet === 'undefined' && typeof spec.facet === 'undefined'))
+        ) {
+            diffChart = true;
+        }
+        if (diffChart) {
+            // console.log('charts are different');
+            Animation.domMarks.clear();
+            Animation.animations.clear();
+        }
+        this.currentSpec = spec;
+        return diffChart;
     }
 
     async init(spec) {
-        this.compareSpec(spec);
-        let [canisObj, svgChart] = await this.preprocessCharts(spec);
-        console.time('other init process');
-        ChartSpec.addLottieMarkLayers(svgChart);
         //set framerate for jsmovin
         globalVar.jsMovin.setFrameRate(TimingSpec.FRAME_RATE);
+
+        const diffChart = this.compareSpec(spec);
+        let canisObj = await this.preprocessCharts(spec, diffChart);
+
         //deal with animations
         this.animations = canisObj.animations;
 
@@ -129,15 +142,23 @@ class Canis {
                     usedChangedAttrs.push(ChartSpec.changedAttrs[i]);
                 }
 
-                let animation = new Animation();
-                animation.translate(animationJson, usedChangedAttrs);//translate from json obj to Animation obj
+                //check whether the animation is existed
+                //TODO: remove non existed animations in the current spec
+                console.log('selection of this animation: ', animationJson.selection);
+                let animation;
+                if (typeof Animation.animations.get(animationJson.selection) !== 'undefined') {//already have this animation
+                    animation = Animation.animations.get(animationJson.selection);
+                    animation.translate(animationJson, usedChangedAttrs, true);
+                } else {
+                    animation = new Animation();
+                    animation.translate(animationJson, usedChangedAttrs);//translate from json obj to Animation obj
+                    Animation.animations.set(animationJson.selection, animation);
+                }
+
                 console.timeEnd('using dom');
-
                 let markIds = [];//record all ids of selected marks
-
                 if (marks.length > 0) {
                     console.time('extract mark dom');
-                    // console.log('before', Animation.domMarks);
                     [].forEach.call(marks, function (mark) {
                         if (mark.classList.contains('mark')) {
                             let markId = mark.getAttribute('id');
@@ -234,7 +255,6 @@ class Canis {
                 document.body.removeChild(tmpContainer);
             }
         }
-        console.timeEnd('other init process');
     }
 
     render(callback) {

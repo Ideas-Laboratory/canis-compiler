@@ -3,14 +3,17 @@ import Animation from './AnimationSpec';
 import Canis from './Canis';
 
 window.canis = {
+    canisObj: {},
     frameRate: TimingSpec.FRAME_RATE,
     duration: () => {
         return Animation.wholeEndTime;
     },
     renderSpec: (spec, callback) => {
-        let canisObj = new Canis();
-        return canisObj.init(spec).then(()=>{
-            return canisObj.render(callback);
+        if (Object.keys(canis.canisObj).length === 0) {
+            canis.canisObj = new Canis();
+        }
+        return canis.canisObj.init(spec).then(() => {
+            return canis.canisObj.render(callback);
         })
     },
     reset: function () {

@@ -25,22 +25,23 @@ class Animation extends TimingSpec {
      * translate from json object to Animation object
      * @param {JSON obj} animationJson 
      */
-    translate(animationJson, usedChangedAttrs) {
-        console.time('translate');
+    translate(animationJson, usedChangedAttrs, updating = false) {
         if (this.checkFormat(animationJson)) {
             this.chartIdx = animationJson.chartIdx;
-            this.selection = animationJson.selection;//init selection
+            if (!updating) {
+                this.selection = animationJson.selection;//init selection
+            }
             this.reference = animationJson.reference;
             this.offset = animationJson.offset;
             if (typeof animationJson.grouping !== 'undefined') {//init grouping
-                console.time('init grouping');
                 this.grouping.initGrouping(animationJson.grouping);
-                console.timeEnd('init grouping');
             }
 
             //translate action specs in the animation Json
             if (typeof animationJson.actions !== 'undefined') {//init actions
-                console.time('init actions');
+                if(updating){
+                    this.actions = [];
+                }
                 for (let i = 0, actionJson; i < animationJson.actions.length | (actionJson = animationJson.actions[i]); i++) {
                     actionJson.chartIdx = animationJson.chartIdx;
                     let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, ChartSpec.dataTrans);//translate templates to no-templates
@@ -50,10 +51,10 @@ class Animation extends TimingSpec {
                         this.actions.push(tmpAction);
                     }
                 }
-                console.timeEnd('init actions');
             }
+        } else {
+            console.error('animation spec not correct!');
         }
-        console.timeEnd('translate');
     }
 
     /**
@@ -96,11 +97,10 @@ class Animation extends TimingSpec {
         //calculate the duration of all actions
         let [actionsDurations, minValueEachAttr, processedActions] = ActionSpec.calActionDuration(this.actions, durationAttrValues, Animation.domMarks);
 
-        //order the marks according to "sort"
+        //construct tree while order the marks according to "sort"
         let marksInOrder = this.grouping.arrangeOrder(markIds, Animation.domMarks);
 
         let markAni = new Map();//the time specs and action specs of each mark, for now using Map, check later to see whether it is worthy to change to Array
-        let groupByMap = new Map();//record the result of groupBy. key:markId, value:group reference
 
         for (let i = 0, markId; i < marksInOrder.length | (markId = marksInOrder[i]); i++) {
             //record visual status of all marks
@@ -169,16 +169,6 @@ class Animation extends TimingSpec {
                 } else {
                     tmpObj[vAttr] = Animation.domMarks.get(markId)[vAttr];
                 }
-
-                if (tmpObj[vAttr] !== '') {
-                    if (typeof Animation.minStatus.get(vAttr) === 'undefined') {
-                        Animation.minStatus.set(vAttr, tmpObj[vAttr]);
-                    } else {
-                        if (parseFloat(Animation.minStatus.get(vAttr)) > parseFloat(tmpObj[vAttr])) {
-                            Animation.minStatus.set(vAttr, tmpObj[vAttr]);
-                        }
-                    }
-                }
             }
             if (typeof Animation.finalStatus.get(markId) === 'undefined') {
                 Animation.finalStatus.set(markId, []);
@@ -190,11 +180,10 @@ class Animation extends TimingSpec {
                 'totalDuration': actionsDurations.get(markId), //total duration of all the actions of this mark
                 'actionAttrs': [] //action attributes of this mark
             });
-
-            groupByMap.set(markId, 'allMarks');
         }
         this.grouping.calTimeWithTree(this.grouping.root, -1, -1, markAni);
         console.log('generated tree: ', this.grouping.root);
+        // console.log('wrong mark: ', markAni.get('mark106'));
 
         //update time according to the time spec of animation
         let tmpAllStart = 10000;
@@ -283,6 +272,7 @@ class Animation extends TimingSpec {
             }
         })
         // console.log('all mark ani: ', this.allMarkAni);
+        console.log('wrong mark: ', this.allMarkAni.get('mark106'));
     }
 
     static translateToLottieChannel(attrName) {
@@ -381,7 +371,6 @@ class Animation extends TimingSpec {
                                             }
 
                                         } else if (lc === 'opacity') {
-                                            // console.log(markId, toValue, typeof toValue);
                                             fromValue *= 100;
                                             toValue *= 100;
                                         }
@@ -479,24 +468,18 @@ class Animation extends TimingSpec {
         this.wholeEndTime = 0;
         this.allMarkAni.clear();
         // this.domMarks.clear();
-        this.minStatus.clear();
         this.finalStatus.clear();
-        this.frames.clear();
+        // this.animations.clear();
     }
 
 }
 
 Animation.visualAttrs = ['x', 'y', 'cx', 'cy', 'innerRadius', 'outterRadius', 'startAngle', 'endAngle', 'width', 'height', 'opacity', 'fill', 'stroke', 'content', 'stroke-dasharray', 'stroke-dashoffset'];
-Animation.startY = 0;//start coord of Y
-Animation.startX = 0;//start coord of X
-Animation.endX = 0;//end coord of X
-Animation.animations = [];
 Animation.domMarks = new Map();
 Animation.wholeEndTime = 0;
-Animation.minStatus = new Map();//record the min value of each attribute.
+Animation.animations = new Map();//record all animations, key:, value: animation obj
 Animation.finalStatus = new Map();//record the final visual status of each mark, eg: key:mark1, value: {opacity: 1, height: 226}
 Animation.allMarkAni = new Map();
-Animation.frames = new Map();//output frames
 Animation.easeFuncs = {
     easeInQuad: (p) => {
         return p * p;

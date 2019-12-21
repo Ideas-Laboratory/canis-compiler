@@ -6,12 +6,10 @@ class GroupingSpec extends TimingSpec {
         this._groupBy = 'id'; //optional
         this._reference = TimingSpec.timingRef.previousStart;
         this._delay = 0;
-        this.sort = class { //optional
-            constructor() {
-                this.field;
-                this.order;
-                this.expr;
-            }
+        this.sort = {
+            field: '',
+            order: '',
+            expr: ''
         }
         this.root = {};
         this.grouping;//optional, another GroupingSpec object indicating more groupings
@@ -83,22 +81,49 @@ class GroupingSpec extends TimingSpec {
     }
 
     arrangeOrder(markIds, domMarks) {
-        // let root = {};
-        this.root.groupRef = 'root';
-        this.root.children = [];
-        this.root.marks = markIds;
-        this.root.timingRef = TimingSpec.timingRef.previousStart;
-        this.root.delay = 0;
-        this.generateTree(this.root, domMarks);
+        if (Object.keys(this.root).length === 0) {// generate new tree
+            this.root.groupRef = 'root';
+            this.root.children = [];
+            this.root.marks = markIds;
+            this.root.timingRef = TimingSpec.timingRef.previousStart;
+            this.root.delay = 0;
+            this.root.sort = {};
+            this.generateTree(this.root, domMarks);
+        } else {// update the current tree
+            this.updateTree(this.root, domMarks);
+        }
 
         let orderedMarks = this.getMarkOrder(this.root);
         return orderedMarks;
     }
+
+    updateTree(t, domMarks) {
+        if (typeof t !== 'undefined') {
+            const groupByRef = this.groupBy;
+            if (typeof this.grouping !== 'undefined') {
+                let sameGrouping = false;
+                if (typeof t.children[0] !== 'undefined') {
+                    sameGrouping = t.children[0].groupRef === groupByRef;
+                }
+                if (sameGrouping) {
+                    for (let i = 0, tmpNode; i < t.children.length | (tmpNode = t.children[i]); i++) {
+                        this.grouping.updateTree(tmpNode, domMarks);
+                    }
+                } else {
+                    t.children = [];
+                    this.generateTree(t, domMarks);
+                }
+            } else if (typeof this.grouping === 'undefined' && t.children.length > 0) {//no more grouping is defined, but the ori tree has deeper hierarchy
+                t.children = [];
+            }
+        }
+    }
+
     generateTree(t, domMarks) {
         const groupByRef = this.groupBy;
         const timingRef = this.reference;
         const delay = this.delay;
-        // console.log('group ref:', groupByRef);
+        const sort = this.sort;
         let nodesThisLevel = new Map();
         for (let i = 0, markId; i < t.marks.length | (markId = t.marks[i]); i++) {
             let datum = domMarks.get(markId)['data-datum'];//datum stored in the tag
@@ -119,6 +144,7 @@ class GroupingSpec extends TimingSpec {
                 tmpObj.groupRef = groupByRef;
                 tmpObj.refValue = refValue;
                 tmpObj.timingRef = timingRef;
+                tmpObj.sort = sort;
                 tmpObj.delay = delay;
                 tmpObj.children = [];
                 tmpObj.marks = [markId];
@@ -127,9 +153,19 @@ class GroupingSpec extends TimingSpec {
         }
 
         //order nodes of this level according to the 'sort' spec
-        switch (typeof this.sort.order) {
+        this.sortNodes(sort, t, nodesThisLevel, domMarks);
+
+        if (typeof this.grouping !== 'undefined') {
+            for (let i = 0, tmpNode; i < t.children.length | (tmpNode = t.children[i]); i++) {
+                this.grouping.generateTree(tmpNode, domMarks);
+            }
+        }
+    }
+
+    sortNodes(specSort, t, nodesThisLevel, domMarks) {
+        switch (typeof specSort.order) {
             case 'object'://Array
-                for (let i = 0, refValue; i < this.sort.order.length | (refValue = this.sort.order[i]); i++) {
+                for (let i = 0, refValue; i < specSort.order.length | (refValue = specSort.order[i]); i++) {
                     if (typeof nodesThisLevel.get(refValue) !== 'undefined') {
                         t.children.push(nodesThisLevel.get(refValue));
                     }
@@ -145,10 +181,10 @@ class GroupingSpec extends TimingSpec {
                 })
 
                 //only take effect when a specific field is specified and are on the lowest level
-                if (typeof this.sort.field !== 'undefined' && hasSingleMark) {
-                    let orderRef = this.sort.field;
+                if (typeof specSort.field !== 'undefined' && hasSingleMark) {
+                    let orderRef = specSort.field;
                     let nodesThisLevelArr = [...nodesThisLevel];
-                    let orderType = this.sort.order;
+                    let orderType = specSort.order;
                     nodesThisLevelArr.sort(function (a, b) {
                         let markId1 = a[1].marks[0];
                         let markId2 = b[1].marks[0];
@@ -195,7 +231,7 @@ class GroupingSpec extends TimingSpec {
                     }
                 } else {
                     let nodesThisLevelArr = [...nodesThisLevel];
-                    if (this.sort.order === GroupingSpec.orderTypes.ascending) {
+                    if (specSort.order === GroupingSpec.orderTypes.ascending) {
                         nodesThisLevelArr.sort(function (a, b) {
                             if (a[0] >= b[0]) {
                                 return 1;
@@ -203,7 +239,7 @@ class GroupingSpec extends TimingSpec {
                                 return -1;
                             }
                         })
-                    } else if (this.sort.order === GroupingSpec.orderTypes.descending) {
+                    } else if (specSort.order === GroupingSpec.orderTypes.descending) {
                         nodesThisLevelArr.sort(function (a, b) {
                             if (b[0] >= a[0]) {
                                 return 1;
@@ -211,7 +247,7 @@ class GroupingSpec extends TimingSpec {
                                 return -1;
                             }
                         })
-                    } else if (this.sort.order === GroupingSpec.orderTypes.random) {
+                    } else if (specSort.order === GroupingSpec.orderTypes.random) {
                         nodesThisLevelArr.sort(function (a, b) {
                             return Math.random() >= 0.5 ? 1 : -1;
                         })
@@ -226,12 +262,6 @@ class GroupingSpec extends TimingSpec {
                 nodesThisLevel.forEach(function (tmpNode, ref) {
                     t.children.push(tmpNode);
                 })
-        }
-
-        if (typeof this.grouping !== 'undefined') {
-            for (let i = 0, tmpNode; i < t.children.length | (tmpNode = t.children[i]); i++) {
-                this.grouping.generateTree(tmpNode, domMarks);
-            }
         }
     }
 
@@ -260,6 +290,13 @@ class GroupingSpec extends TimingSpec {
         return orderedMarks;
     }
 
+    /**
+     * calculate the time of each mark based on the grouping structure
+     * @param {*} t 
+     * @param {*} lastGroupStart 
+     * @param {*} lastGroupEnd 
+     * @param {*} markAni 
+     */
     calTimeWithTree(t, lastGroupStart, lastGroupEnd, markAni) {
         if (t.children.length > 0) {
             for (let i = 0; i < t.children.length; i++) {
@@ -283,7 +320,7 @@ class GroupingSpec extends TimingSpec {
             default:
                 t.start = lastGroupStart + t.delay;
         }
-        if (lastGroupStart === -1){
+        if (lastGroupStart === -1) {
             t.start = 0;
         }
         t.end = 0;
