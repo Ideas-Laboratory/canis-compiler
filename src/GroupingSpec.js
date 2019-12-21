@@ -87,7 +87,6 @@ class GroupingSpec extends TimingSpec {
             this.root.marks = markIds;
             this.root.timingRef = TimingSpec.timingRef.previousStart;
             this.root.delay = 0;
-            this.root.sort = {};
             this.generateTree(this.root, domMarks);
         } else {// update the current tree
             this.updateTree(this.root, domMarks);
@@ -102,15 +101,11 @@ class GroupingSpec extends TimingSpec {
             const groupByRef = this.groupBy;
             const timingRef = this.reference;
             const delay = this.delay;
-            const sort = this.sort;
             if (typeof this.grouping !== 'undefined') {
                 let sameGrouping = false;
                 if (typeof t.children[0] !== 'undefined') {
                     sameGrouping = t.children[0].groupRef === groupByRef;
                 }
-                // t.timingRef = timingRef;
-                // t.delay = delay;
-                // t.sort = sort;
 
                 if (sameGrouping) {
                     let nodesThisLevel = new Map();
@@ -121,7 +116,7 @@ class GroupingSpec extends TimingSpec {
                         tmpNode.delay = delay;
                     }
                     //re-sort the children of t
-                    this.sortNodes(sort, t, nodesThisLevel, domMarks);
+                    this.sortNodes(this.sort, t, nodesThisLevel, domMarks);
                 } else {
                     t.children = [];
                     this.generateTree(t, domMarks);
@@ -136,7 +131,6 @@ class GroupingSpec extends TimingSpec {
         const groupByRef = this.groupBy;
         const timingRef = this.reference;
         const delay = this.delay;
-        const sort = this.sort;
         let nodesThisLevel = new Map();
         for (let i = 0, markId; i < t.marks.length | (markId = t.marks[i]); i++) {
             let datum = domMarks.get(markId)['data-datum'];//datum stored in the tag
@@ -157,7 +151,6 @@ class GroupingSpec extends TimingSpec {
                 tmpObj.groupRef = groupByRef;
                 tmpObj.refValue = refValue;
                 tmpObj.timingRef = timingRef;
-                // tmpObj.sort = sort;
                 tmpObj.delay = delay;
                 tmpObj.children = [];
                 tmpObj.marks = [markId];
@@ -166,7 +159,7 @@ class GroupingSpec extends TimingSpec {
         }
 
         //order nodes of this level according to the 'sort' spec
-        this.sortNodes(sort, t, nodesThisLevel, domMarks);
+        this.sortNodes(this.sort, t, nodesThisLevel, domMarks);
 
         if (typeof this.grouping !== 'undefined') {
             for (let i = 0, tmpNode; i < t.children.length | (tmpNode = t.children[i]); i++) {
