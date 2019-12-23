@@ -2,6 +2,7 @@
     "presets": [
         "env"
     ],
+    
     "plugins": [
         "babel-plugin-add-module-exports"
     ],
@@ -13,5 +14,9 @@
                 ]
             ]
         }
-    }
+    },
+    "sourceRoot": "./src",
+    "ignore": [
+        "**/index.js"
+    ]
 }

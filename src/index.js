@@ -1,6 +1,6 @@
 import TimingSpec from './TimingSpec';
 import Animation from './AnimationSpec';
-import Canis from './Canis';
+import CanisSpec from './CanisSpec';
 
 window.canis = {
     canisObj: {},
@@ -10,7 +10,7 @@ window.canis = {
     },
     renderSpec: (spec, callback) => {
         if (Object.keys(canis.canisObj).length === 0) {
-            canis.canisObj = new Canis();
+            canis.canisObj = new CanisSpec();
         }
         return canis.canisObj.init(spec).then(() => {
             return canis.canisObj.render(callback);
@@ -20,7 +20,7 @@ window.canis = {
         Animation.resetAll();
     },
     exportJSON: function () {
-        return Canis.lottieJSON;
+        return CanisSpec.lottieJSON;
     },
     test: function (spec) {
         console.log('this is a test! ', spec);

@@ -6,7 +6,7 @@ import { CanisUtil } from './util/Util.js';
 import { globalVar } from './util/GlobalVar.js';
 import 'babel-polyfill';
 
-class Canis {
+class CanisSpec {
     constructor() {
         this.currentSpec = {};
         this.canisObj = {};
@@ -129,12 +129,12 @@ class Canis {
                 let animationJson = this.animations[aniIdx];
                 console.log(aniIdx);
                 console.time('using dom');
-                //use the selection in animation to select marks and record dom attrs
+                //use the selector in animation to select marks and record dom attrs
                 console.time('query dom');
                 let tmpContainer = document.createElement('div');
                 document.body.appendChild(tmpContainer);
                 tmpContainer.innerHTML = ChartSpec.charts[animationJson.chartIdx].outerHTML;
-                let marks = tmpContainer.querySelectorAll(animationJson.selection);
+                let marks = tmpContainer.querySelectorAll(animationJson.selector);
                 console.timeEnd('query dom');
 
                 let usedChangedAttrs = [];
@@ -144,15 +144,15 @@ class Canis {
 
                 //check whether the animation is existed
                 //TODO: remove non existed animations in the current spec
-                console.log('selection of this animation: ', animationJson.selection);
+                console.log('selector of this animation: ', animationJson.selector);
                 let animation;
-                if (typeof Animation.animations.get(animationJson.selection) !== 'undefined') {//already have this animation
-                    animation = Animation.animations.get(animationJson.selection);
+                if (typeof Animation.animations.get(animationJson.selector) !== 'undefined') {//already have this animation
+                    animation = Animation.animations.get(animationJson.selector);
                     animation.translate(animationJson, usedChangedAttrs, true);
                 } else {
                     animation = new Animation();
                     animation.translate(animationJson, usedChangedAttrs);//translate from json obj to Animation obj
-                    Animation.animations.set(animationJson.selection, animation);
+                    Animation.animations.set(animationJson.selector, animation);
                 }
 
                 console.timeEnd('using dom');
@@ -265,13 +265,13 @@ class Canis {
 
         //export lottie JSON
         let lottieJSON = globalVar.jsMovin.toJSON();
-        Canis.lottieJSON = lottieJSON;
+        CanisSpec.lottieJSON = lottieJSON;
         console.timeEnd('rendering');
         callback();
         return JSON.parse(lottieJSON);
     }
 }
 
-Canis.lottieJSON = '';
+CanisSpec.lottieJSON = '';
 
-export default Canis;
+export default CanisSpec;

@@ -11,7 +11,7 @@ class Animation extends TimingSpec {
     constructor() {
         super();
         this.chartIdx;
-        this.selection;
+        this.selector;
         this.grouping = new GroupingSpec();
         this.actions = [];
 
@@ -29,7 +29,7 @@ class Animation extends TimingSpec {
         if (this.checkFormat(animationJson)) {
             this.chartIdx = animationJson.chartIdx;
             if (!updating) {
-                this.selection = animationJson.selection;//init selection
+                this.selector = animationJson.selector;//init selector
             }
             this.reference = animationJson.reference;
             this.offset = animationJson.offset;
@@ -38,11 +38,11 @@ class Animation extends TimingSpec {
             }
 
             //translate action specs in the animation Json
-            if (typeof animationJson.actions !== 'undefined') {//init actions
+            if (typeof animationJson.effects !== 'undefined') {//init actions
                 if(updating){
                     this.actions = [];
                 }
-                for (let i = 0, actionJson; i < animationJson.actions.length | (actionJson = animationJson.actions[i]); i++) {
+                for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
                     actionJson.chartIdx = animationJson.chartIdx;
                     let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, ChartSpec.dataTrans);//translate templates to no-templates
                     for (let j = 0, visAttrActionJson; j < visAttrActionJsonArr.length | (visAttrActionJson = visAttrActionJsonArr[j]); j++) {
@@ -63,10 +63,10 @@ class Animation extends TimingSpec {
      */
     checkFormat(animationJson) {
         let keys = Object.keys(animationJson);
-        if (keys.includes('selection')) {
+        if (keys.includes('selector')) {
             return true;
         }
-        alert('illegal format, no \'selection\' is defined ');
+        alert('illegal format, no \'selector\' is defined ');
         return false;
     }
 
