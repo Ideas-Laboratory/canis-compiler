@@ -3,8 +3,9 @@ import FacetSpec from "./FacetSpec";
 import { globalVar } from './util/GlobalVar.js';
 
 class ChartSpec {
-    constructor(id, source) {
+    constructor(id, type, source) {
         this.id = id;
+        this.type = type;
         this.source = source;
     }
 
@@ -41,25 +42,31 @@ class ChartSpec {
         let defaultWidth = 0;
         let defaultHeight = 0;
         for (let i = 0; i < chartSpecs.length; i++) {
-            let xhr = new XMLHttpRequest(),
-                okStatus = document.location.protocol === "file:" ? 0 : 200,
-                svgContent;
-            xhr.open('GET', chartSpecs[i].source, false);
-            xhr.overrideMimeType("text/html;charset=utf-8");
-            xhr.send(null);
-            if (xhr.status === okStatus) {
-                let tmpDiv = document.createElement('div');
-                tmpDiv.innerHTML = xhr.responseText;
-                svgContent = tmpDiv.children[0];
-                let viewBoxNums = svgContent.getAttribute('viewBox').split(' ');
-                defaultWidth = parseFloat(viewBoxNums[2]);
-                defaultHeight = parseFloat(viewBoxNums[3]);
-                ChartSpec.charts.push(svgContent);
-                nameCharts.set(chartSpecs[i].id, ChartSpec.charts.length - 1);
-            } else if (xhr.status === 404) {
-                nullCharts.unshift(i);
-                console.log('can not find ' + chartSpecs[i].source + ' ! Please check the url.');
+            if (chartSpecs[i].type === ChartSpec.CHART_URL) {//load chart with url
+                let xhr = new XMLHttpRequest(),
+                    okStatus = document.location.protocol === "file:" ? 0 : 200,
+                    svgContent;
+                xhr.open('GET', chartSpecs[i].source, false);
+                xhr.overrideMimeType("text/html;charset=utf-8");
+                xhr.send(null);
+                if (xhr.status === okStatus) {
+                    let tmpDiv = document.createElement('div');
+                    tmpDiv.innerHTML = xhr.responseText;
+                    svgContent = tmpDiv.children[0];
+                    console.log('svgContent: ', svgContent);
+                    let viewBoxNums = svgContent.getAttribute('viewBox').split(' ');
+                    defaultWidth = parseFloat(viewBoxNums[2]);
+                    defaultHeight = parseFloat(viewBoxNums[3]);
+                    ChartSpec.charts.push(svgContent);
+                    nameCharts.set(chartSpecs[i].id, ChartSpec.charts.length - 1);
+                } else if (xhr.status === 404) {
+                    nullCharts.unshift(i);
+                    console.log('can not find ' + chartSpecs[i].source + ' ! Please check the url.');
+                }
+            } else {
+                console.log(chartSpecs[i].source, typeof chartSpecs[i].source);
             }
+
         }
 
         //remove the empty charts 
@@ -400,6 +407,8 @@ class ChartSpec {
     }
 }
 
+ChartSpec.CHART_URL = 'url';
+ChartSpec.CHART_CONTENT = 'content';
 ChartSpec.charts = [];
 ChartSpec.changedAttrs = [];
 ChartSpec.viewport = new Viewport();

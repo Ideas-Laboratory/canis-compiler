@@ -70,8 +70,9 @@ class CanisSpec {
             canisObj.charts = ChartSpec.chartPreProcessing(canisObj.charts);
             //deal with input charts
             for (let i = 0; i < canisObj.charts.length; i++) {
-                let chartName = typeof canisObj.charts[i].id === 'undefined' ? 'chart' + i : canisObj.charts[i].id;
-                let tmpChart = new ChartSpec(chartName, canisObj.charts[i].source);
+                const chartName = typeof canisObj.charts[i].id === 'undefined' ? 'chart' + i : canisObj.charts[i].id;
+                const chartType = typeof canisObj.charts[i].type === 'undefined' ? ChartSpec.CHART_URL : canisObj.charts[i].type;
+                const tmpChart = new ChartSpec(chartName, chartType, canisObj.charts[i].source);
                 this.chartSpecs.push(tmpChart);
             }
             //init facet
@@ -113,6 +114,8 @@ class CanisSpec {
     }
 
     async init(spec) {
+        console.log('init with spec: ', spec);
+
         //set framerate for jsmovin
         globalVar.jsMovin.setFrameRate(TimingSpec.FRAME_RATE);
 

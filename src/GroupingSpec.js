@@ -6,11 +6,12 @@ class GroupingSpec extends TimingSpec {
         this._groupBy = 'id'; //optional
         this._reference = TimingSpec.timingRef.previousStart;
         this._delay = 0;
-        this.sort = {
-            field: '',
-            order: '',
-            expr: ''
-        }
+        // this.sort = {
+        //     field: '',
+        //     order: '',
+        //     expr: ''
+        // }
+        this.sort = {};
         this.root = {};
         this.grouping;//optional, another GroupingSpec object indicating more groupings
     }
@@ -157,10 +158,8 @@ class GroupingSpec extends TimingSpec {
                 nodesThisLevel.set(refValue, tmpObj);
             }
         }
-
         //order nodes of this level according to the 'sort' spec
         this.sortNodes(this.sort, t, nodesThisLevel, domMarks);
-
         if (typeof this.grouping !== 'undefined') {
             for (let i = 0, tmpNode; i < t.children.length | (tmpNode = t.children[i]); i++) {
                 this.grouping.generateTree(tmpNode, domMarks);

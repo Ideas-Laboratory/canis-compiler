@@ -1,10 +1,7 @@
 import TimingSpec from './TimingSpec';
 import Animation from './AnimationSpec';
+import ActionSpec from './ActionSpec';
 import CanisSpec from './CanisSpec';
-
-// const TimingSpec = require('./TimingSpec');
-// const Animation = require('./AnimationSpec');
-// const CanisSpec = require('./CanisSpec');
 
 export default class Canis {
     constructor() {
@@ -21,6 +18,7 @@ export default class Canis {
             this.canisObj = new CanisSpec();
         }
         return this.canisObj.init(spec).then(() => {
+            console.log('finsh init');
             return this.canisObj.render(callback);
         })
     }
@@ -37,6 +35,8 @@ export default class Canis {
         console.log('this is a test! ');
     }
 }
+
+export { ActionSpec, TimingSpec }
 
 // module.exports = Canis;
 

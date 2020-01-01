@@ -78,7 +78,6 @@ class Animation extends TimingSpec {
     calAniTime(markIds, lastAnimation) {
         console.time('cal ani time');
         let that = this;
-
         //check whether the durations of the actions are set with the data variables
         let durationAttrValues = new Map();
         for (let i = 0, markId; i < markIds.length | (markId = markIds[i]); i++) {
@@ -93,15 +92,12 @@ class Animation extends TimingSpec {
             }
             durationAttrValues.set(markId, tmpAttrValues);
         }
-
         //calculate the duration of all actions
         let [actionsDurations, minValueEachAttr, processedActions] = ActionSpec.calActionDuration(this.actions, durationAttrValues, Animation.domMarks);
-
         //construct tree while order the marks according to "sort"
         let marksInOrder = this.grouping.arrangeOrder(markIds, Animation.domMarks);
 
         let markAni = new Map();//the time specs and action specs of each mark, for now using Map, check later to see whether it is worthy to change to Array
-
         for (let i = 0, markId; i < marksInOrder.length | (markId = marksInOrder[i]); i++) {
             //record visual status of all marks
             let tmpObj = {};
