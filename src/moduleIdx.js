@@ -2,6 +2,7 @@ import TimingSpec from './TimingSpec';
 import Animation from './AnimationSpec';
 import ActionSpec from './ActionSpec';
 import CanisSpec from './CanisSpec';
+import ChartSpec from './ChartSpec';
 
 export default class Canis {
     constructor() {
@@ -36,7 +37,7 @@ export default class Canis {
     }
 }
 
-export { ActionSpec, TimingSpec }
+export { ActionSpec, TimingSpec , ChartSpec}
 
 // module.exports = Canis;
 

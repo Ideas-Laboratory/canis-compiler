@@ -83,10 +83,7 @@ class ChartSpec {
             ChartSpec.charts[i].setAttribute('trans', '0,0');
             ChartSpec.removeTransitions(ChartSpec.charts[i].children[0]);
         }
-        // let resultChart = ChartSpec.mergeCharts();
         this.svgChart = ChartSpec.mergeCharts();
-
-        // return resultChart;
     }
 
     static facetViews(nameCharts, facet) {
@@ -246,7 +243,6 @@ class ChartSpec {
 
         //add missing marks to each chart
         allMarks = Array.from(allMarks);
-        ChartSpec.markDoms.clear();
         for (let i = 0; i < ChartSpec.charts.length; i++) {
             for (let j = 0; j < allMarks.length; j++) {
                 if (ChartSpec.charts[i].querySelectorAll('#' + allMarks[j]).length === 0) {//chart i does not have mark j
@@ -356,6 +352,39 @@ class ChartSpec {
     static removeTransitions(t) {
         let tr = t.getAttribute('transform');
         let parentTrans = t.parentNode.getAttribute('trans').split(',');
+        if (t.classList.contains('mark')) {
+            let dataDatumAttrValue = JSON.parse(t.getAttribute('data-datum'));
+            if (Array.isArray(dataDatumAttrValue)) {
+                dataDatumAttrValue = dataDatumAttrValue[0];
+            }
+            let isNonDataMark = false;
+            Array.from(t.classList).forEach((c) => {
+                c = c.toLowerCase();
+                if (c.includes('axis') || c.includes('legend') || c.includes('title')){
+                    isNonDataMark = true;
+                }
+            })
+            if (isNonDataMark) {
+                this.nonDataMarkDatum.set(t.getAttribute('id'), dataDatumAttrValue);
+            } else {
+                this.dataMarkDatum.set(t.getAttribute('id'), dataDatumAttrValue);
+            }
+        }
+
+        if (t.classList.contains('axis') || t.classList.contains('legend')) {
+            const tmpDataDatum = JSON.parse(t.getAttribute('data-datum'));
+            if (Array.isArray(tmpDataDatum)) {
+                tmpDataDatum = tmpDataDatum[0];
+            }
+            if (t.classList.contains('axis')) {
+                this.chartUnderstanding[tmpDataDatum.position] = 'position';
+            } else if (t.classList.contains('legend')) {
+                for (let channel in tmpDataDatum) {
+                    this.chartUnderstanding[tmpDataDatum[channel]] = channel;
+                }
+            }
+        }
+
         if (tr) {
             tr = tr.replace(/translate|scale|rotate|\s/g, (m) => {
                 return m === ' ' ? '' : '@' + m;
@@ -413,7 +442,9 @@ ChartSpec.charts = [];
 ChartSpec.changedAttrs = [];
 ChartSpec.viewport = new Viewport();
 ChartSpec.dataTrans = new Map();
-ChartSpec.markDoms = new Map();
 ChartSpec.svgChart;
+ChartSpec.chartUnderstanding = {};
+ChartSpec.dataMarkDatum = new Map();
+ChartSpec.nonDataMarkDatum = new Map();
 
 export default ChartSpec;
