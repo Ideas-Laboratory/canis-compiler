@@ -39,7 +39,7 @@ class Animation extends TimingSpec {
 
             //translate action specs in the animation Json
             if (typeof animationJson.effects !== 'undefined') {//init actions
-                if(updating){
+                if (updating) {
                     this.actions = [];
                 }
                 for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
@@ -94,6 +94,7 @@ class Animation extends TimingSpec {
         }
         //calculate the duration of all actions
         let [actionsDurations, minValueEachAttr, processedActions] = ActionSpec.calActionDuration(this.actions, durationAttrValues, Animation.domMarks);
+        console.log('after calculate actions: ', this.actions, actionsDurations, minValueEachAttr, processedActions);
         //construct tree while order the marks according to "sort"
         let marksInOrder = this.grouping.arrangeOrder(markIds, Animation.domMarks);
 
@@ -179,7 +180,6 @@ class Animation extends TimingSpec {
         }
         this.grouping.calTimeWithTree(this.grouping.root, -1, -1, markAni);
         console.log('generated tree: ', this.grouping.root);
-        console.log('wrong mark: ', markAni.get('mark109'));
 
         //update time according to the time spec of animation
         let tmpAllStart = 10000;
@@ -223,6 +223,7 @@ class Animation extends TimingSpec {
             }
 
             markAni.set(markId, tmpObj);
+            console.log('setting: ', markId, tmpObj);
         })
 
         markAni.forEach(function (value, markId) {
@@ -267,8 +268,11 @@ class Animation extends TimingSpec {
                 }
             }
         })
-        // console.log('all mark ani: ', this.allMarkAni);
-        // console.log('wrong mark: ', this.allMarkAni.get('mark106'));
+        console.log('all mark ani: ', this.allMarkAni);
+    }
+
+    static findKeyframes() {
+
     }
 
     static translateToLottieChannel(attrName) {
@@ -473,6 +477,7 @@ class Animation extends TimingSpec {
 Animation.visualAttrs = ['x', 'y', 'cx', 'cy', 'innerRadius', 'outterRadius', 'startAngle', 'endAngle', 'width', 'height', 'opacity', 'fill', 'stroke', 'content', 'stroke-dasharray', 'stroke-dashoffset'];
 Animation.domMarks = new Map();
 Animation.wholeEndTime = 0;
+Animation.frames = [];//
 Animation.animations = new Map();//record all animations, key:, value: animation obj
 Animation.finalStatus = new Map();//record the final visual status of each mark, eg: key:mark1, value: {opacity: 1, height: 226}
 Animation.allMarkAni = new Map();

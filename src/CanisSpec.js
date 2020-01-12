@@ -117,9 +117,10 @@ class CanisSpec {
     }
 
     async init(spec) {
+        console.log(spec);
+        Animation.resetAll();
         if (spec.charts.length === 0) {//no charts specified
             console.log('no charts in spec');
-            Animation.resetAll();
             Animation.domMarks.clear();
             ChartSpec.dataMarkDatum.clear();
             ChartSpec.nonDataMarkDatum.clear();
@@ -278,6 +279,7 @@ class CanisSpec {
     render(callback) {
         console.time('rendering');
         Animation.renderAnimation();
+        Animation.findKeyframes();
         //map animation keyframes to lottie spec
         Animation.mapToLottieSpec();
 
