@@ -223,7 +223,6 @@ class Animation extends TimingSpec {
             }
 
             markAni.set(markId, tmpObj);
-            console.log('setting: ', markId, tmpObj);
         })
 
         markAni.forEach(function (value, markId) {
