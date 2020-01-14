@@ -82,8 +82,13 @@ class GroupingSpec extends TimingSpec {
     }
 
     arrangeOrder(markIds, domMarks) {
+        GroupingSpec.frames.clear();
+        GroupingSpec.framesMark.clear();
         if (Object.keys(this.root).length === 0) {// generate new tree
             this.root.groupRef = 'root';
+            this.root.id = GroupingSpec.nodeId;
+            GroupingSpec.frames.set(GroupingSpec.nodeId, true);
+            GroupingSpec.nodeId++;
             this.root.children = [];
             this.root.marks = markIds;
             this.root.timingRef = TimingSpec.timingRef.previousStart;
@@ -108,6 +113,7 @@ class GroupingSpec extends TimingSpec {
                     sameGrouping = t.children[0].groupRef === groupByRef;
                 }
 
+                console.log('whether this is same grouping: ', sameGrouping);
                 if (sameGrouping) {
                     let nodesThisLevel = new Map();
                     for (let i = 0, tmpNode; i < t.children.length | (tmpNode = t.children[i]); i++) {
@@ -149,6 +155,8 @@ class GroupingSpec extends TimingSpec {
                 nodesThisLevel.get(refValue).marks.push(markId);
             } else {
                 let tmpObj = {};
+                tmpObj.id = GroupingSpec.nodeId;
+                GroupingSpec.nodeId++;
                 tmpObj.groupRef = groupByRef;
                 tmpObj.refValue = refValue;
                 tmpObj.timingRef = timingRef;
@@ -160,6 +168,7 @@ class GroupingSpec extends TimingSpec {
         }
         //order nodes of this level according to the 'sort' spec
         this.sortNodes(this.sort, t, nodesThisLevel, domMarks);
+        console.log('nodes this level: ', nodesThisLevel);
         if (typeof this.grouping !== 'undefined') {
             for (let i = 0, tmpNode; i < t.children.length | (tmpNode = t.children[i]); i++) {
                 this.grouping.generateTree(tmpNode, domMarks);
@@ -168,12 +177,16 @@ class GroupingSpec extends TimingSpec {
     }
 
     sortNodes(specSort, t, nodesThisLevel, domMarks) {
+        const that = this;
         t.children = [];
         switch (typeof specSort.order) {
             case 'object'://Array
+                let appendNum = 0;
                 for (let i = 0, refValue; i < specSort.order.length | (refValue = specSort.order[i]); i++) {
                     if (typeof nodesThisLevel.get(refValue) !== 'undefined') {
                         t.children.push(nodesThisLevel.get(refValue));
+                        that.appendFrame(t.id, nodesThisLevel.get(refValue).id, appendNum, nodesThisLevel.size);
+                        appendNum++;
                     }
                 }
                 break;
@@ -233,6 +246,7 @@ class GroupingSpec extends TimingSpec {
 
                     })
                     for (let i = 0, tmpNode; i < nodesThisLevelArr.length | (tmpNode = nodesThisLevelArr[i]); i++) {
+                        that.appendFrame(t.id, tmpNode.id, i, nodesThisLevelArr.length);
                         t.children.push(tmpNode[1]);
                     }
                 } else {
@@ -259,15 +273,27 @@ class GroupingSpec extends TimingSpec {
                         })
                     }
                     for (let i = 0, tmpNode; i < nodesThisLevelArr.length | (tmpNode = nodesThisLevelArr[i]); i++) {
+                        that.appendFrame(t.id, tmpNode.id, i, nodesThisLevelArr.length);
                         t.children.push(tmpNode[1]);
                     }
                 }
 
                 break;
             default:
+                let count = 0;
                 nodesThisLevel.forEach(function (tmpNode, ref) {
                     t.children.push(tmpNode);
+                    that.appendFrame(t.id, tmpNode.id, count, nodesThisLevel.size);
+                    count++;
                 })
+        }
+    }
+
+    appendFrame(parentId, nodeId, nodeIdx, nodesNum) {
+        if (GroupingSpec.frames.get(parentId) && (nodeIdx === 0 || nodeIdx === nodesNum - 1)) {
+            GroupingSpec.frames.set(nodeId, true);
+        } else {
+            GroupingSpec.frames.set(nodeId, false);
         }
     }
 
@@ -334,8 +360,33 @@ class GroupingSpec extends TimingSpec {
             markAni.get(t.marks[i]).startTime += t.start;
             if (markAni.get(t.marks[i]).startTime + markAni.get(t.marks[i]).totalDuration > t.end) {
                 t.end = markAni.get(t.marks[i]).startTime + markAni.get(t.marks[i]).totalDuration;
+                console.log('t end: ', t.end);
             }
         }
+
+        if (t.marks.length === 1) {
+            const tmpMarkId = t.marks[0];
+            if (GroupingSpec.frames.get(t.id)) {
+                GroupingSpec.framesMark.set(tmpMarkId, true);
+            } else {
+                if (typeof GroupingSpec.framesMark.get(tmpMarkId) === 'undefined') {
+                    GroupingSpec.framesMark.set(tmpMarkId, false);
+                }
+            }
+        }
+        // console.log('*************');
+        // console.log(t.id, t.marks, GroupingSpec.frames.get(t.id));
+        // if (GroupingSpec.frames.get(t.id)) {//this is a keyframe
+        //     console.log('this is a keyframe', t.end);
+        //     GroupingSpec.frameTime.set(t.end, true);
+        // } else {
+        //     console.log('this is not a keyframe', t.end);
+        //     if (typeof GroupingSpec.frameTime.get(t.end) === 'undefined') {
+        //         console.log('setting to false');
+        //         GroupingSpec.frameTime.set(t.end, false);
+        //     }
+        // }
+
     }
 }
 
@@ -344,5 +395,10 @@ GroupingSpec.orderTypes = {
     descending: 'descending',
     random: 'random'
 }
+
+GroupingSpec.nodeId = 0;
+GroupingSpec.frames = new Map();//key: nodeId, value: whether this is a keyframe
+GroupingSpec.framesMark = new Map();//keyframe: markid, value: whether this time point is a keyframe
+
 
 export default GroupingSpec;

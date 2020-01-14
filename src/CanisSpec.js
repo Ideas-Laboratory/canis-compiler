@@ -5,6 +5,7 @@ import Animation from "./AnimationSpec.js";
 import { CanisUtil } from './util/Util.js';
 import { globalVar } from './util/GlobalVar.js';
 import 'babel-polyfill';
+import GroupingSpec from './GroupingSpec.js';
 
 class CanisSpec {
     constructor() {
@@ -119,6 +120,8 @@ class CanisSpec {
     async init(spec) {
         console.log(spec);
         Animation.resetAll();
+        GroupingSpec.frames.clear();//clear keyframe record;
+        GroupingSpec.framesMark.clear();//clear keyframe record;
         if (spec.charts.length === 0) {//no charts specified
             console.log('no charts in spec');
             Animation.domMarks.clear();
@@ -141,7 +144,6 @@ class CanisSpec {
 
             if (Array.isArray(this.animations)) {
                 let lastAnimation;
-
                 for (let aniIdx = 0; aniIdx < this.animations.length; aniIdx++) {
                     let animationJson = this.animations[aniIdx];
                     console.log(aniIdx);

@@ -97,6 +97,7 @@ class Animation extends TimingSpec {
         console.log('after calculate actions: ', this.actions, actionsDurations, minValueEachAttr, processedActions);
         //construct tree while order the marks according to "sort"
         let marksInOrder = this.grouping.arrangeOrder(markIds, Animation.domMarks);
+        console.log('animation frames: ', GroupingSpec.frames);
 
         let markAni = new Map();//the time specs and action specs of each mark, for now using Map, check later to see whether it is worthy to change to Array
         for (let i = 0, markId; i < marksInOrder.length | (markId = marksInOrder[i]); i++) {
@@ -178,9 +179,10 @@ class Animation extends TimingSpec {
                 'actionAttrs': [] //action attributes of this mark
             });
         }
+        console.log('going in cal time with tree: ', markAni, markAni.get('mark152'));
         this.grouping.calTimeWithTree(this.grouping.root, -1, -1, markAni);
         console.log('generated tree: ', this.grouping.root);
-
+        console.log('frame time', GroupingSpec.framesMark);
         //update time according to the time spec of animation
         let tmpAllStart = 10000;
         markAni.forEach(function (value, markId) {
@@ -231,18 +233,30 @@ class Animation extends TimingSpec {
                 value.actionAttrs[i].startTime = value.startTime + value.actionAttrs[i].offsetStart;//absolute start time
             }
 
+            let frameTimePoint = 0;
             if (typeof Animation.allMarkAni.get(markId) === 'undefined') {
                 Animation.allMarkAni.set(markId, value);
+                frameTimePoint = value.startTime + value.totalDuration;
             } else {//merge animation specs for the same mark
                 let currentStartTime = Animation.allMarkAni.get(markId).startTime;
                 let currentEndTime = currentStartTime + Animation.allMarkAni.get(markId).totalDuration;
                 Animation.allMarkAni.get(markId).startTime = currentStartTime < value.startTime ? currentStartTime : value.startTime;
                 let tmpEndTime = value.startTime + value.totalDuration;
                 currentEndTime = currentEndTime > tmpEndTime ? currentEndTime : tmpEndTime;
+                frameTimePoint = currentEndTime;
                 Animation.allMarkAni.get(markId).totalDuration = currentEndTime - Animation.allMarkAni.get(markId).startTime;
                 Animation.allMarkAni.get(markId).actionAttrs = [...Animation.allMarkAni.get(markId).actionAttrs, ...value.actionAttrs];
             }
+            //record keyframe time point
+            if (GroupingSpec.framesMark.get(markId)) {
+                Animation.frameTime.set(frameTimePoint, true);
+            } else {
+                if (typeof Animation.frameTime.get(frameTimePoint) === 'undefined') {
+                    Animation.frameTime.set(frameTimePoint, false);
+                }
+            }
         })
+        console.log('keyframes: ', Animation.frameTime);
         console.timeEnd('cal ani time');
     }
 
@@ -466,6 +480,7 @@ class Animation extends TimingSpec {
     static resetAll() {
         this.wholeEndTime = 0;
         this.allMarkAni.clear();
+        this.frameTime.clear();
         // this.domMarks.clear();
         this.finalStatus.clear();
         // this.animations.clear();
@@ -476,7 +491,7 @@ class Animation extends TimingSpec {
 Animation.visualAttrs = ['x', 'y', 'cx', 'cy', 'innerRadius', 'outterRadius', 'startAngle', 'endAngle', 'width', 'height', 'opacity', 'fill', 'stroke', 'content', 'stroke-dasharray', 'stroke-dashoffset'];
 Animation.domMarks = new Map();
 Animation.wholeEndTime = 0;
-Animation.frames = [];//
+Animation.frameTime = new Map();//key: time, value: whether this time point is a keyframe
 Animation.animations = new Map();//record all animations, key:, value: animation obj
 Animation.finalStatus = new Map();//record the final visual status of each mark, eg: key:mark1, value: {opacity: 1, height: 226}
 Animation.allMarkAni = new Map();

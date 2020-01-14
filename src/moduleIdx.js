@@ -37,7 +37,7 @@ export default class Canis {
     }
 }
 
-export { ActionSpec, TimingSpec , ChartSpec}
+export { ActionSpec, TimingSpec, ChartSpec, Animation}
 
 // module.exports = Canis;
 
