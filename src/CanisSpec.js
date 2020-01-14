@@ -98,6 +98,7 @@ class CanisSpec {
 
     compareSpec(spec) {
         let diffChart = false;
+        console.log('comparing: ', this.currentSpec.charts, spec.charst);
         if ((typeof this.currentSpec.charts !== 'undefined' && JSON.stringify(spec.charts) !== JSON.stringify(this.currentSpec.charts)) ||
             typeof this.currentSpec.charts === 'undefined' ||
             (typeof spec.facet !== 'undefined' && typeof this.currentSpec.facet !== 'undefined' && JSON.stringify(spec.facet) !== JSON.stringify(this.currentSpec.facet)) ||
@@ -137,6 +138,7 @@ class CanisSpec {
             globalVar.jsMovin.setFrameRate(TimingSpec.FRAME_RATE);
 
             const diffChart = this.compareSpec(spec);
+            console.log('diff chart: ', diffChart);
             let canisObj = await this.preprocessCharts(spec, diffChart);
 
             //deal with animations
