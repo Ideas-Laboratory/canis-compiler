@@ -228,27 +228,30 @@ class Animation extends TimingSpec {
         })
 
         markAni.forEach(function (value, markId) {
-            //update the start time of actions 
+            //update the start time of actions
+            let frameTimePoint = 0;
             for (let i = 0; i < value.actionAttrs.length; i++) {
                 value.actionAttrs[i].startTime = value.startTime + value.actionAttrs[i].offsetStart;//absolute start time
+                if (value.actionAttrs[i].startTime + value.actionAttrs[i].duration > frameTimePoint){
+                    frameTimePoint = value.actionAttrs[i].startTime + value.actionAttrs[i].duration;
+                }
             }
-
-            let frameTimePoint = 0;
             if (typeof Animation.allMarkAni.get(markId) === 'undefined') {
                 Animation.allMarkAni.set(markId, value);
-                frameTimePoint = value.startTime + value.totalDuration;
+                // frameTimePoint = value.startTime + value.totalDuration;
             } else {//merge animation specs for the same mark
                 let currentStartTime = Animation.allMarkAni.get(markId).startTime;
                 let currentEndTime = currentStartTime + Animation.allMarkAni.get(markId).totalDuration;
                 Animation.allMarkAni.get(markId).startTime = currentStartTime < value.startTime ? currentStartTime : value.startTime;
                 let tmpEndTime = value.startTime + value.totalDuration;
                 currentEndTime = currentEndTime > tmpEndTime ? currentEndTime : tmpEndTime;
-                frameTimePoint = currentEndTime;
+                // frameTimePoint = currentEndTime;
                 Animation.allMarkAni.get(markId).totalDuration = currentEndTime - Animation.allMarkAni.get(markId).startTime;
                 Animation.allMarkAni.get(markId).actionAttrs = [...Animation.allMarkAni.get(markId).actionAttrs, ...value.actionAttrs];
             }
             //record keyframe time point
             if (GroupingSpec.framesMark.get(markId)) {
+                console.log(markId, 'end time', frameTimePoint, value);
                 Animation.frameTime.set(frameTimePoint, true);
             } else {
                 if (typeof Animation.frameTime.get(frameTimePoint) === 'undefined') {
@@ -483,7 +486,7 @@ class Animation extends TimingSpec {
         this.frameTime.clear();
         // this.domMarks.clear();
         this.finalStatus.clear();
-        // this.animations.clear();
+        this.animations.clear();
     }
 
 }

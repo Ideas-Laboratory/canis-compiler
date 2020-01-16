@@ -1,6 +1,6 @@
 {
     "name": "canis_toolkit",
-    "version": "1.0.1",
+    "version": "1.1.1",
     "main": "lib/moduleIdx.js",
     "scripts": {
         "build": "webpack --env dev && webpack --env build",

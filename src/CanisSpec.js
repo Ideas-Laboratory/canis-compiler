@@ -175,6 +175,7 @@ class CanisSpec {
                         animation.translate(animationJson, usedChangedAttrs);//translate from json obj to Animation obj
                         Animation.animations.set(animationJson.selector, animation);
                     }
+                    console.log('translated animation: ', animation);
 
                     console.timeEnd('using dom');
                     let markIds = [];//record all ids of selected marks

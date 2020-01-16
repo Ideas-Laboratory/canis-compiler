@@ -6,11 +6,7 @@ class GroupingSpec extends TimingSpec {
         this._groupBy = 'id'; //optional
         this._reference = TimingSpec.timingRef.previousStart;
         this._delay = 0;
-        // this.sort = {
-        //     field: '',
-        //     order: '',
-        //     expr: ''
-        // }
+        this.definedById = false;
         this.sort = {};
         this.root = {};
         this.grouping;//optional, another GroupingSpec object indicating more groupings
@@ -62,6 +58,9 @@ class GroupingSpec extends TimingSpec {
      */
     initGrouping(groupingJson) {
         this.groupBy = groupingJson.groupBy;
+        if (groupingJson.groupBy === 'id') {
+            this.grouping.definedById = true;
+        }
         this.reference = groupingJson.reference;
         this.delay = groupingJson.delay;
 
@@ -78,6 +77,7 @@ class GroupingSpec extends TimingSpec {
             //didnot goruping to id, add extra grouping by id
             this.grouping = new GroupingSpec();
             this.grouping.groupBy = 'id';
+            this.grouping.definedById = false;
         }
     }
 
@@ -97,7 +97,7 @@ class GroupingSpec extends TimingSpec {
         } else {// update the current tree
             this.updateTree(this.root, domMarks);
         }
-
+        console.log('generated tree: ', this.root);
         let orderedMarks = this.getMarkOrder(this.root);
         return orderedMarks;
     }
@@ -158,6 +158,9 @@ class GroupingSpec extends TimingSpec {
                 tmpObj.id = GroupingSpec.nodeId;
                 GroupingSpec.nodeId++;
                 tmpObj.groupRef = groupByRef;
+                if (tmpObj.groupRef === 'id') {
+                    tmpObj.definedById = this.definedById;
+                }
                 tmpObj.refValue = refValue;
                 tmpObj.timingRef = timingRef;
                 tmpObj.delay = delay;
