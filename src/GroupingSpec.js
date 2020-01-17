@@ -8,7 +8,7 @@ class GroupingSpec extends TimingSpec {
         this._delay = 0;
         this.definedById = false;
         this.sort = {};
-        this.root = {};
+        // this.root = {};
         this.grouping;//optional, another GroupingSpec object indicating more groupings
     }
 
@@ -81,24 +81,24 @@ class GroupingSpec extends TimingSpec {
         }
     }
 
-    arrangeOrder(markIds, domMarks) {
+    arrangeOrder(markIds, domMarks, root) {
         GroupingSpec.frames.clear();
         GroupingSpec.framesMark.clear();
-        if (Object.keys(this.root).length === 0) {// generate new tree
-            this.root.groupRef = 'root';
-            this.root.id = GroupingSpec.nodeId;
+        if (Object.keys(root).length === 0) {// generate new tree
+            root.groupRef = 'root';
+            root.id = GroupingSpec.nodeId;
             GroupingSpec.frames.set(GroupingSpec.nodeId, true);
             GroupingSpec.nodeId++;
-            this.root.children = [];
-            this.root.marks = markIds;
-            this.root.timingRef = TimingSpec.timingRef.previousStart;
-            this.root.delay = 0;
-            this.generateTree(this.root, domMarks);
+            root.children = [];
+            root.marks = markIds;
+            root.timingRef = TimingSpec.timingRef.previousStart;
+            root.delay = 0;
+            this.generateTree(root, domMarks);
         } else {// update the current tree
-            this.updateTree(this.root, domMarks);
+            this.updateTree(root, domMarks);
         }
-        console.log('generated tree: ', this.root);
-        let orderedMarks = this.getMarkOrder(this.root);
+        console.log('generated tree: ', root);
+        let orderedMarks = this.getMarkOrder(root);
         return orderedMarks;
     }
 

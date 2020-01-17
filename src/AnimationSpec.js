@@ -19,6 +19,7 @@ class Animation extends TimingSpec {
         // Animation.domMarks = new Map();//key: markId, value: dom attrs
         this.animationStartTime = 1000000;
         this.animationEndTime = 0;
+        this.root = {};
     }
 
     /**
@@ -96,7 +97,7 @@ class Animation extends TimingSpec {
         let [actionsDurations, minValueEachAttr, processedActions] = ActionSpec.calActionDuration(this.actions, durationAttrValues, Animation.domMarks);
         console.log('after calculate actions: ', this.actions, actionsDurations, minValueEachAttr, processedActions);
         //construct tree while order the marks according to "sort"
-        let marksInOrder = this.grouping.arrangeOrder(markIds, Animation.domMarks);
+        let marksInOrder = this.grouping.arrangeOrder(markIds, Animation.domMarks, this.root);
         console.log('animation frames: ', GroupingSpec.frames);
 
         let markAni = new Map();//the time specs and action specs of each mark, for now using Map, check later to see whether it is worthy to change to Array
@@ -180,8 +181,8 @@ class Animation extends TimingSpec {
             });
         }
         console.log('going in cal time with tree: ', markAni, markAni.get('mark152'));
-        this.grouping.calTimeWithTree(this.grouping.root, -1, -1, markAni);
-        console.log('generated tree: ', this.grouping.root);
+        this.grouping.calTimeWithTree(this.root, -1, -1, markAni);
+        console.log('generated tree: ', this.root);
         console.log('frame time', GroupingSpec.framesMark);
         //update time according to the time spec of animation
         let tmpAllStart = 10000;
