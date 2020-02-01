@@ -8,12 +8,15 @@ window.canis = {
     duration: () => {
         return Animation.wholeEndTime;
     },
-    renderSpec: (spec, callback) => {
+    renderSpec: (spec, status, callback) => {
+        status.info = { type: 'clear', msg: 'rendering...' };
         if (Object.keys(canis.canisObj).length === 0) {
             canis.canisObj = new CanisSpec();
         }
-        return canis.canisObj.init(spec).then(() => {
-            return canis.canisObj.render(callback);
+        return canis.canisObj.init(spec, status).then(() => {
+            if (!canis.canisObj.hasError) {
+                return canis.canisObj.render(callback, status);
+            }
         })
     },
     reset: function () {

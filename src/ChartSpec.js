@@ -9,14 +9,16 @@ class ChartSpec {
         this.source = source;
     }
 
-    static chartPreProcessing(chartSpecs) {
+    static chartPreProcessing(chartSpecs, status) {
         let inputSpecs = [];
+        let hasError = false;
         for (let i = 0; i < chartSpecs.length; i++) {
             let inputSpec = chartSpecs[i];
             if (typeof inputSpec.start !== 'undefined' && typeof inputSpec.end !== 'undefined') {
                 let startIdx = parseInt(inputSpec.start), endIdx = parseInt(inputSpec.end);
                 if (endIdx < startIdx) {
-                    console.log('wrong start and end file index ');
+                    hasError = true;
+                    status.info = { type: 'error', msg: 'Wrong start and end chart index.' };
                     continue;
                 } else {
                     let tmpBlocks = inputSpec.source.split('/');
@@ -32,15 +34,16 @@ class ChartSpec {
                 inputSpecs.push(inputSpec);
             }
         }
-        return inputSpecs;
+        return [inputSpecs, hasError];
     }
 
-    static loadCharts(chartSpecs, facet) {
+    static loadCharts(chartSpecs, facet, status) {
         let nameCharts = new Map();
         ChartSpec.charts = [];
         let nullCharts = [];
         let defaultWidth = 0;
         let defaultHeight = 0;
+        let hasError = false;
         for (let i = 0; i < chartSpecs.length; i++) {
             if (chartSpecs[i].type === ChartSpec.CHART_URL) {//load chart with url
                 let xhr = new XMLHttpRequest(),
@@ -53,7 +56,6 @@ class ChartSpec {
                     let tmpDiv = document.createElement('div');
                     tmpDiv.innerHTML = xhr.responseText;
                     svgContent = tmpDiv.children[0];
-                    console.log('svgContent: ', svgContent);
                     let viewBoxNums = svgContent.getAttribute('viewBox').split(' ');
                     defaultWidth = parseFloat(viewBoxNums[2]);
                     defaultHeight = parseFloat(viewBoxNums[3]);
@@ -61,12 +63,12 @@ class ChartSpec {
                     nameCharts.set(chartSpecs[i].id, ChartSpec.charts.length - 1);
                 } else if (xhr.status === 404) {
                     nullCharts.unshift(i);
-                    console.log('can not find ' + chartSpecs[i].source + ' ! Please check the url.');
+                    hasError = true;
+                    status.info = { type: 'error', msg: 'Can not find ' + chartSpecs[i].source + ' ! Please check the url.' };
                 }
             } else {
                 console.log(chartSpecs[i].source, typeof chartSpecs[i].source);
             }
-
         }
 
         //remove the empty charts 
@@ -76,6 +78,8 @@ class ChartSpec {
 
         //generate chart facets
         typeof facet !== 'undefined' ? ChartSpec.facetViews(nameCharts, facet) : this.viewport.setViewport(defaultWidth, defaultHeight);
+
+        return hasError;
     }
 
     static removeTransAndMerge() {
@@ -360,7 +364,7 @@ class ChartSpec {
             let isNonDataMark = false;
             Array.from(t.classList).forEach((c) => {
                 c = c.toLowerCase();
-                if (c.includes('axis') || c.includes('legend') || c.includes('title')){
+                if (c.includes('axis') || c.includes('legend') || c.includes('title')) {
                     isNonDataMark = true;
                 }
             })

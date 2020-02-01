@@ -27,48 +27,32 @@ class Animation extends TimingSpec {
      * @param {JSON obj} animationJson 
      */
     translate(animationJson, usedChangedAttrs, updating = false) {
-        if (this.checkFormat(animationJson)) {
-            this.chartIdx = animationJson.chartIdx;
-            if (!updating) {
-                this.selector = animationJson.selector;//init selector
-            }
-            this.reference = animationJson.reference;
-            this.offset = animationJson.offset;
-            if (typeof animationJson.grouping !== 'undefined') {//init grouping
-                this.grouping.initGrouping(animationJson.grouping);
-            }
+        this.chartIdx = animationJson.chartIdx;
+        if (!updating) {
+            this.selector = animationJson.selector;//init selector
+        }
+        this.reference = animationJson.reference;
+        this.offset = animationJson.offset;
+        if (typeof animationJson.grouping !== 'undefined') {//init grouping
+            this.grouping.initGrouping(animationJson.grouping);
+        }
 
-            //translate action specs in the animation Json
-            if (typeof animationJson.effects !== 'undefined') {//init actions
-                if (updating) {
-                    this.actions = [];
-                }
-                for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
-                    actionJson.chartIdx = animationJson.chartIdx;
-                    let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, ChartSpec.dataTrans);//translate templates to no-templates
-                    for (let j = 0, visAttrActionJson; j < visAttrActionJsonArr.length | (visAttrActionJson = visAttrActionJsonArr[j]); j++) {
-                        let tmpAction = new ActionSpec();
-                        tmpAction.initAction(visAttrActionJson);
-                        this.actions.push(tmpAction);
-                    }
+        //translate action specs in the animation Json
+        if (typeof animationJson.effects !== 'undefined') {//init actions
+            if (updating) {
+                this.actions = [];
+            }
+            for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
+                actionJson.chartIdx = animationJson.chartIdx;
+                let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, ChartSpec.dataTrans);//translate templates to no-templates
+                for (let j = 0, visAttrActionJson; j < visAttrActionJsonArr.length | (visAttrActionJson = visAttrActionJsonArr[j]); j++) {
+                    let tmpAction = new ActionSpec();
+                    tmpAction.initAction(visAttrActionJson);
+                    this.actions.push(tmpAction);
                 }
             }
-        } else {
-            console.error('animation spec not correct!');
         }
-    }
 
-    /**
-     * check if the input json format is illegal
-     * @param {JSON obj} animationJson 
-     */
-    checkFormat(animationJson) {
-        let keys = Object.keys(animationJson);
-        if (keys.includes('selector')) {
-            return true;
-        }
-        alert('illegal format, no \'selector\' is defined ');
-        return false;
     }
 
     /**
@@ -233,7 +217,7 @@ class Animation extends TimingSpec {
             let frameTimePoint = 0;
             for (let i = 0; i < value.actionAttrs.length; i++) {
                 value.actionAttrs[i].startTime = value.startTime + value.actionAttrs[i].offsetStart;//absolute start time
-                if (value.actionAttrs[i].startTime + value.actionAttrs[i].duration > frameTimePoint){
+                if (value.actionAttrs[i].startTime + value.actionAttrs[i].duration > frameTimePoint) {
                     frameTimePoint = value.actionAttrs[i].startTime + value.actionAttrs[i].duration;
                 }
             }
