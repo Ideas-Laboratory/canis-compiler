@@ -57,9 +57,10 @@ class GroupingSpec extends TimingSpec {
      * @param {JSON obj} groupingJson 
      */
     initGrouping(groupingJson) {
+        console.log('grouping json: ', groupingJson, this, this.grouping);
         this.groupBy = groupingJson.groupBy;
         if (groupingJson.groupBy === 'id') {
-            this.grouping.definedById = true;
+            this.definedById = true;
         }
         this.reference = groupingJson.reference;
         this.delay = groupingJson.delay;
