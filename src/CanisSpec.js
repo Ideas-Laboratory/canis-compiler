@@ -158,6 +158,22 @@ class CanisSpec {
                 status.info = { type: 'error', msg: 'No effects found in animation unit.' };
                 break;
             } else {
+                //check reference
+                if (spec.animations[i].reference) {
+                    if (!Object.keys(TimingSpec.timingRef).includes(TimingSpec.transRef(spec.animations[i].reference))) {
+                        hasError = true;
+                        status.info = { type: 'error', msg: 'The value of the reference has to be one of: start with previous or start after previous.' };
+                        break;
+                    }
+                }
+                //check grouping
+                if (spec.animations[i].grouping) {
+                    hasError = this.checkGroupingSpec(spec.animations[i].grouping, status);
+                    if (hasError) {
+                        break;
+                    }
+                }
+                //check effects
                 for (let j = 0, len2 = spec.animations[i].effects.length; j < len2; j++) {
                     if (!spec.animations[i].effects[j].type) {
                         hasError = true;
@@ -168,6 +184,19 @@ class CanisSpec {
             }
         }
         return hasError;
+    }
+
+    checkGroupingSpec(groupingSpec, status) {
+        if (groupingSpec.reference) {
+            if (!Object.keys(TimingSpec.timingRef).includes(TimingSpec.transRef(groupingSpec.reference))) {
+                status.info = { type: 'error', msg: 'The value of the reference has to be one of: start with previous or start after previous.' };
+                return true;
+            }
+        }
+        if (groupingSpec.grouping) {
+            return this.checkGroupingSpec(groupingSpec.grouping, status);
+        }
+        return false;
     }
 
     async init(spec, status = null) {
@@ -204,7 +233,6 @@ class CanisSpec {
                     let lastAnimation;
                     for (let aniIdx = 0; aniIdx < this.animations.length; aniIdx++) {
                         let animationJson = this.animations[aniIdx];
-                        console.log(aniIdx);
                         console.time('using dom');
                         //use the selector in animation to select marks and record dom attrs
                         console.time('query dom');
@@ -339,9 +367,9 @@ class CanisSpec {
 
     }
 
-    render(callback) {
+    render(callback, status = null) {
         console.time('rendering');
-        Animation.renderAnimation();
+        Animation.renderAnimation(status);
         Animation.findKeyframes();
         //map animation keyframes to lottie spec
         Animation.mapToLottieSpec();
@@ -350,6 +378,9 @@ class CanisSpec {
         let lottieJSON = globalVar.jsMovin.toJSON();
         CanisSpec.lottieJSON = lottieJSON;
         console.timeEnd('rendering');
+        if (status) {
+            status.info = 'Done rendering.';
+        }
         callback();
         return JSON.parse(lottieJSON);
     }

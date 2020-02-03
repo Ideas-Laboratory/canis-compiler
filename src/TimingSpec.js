@@ -10,9 +10,7 @@ class TimingSpec {
             let tmpOffsetRefStr = TimingSpec.transRef(offsetRef);
             if (Object.keys(TimingSpec.timingRef).includes(tmpOffsetRefStr)) {
                 this._reference = offsetRef;
-            } else {
-                alert('the \'reference\' of TimingSpec has to be one of \'previousStart\', \'previousEnd\' or \'absolute\'. ')
-            }
+            } 
         }
     }
 

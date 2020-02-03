@@ -236,7 +236,7 @@ class Animation extends TimingSpec {
             }
             //record keyframe time point
             if (GroupingSpec.framesMark.get(markId)) {
-                console.log(markId, 'end time', frameTimePoint, value);
+                // console.log(markId, 'end time', frameTimePoint, value);
                 Animation.frameTime.set(frameTimePoint, true);
             } else {
                 if (typeof Animation.frameTime.get(frameTimePoint) === 'undefined') {
@@ -244,14 +244,14 @@ class Animation extends TimingSpec {
                 }
             }
         })
-        console.log('keyframes: ', Animation.frameTime);
+        // console.log('keyframes: ', Animation.frameTime);
         console.timeEnd('cal ani time');
     }
 
     /**
      * calculate timing for each action then render animation by slicing the action specs into frames
      */
-    static renderAnimation() {
+    static renderAnimation(status = null) {
         let that = this;
         this.allMarkAni.forEach(function (value, markId) {
             //record the end time of the entire animation, and record the init status of each mark
@@ -259,6 +259,9 @@ class Animation extends TimingSpec {
                 that.wholeEndTime = value.startTime + value.totalDuration;
             }
         })
+        if (status) {
+            status.info = 'The duration of the generated animation is: ' + this.wholeEndTime + 'ms';
+        }
         console.log('The duration of the generated animation is: ' + this.wholeEndTime + 'ms');
 
         //replace the 'wholeEnd' place holder in duration
