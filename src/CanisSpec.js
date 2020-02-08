@@ -130,19 +130,19 @@ class CanisSpec {
         //check charts
         if (spec.charts.length === 0) {
             hasError = true;
-            status.info = { type: 'error', msg: 'There are no input charts.' };
+            status.info = { type: 'error', msg: 'There are no input charts.', errSpec: '"charts":[]' };
         }
         //check chart source
         for (let i = 0, len = spec.charts.length; i < len; i++) {
             if (!spec.charts[i].source) {
                 hasError = true;
-                status.info = { type: 'error', msg: 'No chart source found in chart item.' };
+                status.info = { type: 'error', msg: 'No chart source found in chart item.', errSpec: JSON.stringify(spec.charts[i]).replace(/\s/g, '') };
                 break;
             } else {
                 const sourceStr = spec.charts[i].source;
                 if (sourceStr.indexOf('.dsvg') < 0 && !(spec.charts[i].start && spec.charts[i].end)) {
                     hasError = true;
-                    status.info = { type: 'error', msg: 'No range specification found for input chart index .' };
+                    status.info = { type: 'error', msg: 'No range specification found for input chart index .', errSpec: JSON.stringify(spec.charts[i]).replace(/\s/g, '') };
                     break;
                 }
             }
@@ -151,18 +151,18 @@ class CanisSpec {
         for (let i = 0, len = spec.animations.length; i < len; i++) {
             if (!spec.animations[i].selector) {
                 hasError = true;
-                status.info = { type: 'error', msg: 'No selector found in animation unit.' };
+                status.info = { type: 'error', msg: 'No selector found in animation unit.', errSpec: JSON.stringify(spec.animations[i]).replace(/\s/g, '') };
                 break;
             } else if (!spec.animations[i].effects) {
                 hasError = true;
-                status.info = { type: 'error', msg: 'No effects found in animation unit.' };
+                status.info = { type: 'error', msg: 'No effects found in animation unit.', errSpec: JSON.stringify(spec.animations[i]).replace(/\s/g, '') };
                 break;
             } else {
                 //check reference
                 if (spec.animations[i].reference) {
                     if (!Object.keys(TimingSpec.timingRef).includes(TimingSpec.transRef(spec.animations[i].reference))) {
                         hasError = true;
-                        status.info = { type: 'error', msg: 'The value of the reference has to be one of: start with previous or start after previous.' };
+                        status.info = { type: 'error', msg: 'The value of the reference has to be one of: start with previous or start after previous.', errSpec: '"reference":"' + spec.animations[i].reference.replace(/\s/g, '') + '"' };
                         break;
                     }
                 }
@@ -177,7 +177,7 @@ class CanisSpec {
                 for (let j = 0, len2 = spec.animations[i].effects.length; j < len2; j++) {
                     if (!spec.animations[i].effects[j].type) {
                         hasError = true;
-                        status.info = { type: 'error', msg: 'No effect type found in effect item.' };
+                        status.info = { type: 'error', msg: 'No effect type found in effect item.', errSpec: JSON.stringify(spec.animations[i].effects[j]).replace(/\s/g, '') };
                         break;
                     }
                 }
@@ -189,7 +189,7 @@ class CanisSpec {
     checkGroupingSpec(groupingSpec, status) {
         if (groupingSpec.reference) {
             if (!Object.keys(TimingSpec.timingRef).includes(TimingSpec.transRef(groupingSpec.reference))) {
-                status.info = { type: 'error', msg: 'The value of the reference has to be one of: start with previous or start after previous.' };
+                status.info = { type: 'error', msg: 'The value of the reference has to be one of: start with previous or start after previous.', errSpec: '"reference":"' + groupingSpec.reference.replace(/\s/g, '') + '"' };
                 return true;
             }
         }

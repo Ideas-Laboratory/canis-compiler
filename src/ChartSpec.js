@@ -18,7 +18,7 @@ class ChartSpec {
                 let startIdx = parseInt(inputSpec.start), endIdx = parseInt(inputSpec.end);
                 if (endIdx < startIdx) {
                     hasError = true;
-                    status.info = { type: 'error', msg: 'Wrong start and end chart index.' };
+                    status.info = { type: 'error', msg: 'Wrong start and end chart index.', errSpec: JSON.stringify(inputSpecs).replace(/\s/g, '') };
                     continue;
                 } else {
                     let tmpBlocks = inputSpec.source.split('/');
@@ -64,7 +64,8 @@ class ChartSpec {
                 } else if (xhr.status === 404) {
                     nullCharts.unshift(i);
                     hasError = true;
-                    status.info = { type: 'error', msg: 'Can not find ' + chartSpecs[i].source + ' ! Please check the url.' };
+                    console.log('"source":' + chartSpecs[i].source);
+                    status.info = { type: 'error', msg: 'Can not find ' + chartSpecs[i].source + ' ! Please check the url.', errSpec: '"source":"' + chartSpecs[i].source.replace(/\s/g, '') + '"' };
                 }
             } else {
                 console.log(chartSpecs[i].source, typeof chartSpecs[i].source);
