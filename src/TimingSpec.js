@@ -10,7 +10,7 @@ class TimingSpec {
             let tmpOffsetRefStr = TimingSpec.transRef(offsetRef);
             if (Object.keys(TimingSpec.timingRef).includes(tmpOffsetRefStr)) {
                 this._reference = offsetRef;
-            } 
+            }
         }
     }
 
@@ -102,8 +102,8 @@ class TimingSpec {
 
     }
 
-    static transRef(refStr){
-        switch (refStr){
+    static transRef(refStr) {
+        switch (refStr) {
             case this.timingRef.previousStart:
                 return 'previousStart';
             case this.timingRef.previousEnd:
@@ -120,5 +120,6 @@ TimingSpec.timingRef = {
     previousEnd: 'start after previous',
     absolute: 'absolute'
 };
+TimingSpec.dataBindAttrs = ['field', 'minOffset', 'minDuration'];
 
 export default TimingSpec;

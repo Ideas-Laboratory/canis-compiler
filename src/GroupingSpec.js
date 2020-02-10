@@ -394,6 +394,8 @@ class GroupingSpec extends TimingSpec {
     }
 }
 
+GroupingSpec.attrs = ['groupBy', 'reference', 'delay', 'sort', 'grouping'];
+GroupingSpec.sortAttrs = ['order', 'field'];
 GroupingSpec.orderTypes = {
     ascending: 'ascending',
     descending: 'descending',

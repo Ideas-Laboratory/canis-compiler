@@ -444,6 +444,7 @@ class ChartSpec {
 ChartSpec.CHART_URL = 'url';
 ChartSpec.CHART_CONTENT = 'content';
 ChartSpec.charts = [];
+ChartSpec.attrs = ['id', 'source', 'start', 'end'];
 ChartSpec.changedAttrs = [];
 ChartSpec.viewport = new Viewport();
 ChartSpec.dataTrans = new Map();

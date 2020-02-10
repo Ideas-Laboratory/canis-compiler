@@ -466,6 +466,8 @@ class ActionSpec extends TimingSpec {
     }
 }
 
+ActionSpec.attrs = ['type', 'offset', 'reference', 'easing', 'duration'];
+
 ActionSpec.actionTypes = {
     fade: 'fade',
     wipeBottom: 'wipe bottom',

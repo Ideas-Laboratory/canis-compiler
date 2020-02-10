@@ -6,6 +6,7 @@ import { CanisUtil } from './util/Util.js';
 import { globalVar } from './util/GlobalVar.js';
 import 'babel-polyfill';
 import GroupingSpec from './GroupingSpec.js';
+import ActionSpec from './ActionSpec.js';
 
 class CanisSpec {
     constructor() {
@@ -121,6 +122,28 @@ class CanisSpec {
         return diffChart;
     }
 
+    checkAttrs(legalAttrs, obj, status) {
+        const attrs = Object.keys(obj);
+        let hasError = false;
+        for (let j = 0, len2 = attrs.length; j < len2; j++) {
+            if (!legalAttrs.includes(attrs[j])) {
+                hasError = true;
+                const tmpValue = obj[attrs[j]];
+                let errSpecStr = '"' + attrs[j] + '":';
+                if (!isNaN(Number(tmpValue))) {//the value is a number
+                    errSpecStr += '' + tmpValue;
+                } else if (typeof tmpValue === 'object') {//the value is array
+                    errSpecStr += JSON.stringify(tmpValue);
+                } else {//the value is string
+                    errSpecStr += '"' + tmpValue + '"';
+                }
+                status.info = { type: 'error', msg: 'Illegal attribute name "' + attrs[j] + '".', errSpec: errSpecStr.replace(/\s/g, '') };
+                break;
+            }
+        }
+        return hasError;
+    }
+
     /**
      * check the validaty of the spec
      * @param {*} spec 
@@ -134,6 +157,12 @@ class CanisSpec {
         }
         //check chart source
         for (let i = 0, len = spec.charts.length; i < len; i++) {
+            //check for wrong attributes
+            hasError = this.checkAttrs(ChartSpec.attrs, spec.charts[i], status);
+            if (hasError) {
+                break;
+            }
+
             if (!spec.charts[i].source) {
                 hasError = true;
                 status.info = { type: 'error', msg: 'No chart source found in chart item.', errSpec: JSON.stringify(spec.charts[i]).replace(/\s/g, '') };
@@ -149,6 +178,12 @@ class CanisSpec {
         }
         //check animation
         for (let i = 0, len = spec.animations.length; i < len; i++) {
+            //check for wrong attributes
+            hasError = this.checkAttrs(Animation.attrs, spec.animations[i], status);
+            if (hasError) {
+                break;
+            }
+
             if (!spec.animations[i].selector) {
                 hasError = true;
                 status.info = { type: 'error', msg: 'No selector found in animation unit.', errSpec: JSON.stringify(spec.animations[i]).replace(/\s/g, '') };
@@ -166,6 +201,13 @@ class CanisSpec {
                         break;
                     }
                 }
+                //check offset object
+                if (spec.animations[i].offset && typeof spec.animations[i].offset === 'object') {
+                    hasError = this.checkAttrs(TimingSpec.dataBindAttrs, spec.animations[i].offset, status);
+                    if (hasError) {
+                        break;
+                    }
+                }
                 //check grouping
                 if (spec.animations[i].grouping) {
                     hasError = this.checkGroupingSpec(spec.animations[i].grouping, status);
@@ -175,10 +217,28 @@ class CanisSpec {
                 }
                 //check effects
                 for (let j = 0, len2 = spec.animations[i].effects.length; j < len2; j++) {
+                    //check for wrong attributes
+                    hasError = this.checkAttrs(ActionSpec.attrs, spec.animations[i].effects[j], status);
+                    if (hasError) {
+                        break;
+                    }
+
                     if (!spec.animations[i].effects[j].type) {
                         hasError = true;
                         status.info = { type: 'error', msg: 'No effect type found in effect item.', errSpec: JSON.stringify(spec.animations[i].effects[j]).replace(/\s/g, '') };
                         break;
+                    }
+                    if (spec.animations[i].effects[j].offset && typeof spec.animations[i].effects[j].offset === 'object') {
+                        hasError = this.checkAttrs(TimingSpec.dataBindAttrs, spec.animations[i].effects[j].offset, status);
+                        if (hasError) {
+                            break;
+                        }
+                    }
+                    if (spec.animations[i].effects[j].duration && typeof spec.animations[i].effects[j].duration === 'object') {
+                        hasError = this.checkAttrs(TimingSpec.dataBindAttrs, spec.animations[i].effects[j].duration, status);
+                        if (hasError) {
+                            break;
+                        }
                     }
                 }
             }
@@ -187,9 +247,21 @@ class CanisSpec {
     }
 
     checkGroupingSpec(groupingSpec, status) {
+        //check for wrong attributes
+        let hasError = this.checkAttrs(GroupingSpec.attrs, groupingSpec, status);
+        if (hasError) {
+            return true;
+        }
+
         if (groupingSpec.reference) {
             if (!Object.keys(TimingSpec.timingRef).includes(TimingSpec.transRef(groupingSpec.reference))) {
                 status.info = { type: 'error', msg: 'The value of the reference has to be one of: start with previous or start after previous.', errSpec: '"reference":"' + groupingSpec.reference.replace(/\s/g, '') + '"' };
+                return true;
+            }
+        }
+        if (groupingSpec.sort && typeof groupingSpec.sort === 'object') {
+            let sortHasError = this.checkAttrs(GroupingSpec.sortAttrs, groupingSpec.sort, status);
+            if (sortHasError) {
                 return true;
             }
         }

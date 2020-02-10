@@ -481,6 +481,7 @@ class Animation extends TimingSpec {
 
 Animation.visualAttrs = ['x', 'y', 'cx', 'cy', 'innerRadius', 'outterRadius', 'startAngle', 'endAngle', 'width', 'height', 'opacity', 'fill', 'stroke', 'content', 'stroke-dasharray', 'stroke-dashoffset'];
 Animation.domMarks = new Map();
+Animation.attrs = ['selector', 'grouping', 'effects', 'offset', 'reference']
 Animation.wholeEndTime = 0;
 Animation.frameTime = new Map();//key: time, value: whether this time point is a keyframe
 Animation.animations = new Map();//record all animations, key:, value: animation obj
