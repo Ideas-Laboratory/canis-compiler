@@ -12,12 +12,25 @@ class CanisSpec {
     constructor() {
         this.currentSpec = {};
         this.canisObj = {};
+        this._constants = new Map();
         this.chartSpecs;
         this.facet;
         this._animations;
         this.chartWidth;
         this.chartHeight;
         this.hasError = false;
+    }
+
+    set constants(conArr) {
+        this._constants.clear();
+        conArr.forEach(c => {
+            this._constants.set(c.name, c.value);
+        })
+        console.log(this._constants);
+    }
+
+    get constants() {
+        return this._constants;
     }
 
     set animations(aniJson) {
@@ -103,7 +116,8 @@ class CanisSpec {
     compareSpec(spec) {
         let diffChart = false;
         console.log('comparing: ', this.currentSpec.charts, spec.charst);
-        if ((typeof this.currentSpec.charts !== 'undefined' && JSON.stringify(spec.charts) !== JSON.stringify(this.currentSpec.charts)) ||
+        if ((typeof this.currentSpec.constants !== 'undefined' && JSON.stringify(spec.constants) !== JSON.stringify(this.currentSpec.constants)) ||
+            (typeof this.currentSpec.charts !== 'undefined' && JSON.stringify(spec.charts) !== JSON.stringify(this.currentSpec.charts)) ||
             typeof this.currentSpec.charts === 'undefined' ||
             (typeof spec.facet !== 'undefined' && typeof this.currentSpec.facet !== 'undefined' && JSON.stringify(spec.facet) !== JSON.stringify(this.currentSpec.facet)) ||
             ((typeof this.currentSpec.facet === 'undefined' || typeof spec.facet === 'undefined') && !(typeof this.currentSpec.facet === 'undefined' && typeof spec.facet === 'undefined'))
@@ -227,6 +241,10 @@ class CanisSpec {
                         hasError = true;
                         status.info = { type: 'error', msg: 'No effect type found in effect item.', errSpec: JSON.stringify(spec.animations[i].effects[j]).replace(/\s/g, '') };
                         break;
+                    } else if (!Object.values(ActionSpec.actionTypes).includes(spec.animations[i].effects[j].type)) {
+                        hasError = true;
+                        status.info = { type: 'error', msg: 'Invalid effect type "' + spec.animations[i].effects[j].type + '".', errSpec: '"type":"' + spec.animations[i].effects[j].type.replace(/\s/g, '') + '"' };
+                        break;
                     }
                     if (spec.animations[i].effects[j].offset && typeof spec.animations[i].effects[j].offset === 'object') {
                         hasError = this.checkAttrs(TimingSpec.dataBindAttrs, spec.animations[i].effects[j].offset, status);
@@ -240,6 +258,11 @@ class CanisSpec {
                             break;
                         }
                     }
+                    if (spec.animations[i].effects[j].easing && !Object.values(ActionSpec.easingType).includes(spec.animations[i].effects[j].easing)) {
+                        hasError = true;
+                        status.info = { type: 'error', msg: 'Invalid easing type "' + spec.animations[i].effects[j].easing + '".', errSpec: '"easing":"' + spec.animations[i].effects[j].easing.replace(/\s/g, '') + '"' };
+                        break;
+                    }
                 }
             }
         }
@@ -247,6 +270,12 @@ class CanisSpec {
     }
 
     checkGroupingSpec(groupingSpec, status) {
+        if (typeof groupingSpec === 'number' || typeof groupingSpec === 'string') {
+            const errStr = typeof groupingSpec === 'number' ? '"grouping":' + groupingSpec : '"grouping":"' + groupingSpec.replace(/\s/g, '') + '"';
+            status.info = { type: 'error', msg: 'Invalid grouping value.', errSpec: errStr };
+            return true;
+        }
+
         //check for wrong attributes
         let hasError = this.checkAttrs(GroupingSpec.attrs, groupingSpec, status);
         if (hasError) {
@@ -264,6 +293,9 @@ class CanisSpec {
             if (sortHasError) {
                 return true;
             }
+        } else if (typeof groupingSpec.sort === 'number') {
+            status.info = { type: 'error', msg: 'Invalid sort value.', errSpec: '"sort":' + groupingSpec.sort };
+            return true;
         }
         if (groupingSpec.grouping) {
             return this.checkGroupingSpec(groupingSpec.grouping, status);
@@ -298,6 +330,11 @@ class CanisSpec {
                 // console.log('diff chart: ', diffChart);
                 let canisObj = await this.preprocessCharts(spec, diffChart, status);
 
+                //init user defined variables
+                if(canisObj.constants && typeof canisObj.constants !== 'undefined'){
+                    this.constants = canisObj.constants;
+                }
+
                 //deal with animations
                 this.animations = canisObj.animations;
 
@@ -305,6 +342,7 @@ class CanisSpec {
                     let lastAnimation;
                     for (let aniIdx = 0; aniIdx < this.animations.length; aniIdx++) {
                         let animationJson = this.animations[aniIdx];
+
                         console.time('using dom');
                         //use the selector in animation to select marks and record dom attrs
                         console.time('query dom');
@@ -312,6 +350,14 @@ class CanisSpec {
                         document.body.appendChild(tmpContainer);
                         tmpContainer.innerHTML = ChartSpec.charts[animationJson.chartIdx].outerHTML;
                         let marks = tmpContainer.querySelectorAll(animationJson.selector);
+                        if (marks.length === 0) {
+                            if (typeof animationJson.selector === 'number') {
+                                status.info = { type: 'error', msg: 'The selector need to be a CSS selector', errSpec: '"selector":' + animationJson.selector };
+                            } else {
+                                status.info = { type: 'error', msg: 'The selector ' + animationJson.selector + ' selects no marks', errSpec: '"selector":"' + animationJson.selector.replace(/\s/g, '') + '"' };
+                            }
+                            return;
+                        }
                         console.timeEnd('query dom');
 
                         let usedChangedAttrs = [];
@@ -331,7 +377,11 @@ class CanisSpec {
                             animation.translate(animationJson, usedChangedAttrs);//translate from json obj to Animation obj
                             Animation.animations.set(animationJson.selector, animation);
                         }
-                        console.log('translated animation: ', animation);
+                        //replace contant variables
+                        if(this.constants.size > 0){
+                            animation.replaceConstants(this.constants, status);
+                            console.log('translated animation: ', animation);
+                        }
 
                         console.timeEnd('using dom');
                         let markIds = [];//record all ids of selected marks

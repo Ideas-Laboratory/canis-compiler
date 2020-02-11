@@ -85,6 +85,32 @@ class ActionSpec extends TimingSpec {
         }
     }
 
+    replaceDurationConst(constants, status = null) {
+        if (typeof this.duration === 'string') {
+            if (typeof constants.get(this.duration) === 'undefined') {//check error in animation timing
+                status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"duration":"' + this.duration.replace(/\s/g, '') + '"' };
+            } else {//replace
+                if (typeof constants.get(this.duration) === 'number') {
+                    this.duration = constants.get(this.duration);
+                } else {
+                    status.info = { type: 'error', msg: 'Duration must be a number or a numeric type constant.', errSpec: '"duration":"' + this.duration.replace(/\s/g, '') + '"' };
+                }
+            }
+        } else if (this.duration && typeof this.duration === 'object') {
+            if (typeof this.duration.minDuration === 'string') {
+                if (typeof constants.get(this.duration.minDuration) === 'undefined') {//check error in animation timing
+                    status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"minDuration":"' + this.duration.minDuration.replace(/\s/g, '') + '"' };
+                } else {//replace
+                    if (typeof constants.get(this.duration.minDuration) === 'number') {
+                        this.duration.minDuration = constants.get(this.duration.minDuration);
+                    } else {
+                        status.info = { type: 'error', msg: 'MinDuration must be a number or a numeric type constant.', errSpec: '"minDuration":"' + this.duration.minDuration.replace(/\s/g, '') + '"' };
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * translate template animations to 'custom' type with the transition on some visual attributes
      */

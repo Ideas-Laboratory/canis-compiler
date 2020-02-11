@@ -22,6 +22,22 @@ class Animation extends TimingSpec {
         this.root = {};
     }
 
+    replaceConstants(constants, status = null) {
+        //replace constants in animation timing
+        this.replaceOffsetConst(constants, status);
+
+        //replace constants in grouping timing
+        if (this.grouping !== 'undefined') {
+            this.grouping.replaceDelayConst(constants, status);
+        }
+
+        //replace constants in action timing
+        this.actions.forEach(a => {
+            a.replaceOffsetConst(constants, status);
+            a.replaceDurationConst(constants, status);
+        })
+    }
+
     /**
      * translate from json object to Animation object
      * @param {JSON obj} animationJson 

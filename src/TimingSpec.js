@@ -34,6 +34,32 @@ class TimingSpec {
     }
     /***** end getters and setters *****/
 
+    replaceOffsetConst(constants, status = null) {
+        if (typeof this.offset === 'string') {
+            if (typeof constants.get(this.offset) === 'undefined') {//check error in animation timing
+                status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"offset":"' + this.offset.replace(/\s/g, '') + '"' };
+            } else {//replace
+                if (typeof constants.get(this.offset) === 'number') {
+                    this.offset = constants.get(this.offset);
+                } else {
+                    status.info = { type: 'error', msg: 'Offset must be a number or a numeric type constant.', errSpec: '"offset":"' + this.offset.replace(/\s/g, '') + '"' };
+                }
+            }
+        } else if (this.offset && typeof this.offset === 'object') {
+            if (typeof this.offset.minOffset === 'string') {
+                if (typeof constants.get(this.offset.minOffset) === 'undefined') {//check error in animation timing
+                    status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"minOffset":"' + this.offset.minOffset.replace(/\s/g, '') + '"' };
+                } else {//replace
+                    if (typeof constants.get(this.offset.minOffset) === 'number') {
+                        this.offset.minOffset = constants.get(this.offset.minOffset);
+                    } else {
+                        status.info = { type: 'error', msg: 'MinOffset must be a number or a numeric type constant.', errSpec: '"minOffset":"' + this.offset.minOffset.replace(/\s/g, '') + '"' };
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * add offset start time
      * @param {number} lastStart : start time of the last item

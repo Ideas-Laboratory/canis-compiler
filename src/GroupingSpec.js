@@ -51,6 +51,22 @@ class GroupingSpec extends TimingSpec {
         return this._delay;
     }
     /***** end getters and setters *****/
+    replaceDelayConst(constants, status = null) {
+        if (typeof this.delay === 'string') {
+            if (typeof constants.get(this.delay) === 'undefined') {//check error in animation timing
+                status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"delay":"' + this.delay.replace(/\s/g, '') + '"' };
+            } else {//replace
+                if (typeof constants.get(this.delay) === 'number') {
+                    this.delay = constants.get(this.delay);
+                } else {
+                    status.info = { type: 'error', msg: 'Delay must be a number or a numeric type constant.', errSpec: '"delay":"' + this.delay.replace(/\s/g, '') + '"' };
+                }
+            }
+        }
+        if (typeof this.grouping !== 'undefined') {
+            this.grouping.replaceDelayConst(constants, status);
+        }
+    }
 
     /**
      * init nested grouping and actions using json obj
