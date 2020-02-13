@@ -48,8 +48,22 @@ class CanisSpec {
             for (let i = 1; i < chartNum - 1; i++) {
                 let tmpAniJson = CanisUtil.deepClone(aniJson);
                 tmpAniJson[0].reference = TimingSpec.timingRef.previousEnd;
+                //record animation id and replace it in align property
+                let tmpAniIdx = 0;
+                let idMapping = new Map(); //key: previous animation id, value: new animation id
                 let tmpIdxAniJson = tmpAniJson.map(tmpAni => {
                     tmpAni.chartIdx = i;
+                    if (typeof tmpAni.id !== 'undefined') {
+                        const newId = '_ani_' + i + '_' + tmpAniIdx;
+                        idMapping.set(tmpAni.id, newId);
+                    }
+                    if (typeof tmpAni.align !== 'undefined') {
+                        if (typeof idMapping.get(tmpAni.align.target) !== 'undefined') {
+                            tmpAni.align.target = idMapping.get(tmpAni.align.target);
+                        } else {
+                            console.log('aligning with an id that does not exist!');
+                        }
+                    }
                     return tmpAni;
                 })
                 idxAniJson.push(...tmpIdxAniJson);
@@ -215,6 +229,14 @@ class CanisSpec {
                         break;
                     }
                 }
+                // //check align
+                // if (spec.animations[i].align) {
+                //     if (!Object.keys(Animation.alignTarget).includes(Animation.transAlign(spec.animations[i].align))) {
+                //         hasError = true;
+                //         status.info = { type: 'error', msg: 'The value of align has to be one of: element or object.', errSpec: '"align":"' + spec.animations[i].align.replace(/\s/g, '') + '"' };
+                //         break;
+                //     }
+                // }
                 //check offset object
                 if (spec.animations[i].offset && typeof spec.animations[i].offset === 'object') {
                     hasError = this.checkAttrs(TimingSpec.dataBindAttrs, spec.animations[i].offset, status);
@@ -331,7 +353,7 @@ class CanisSpec {
                 let canisObj = await this.preprocessCharts(spec, diffChart, status);
 
                 //init user defined variables
-                if(canisObj.constants && typeof canisObj.constants !== 'undefined'){
+                if (canisObj.constants && typeof canisObj.constants !== 'undefined') {
                     this.constants = canisObj.constants;
                 }
 
@@ -367,18 +389,26 @@ class CanisSpec {
 
                         //check whether the animation is existed
                         //TODO: remove non existed animations in the current spec
-                        console.log('selector of this animation: ', animationJson.selector);
+                        console.log('selector of this animation: ', animationJson, animationJson.selector);
                         let animation;
-                        if (typeof Animation.animations.get(animationJson.selector) !== 'undefined') {//already have this animation
-                            animation = Animation.animations.get(animationJson.selector);
+                        const aniKey = animationJson.chartIdx + '_' + animationJson.selector;
+                        if (typeof Animation.animations.get(aniKey) !== 'undefined') {//already have this animation
+                            animation = Animation.animations.get(aniKey);
                             animation.translate(animationJson, usedChangedAttrs, true);
                         } else {
                             animation = new Animation();
                             animation.translate(animationJson, usedChangedAttrs);//translate from json obj to Animation obj
-                            Animation.animations.set(animationJson.selector, animation);
+                            Animation.animations.set(aniKey, animation);
+                        }
+                        //auto fill align property for animations except the first one
+                        if (typeof animation.align === 'undefined' && typeof lastAnimation !== 'undefined') {
+                            animation.align = {
+                                target: lastAnimation.id,
+                                type: Animation.alignTarget.withObj
+                            }
                         }
                         //replace contant variables
-                        if(this.constants.size > 0){
+                        if (this.constants.size > 0) {
                             animation.replaceConstants(this.constants, status);
                             console.log('translated animation: ', animation);
                         }
@@ -479,7 +509,8 @@ class CanisSpec {
                             // console.log('after', Animation.domMarks);
                             console.timeEnd('extract mark dom');
                         }
-                        animation.calAniTime(markIds, lastAnimation);
+                        // animation.calAniTime(markIds, lastAnimation);
+                        animation.calAniTime(markIds);
                         lastAnimation = animation;
                         document.body.removeChild(tmpContainer);
                     }

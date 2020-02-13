@@ -407,7 +407,7 @@ class GroupingSpec extends TimingSpec {
             markAni.get(t.marks[i]).startTime += t.start;
             if (markAni.get(t.marks[i]).startTime + markAni.get(t.marks[i]).totalDuration > t.end) {
                 t.end = markAni.get(t.marks[i]).startTime + markAni.get(t.marks[i]).totalDuration;
-                console.log('t end: ', t.end);
+                // console.log('t end: ', t.end);
             }
         }
 

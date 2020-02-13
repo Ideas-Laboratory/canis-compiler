@@ -10,8 +10,10 @@ import { LayerFactory } from 'jsmovin';
 class Animation extends TimingSpec {
     constructor() {
         super();
+        this._id;
         this.chartIdx;
         this.selector;
+        this._align = Animation.alignTarget.object;
         this.grouping = new GroupingSpec();
         this.actions = [];
 
@@ -21,6 +23,41 @@ class Animation extends TimingSpec {
         this.animationEndTime = 0;
         this.root = {};
     }
+
+    /***** getters and setters *****/
+    set id(id) {
+        if (typeof this._id === 'undefined') {
+            if (typeof id !== 'undefined') {
+                this._id = id;
+            } else {//add default id
+                this._id = 'ani' + Animation.aniIdx;
+                Animation.aniIdx++;
+            }
+        } else {
+            console.log('animation ' + this._id + ' already has an id.');
+        }
+    }
+
+    get id() {
+        return this._id;
+    }
+
+    set align(align) {
+        if (typeof align !== 'undefined' && typeof align === 'object') {
+            this._align = align;
+        }
+        // if (typeof alignStr !== 'undefined') {
+        //     let tmpAlignStr = Animation.transAlign(alignStr);
+        //     if (Object.keys(Animation.alignTarget).includes(tmpAlignStr)) {
+        //         this._align = alignStr;
+        //     }
+        // }
+    }
+
+    get align() {
+        return this._align;
+    }
+    /***** end getters and setters *****/
 
     replaceConstants(constants, status = null) {
         //replace constants in animation timing
@@ -47,8 +84,10 @@ class Animation extends TimingSpec {
         if (!updating) {
             this.selector = animationJson.selector;//init selector
         }
+        this.id = animationJson.id;
         this.reference = animationJson.reference;
         this.offset = animationJson.offset;
+        this.align = animationJson.align;
         if (typeof animationJson.grouping !== 'undefined') {//init grouping
             this.grouping.initGrouping(animationJson.grouping);
         }
@@ -76,7 +115,18 @@ class Animation extends TimingSpec {
      * @param {Array} markIds : array of mark ids
      * @param {Animation} lastAnimation : last animation in order to calculate time
      */
-    calAniTime(markIds, lastAnimation) {
+    // calAniTime(markIds, lastAnimation) {
+    calAniTime(markIds) {
+        let lastAnimation;
+        if (typeof this.align !== 'undefined') {
+            Animation.animations.forEach((value, key) => {
+                if (this.align.target === value.id) {
+                    lastAnimation = value;
+                }
+            })
+        }
+
+        console.log('about to cal ani time: ', this, lastAnimation);
         console.time('cal ani time');
         let that = this;
         //check whether the durations of the actions are set with the data variables
@@ -95,7 +145,6 @@ class Animation extends TimingSpec {
         }
         //calculate the duration of all actions
         let [actionsDurations, minValueEachAttr, processedActions] = ActionSpec.calActionDuration(this.actions, durationAttrValues, Animation.domMarks);
-        console.log('after calculate actions: ', this.actions, actionsDurations, minValueEachAttr, processedActions);
         //construct tree while order the marks according to "sort"
         let marksInOrder = this.grouping.arrangeOrder(markIds, Animation.domMarks, this.root);
         console.log('animation frames: ', GroupingSpec.frames);
@@ -269,7 +318,7 @@ class Animation extends TimingSpec {
      */
     static renderAnimation(status = null) {
         let that = this;
-        this.allMarkAni.forEach(function (value, markId) {
+        this.allMarkAni.forEach((value, markId) => {
             //record the end time of the entire animation, and record the init status of each mark
             if (that.wholeEndTime < value.startTime + value.totalDuration) {
                 that.wholeEndTime = value.startTime + value.totalDuration;
@@ -281,7 +330,7 @@ class Animation extends TimingSpec {
         console.log('The duration of the generated animation is: ' + this.wholeEndTime + 'ms');
 
         //replace the 'wholeEnd' place holder in duration
-        this.allMarkAni.forEach(function (value, a) {
+        this.allMarkAni.forEach((value, a) => {
             for (let i = 0, item; i < value.actionAttrs.length | (item = value.actionAttrs[i]); i++) {
                 if (item.duration === 'wholeEnd') {
                     item.duration = that.wholeEndTime - item.startTime;
@@ -483,6 +532,15 @@ class Animation extends TimingSpec {
         })
     }
 
+    static transAlign(alignStr) {
+        switch (alignStr) {
+            case this.alignTarget.withEle:
+                return 'withEle';
+            case this.alignTarget.withObj:
+                return 'withObj';
+        }
+    }
+
     //if the charts changed, then do reset
     static resetAll() {
         this.wholeEndTime = 0;
@@ -491,13 +549,20 @@ class Animation extends TimingSpec {
         // this.domMarks.clear();
         this.finalStatus.clear();
         this.animations.clear();
+        Animation.aniIdx = 0;
     }
 
 }
 
+
+Animation.aniIdx = 0;
+Animation.alignTarget = {
+    withEle: 'element',
+    withObj: 'object'
+}
 Animation.visualAttrs = ['x', 'y', 'cx', 'cy', 'innerRadius', 'outterRadius', 'startAngle', 'endAngle', 'width', 'height', 'opacity', 'fill', 'stroke', 'content', 'stroke-dasharray', 'stroke-dashoffset'];
 Animation.domMarks = new Map();
-Animation.attrs = ['selector', 'grouping', 'effects', 'offset', 'reference']
+Animation.attrs = ['id', 'selector', 'grouping', 'effects', 'offset', 'reference', 'align']
 Animation.wholeEndTime = 0;
 Animation.frameTime = new Map();//key: time, value: whether this time point is a keyframe
 Animation.animations = new Map();//record all animations, key:, value: animation obj
