@@ -22,7 +22,7 @@ class TimingSpec {
         if (typeof ofst !== 'undefined') {
             if (typeof ofst === 'number') {
                 this._offset = Math.floor(ofst / (1000 / TimingSpec.FRAME_RATE)) * (1000 / TimingSpec.FRAME_RATE);
-            } else if (typeof ofst === 'object') {
+            } else if (typeof ofst === 'object' || typeof ofst === 'string') {
                 this._offset = ofst;
             }
 
@@ -37,7 +37,26 @@ class TimingSpec {
     replaceOffsetConst(constants, status = null) {
         if (typeof this.offset === 'string') {
             if (typeof constants.get(this.offset) === 'undefined') {//check error in animation timing
-                status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"offset":"' + this.offset.replace(/\s/g, '') + '"' };
+                //check if it is an equation
+                if (this.offset.indexOf("calc") === 0) {
+                    this.offset = this.offset.substring(0, this.offset.length - 1).substring(5);
+                    constants.forEach((value, key, map) => {
+                        if (this.offset.includes(key)) {
+                            if (typeof value === 'number') {
+                                this.offset = this.offset.replace(new RegExp(key, 'gm'), '' + value);
+                            } else {
+                                status.info = { type: 'error', msg: 'Offset must be a number or a numeric type constant.', errSpec: '"offset":"' + this.offset.replace(/\s/g, '') + '"' };
+                            }
+                        }
+                    })
+                    if (CanisUtil.checkEquation(this.offset, constants)) {
+                        this.offset = eval(this.offset);
+                    } else {
+                        status.info = { type: 'error', msg: 'Wrong equation.', errSpec: '"offset":"' + this.offset.replace(/\s/g, '') + '"' };
+                    }
+                } else {
+                    status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"offset":"' + this.offset.replace(/\s/g, '') + '"' };
+                }
             } else {//replace
                 if (typeof constants.get(this.offset) === 'number') {
                     this.offset = constants.get(this.offset);
@@ -48,7 +67,26 @@ class TimingSpec {
         } else if (this.offset && typeof this.offset === 'object') {
             if (typeof this.offset.minOffset === 'string') {
                 if (typeof constants.get(this.offset.minOffset) === 'undefined') {//check error in animation timing
-                    status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"minOffset":"' + this.offset.minOffset.replace(/\s/g, '') + '"' };
+                    //check if it is an equation
+                    if (this.offset.minOffset.indexOf("calc") === 0) {
+                        this.offset.minOffset = this.offset.minOffset.substring(0, this.offset.minOffset.length - 1).substring(5);
+                        constants.forEach((value, key, map) => {
+                            if (this.offset.minOffset.includes(key)) {
+                                if (typeof value === 'number') {
+                                    this.offset.minOffset = this.offset.minOffset.replace(new RegExp(key, 'gm'), '' + value);
+                                } else {
+                                    status.info = { type: 'error', msg: 'MinOffset must be a number or a numeric type constant.', errSpec: '"minOffset":"' + this.offset.minOffset.replace(/\s/g, '') + '"' };
+                                }
+                            }
+                        })
+                        if (CanisUtil.checkEquation(this.offset.minOffset, constants)) {
+                            this.offset.minOffset = eval(this.offset.minOffset);
+                        } else {
+                            status.info = { type: 'error', msg: 'Wrong equation.', errSpec: '"minOffset":"' + this.offset.minOffset.replace(/\s/g, '') + '"' };
+                        }
+                    } else {
+                        status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"minOffset":"' + this.offset.minOffset.replace(/\s/g, '') + '"' };
+                    }
                 } else {//replace
                     if (typeof constants.get(this.offset.minOffset) === 'number') {
                         this.offset.minOffset = constants.get(this.offset.minOffset);

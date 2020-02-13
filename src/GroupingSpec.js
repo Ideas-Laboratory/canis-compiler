@@ -1,4 +1,5 @@
 import TimingSpec from './TimingSpec.js';
+import { CanisUtil } from './util/Util.js';
 
 class GroupingSpec extends TimingSpec {
     constructor() {
@@ -38,12 +39,14 @@ class GroupingSpec extends TimingSpec {
     }
 
     set delay(dly) {
-        if (typeof dly !== 'undefined') {
+        if (typeof dly === 'number') {
             if (dly >= 1000 / TimingSpec.FRAME_RATE || dly === 0) {
                 this._delay = dly;
             } else {
                 this._delay = 1000 / TimingSpec.FRAME_RATE;
             }
+        } else if (typeof dly === 'string') {
+            this._delay = dly;
         }
     }
 
@@ -54,9 +57,33 @@ class GroupingSpec extends TimingSpec {
     replaceDelayConst(constants, status = null) {
         if (typeof this.delay === 'string') {
             if (typeof constants.get(this.delay) === 'undefined') {//check error in animation timing
-                status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"delay":"' + this.delay.replace(/\s/g, '') + '"' };
+                //check if it is an equation
+                if (this.delay.indexOf("calc") === 0) {
+                    this.delay = this.delay.substring(0, this.delay.length - 1).substring(5);
+                    constants.forEach((value, key, map) => {
+                        console.log("key is", key, value, this.delay, this.delay.includes(key));
+                        if (this.delay.includes(key)) {
+                            if (typeof value === 'number') {
+                                this.delay = this.delay.replace(new RegExp(key, 'gm'), '' + value);
+                                console.log('after replace: ', this.delay);
+                            } else {
+                                status.info = { type: 'error', msg: 'Delay must be a number or a numeric type constant.', errSpec: '"delay":"' + this.delay.replace(/\s/g, '') + '"' };
+                            }
+                        }
+                    })
+                    if (CanisUtil.checkEquation(this.delay, constants)) {
+                        console.log('this is euq', this.delay);
+                        this.delay = eval(this.delay);
+                    } else {
+                        console.log('this is not euq', this.delay);
+                        status.info = { type: 'error', msg: 'Wrong equation.', errSpec: '"delay":"' + this.delay.replace(/\s/g, '') + '"' };
+                    }
+                } else {
+                    status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"delay":"' + this.delay.replace(/\s/g, '') + '"' };
+                }
             } else {//replace
                 if (typeof constants.get(this.delay) === 'number') {
+                    console.log('delay is number', constants.get(this.delay));
                     this.delay = constants.get(this.delay);
                 } else {
                     status.info = { type: 'error', msg: 'Delay must be a number or a numeric type constant.', errSpec: '"delay":"' + this.delay.replace(/\s/g, '') + '"' };

@@ -44,12 +44,10 @@ class ActionSpec extends TimingSpec {
     }
 
     set duration(drtn) {
-        if (typeof drtn !== 'undefined') {
-            if (typeof drtn === 'number') {
-                this._duration = Math.floor(drtn / (1000 / TimingSpec.FRAME_RATE)) * (1000 / TimingSpec.FRAME_RATE);
-            } else {
-                this._duration = drtn;
-            }
+        if (typeof drtn === 'number') {
+            this._duration = Math.floor(drtn / (1000 / TimingSpec.FRAME_RATE)) * (1000 / TimingSpec.FRAME_RATE);
+        } else if (typeof drtn === 'string' || typeof drtn === 'object') {
+            this._duration = drtn;
         }
     }
 
@@ -88,7 +86,26 @@ class ActionSpec extends TimingSpec {
     replaceDurationConst(constants, status = null) {
         if (typeof this.duration === 'string') {
             if (typeof constants.get(this.duration) === 'undefined') {//check error in animation timing
-                status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"duration":"' + this.duration.replace(/\s/g, '') + '"' };
+                //check if it is an equation
+                if (this.duration.indexOf("calc") === 0) {
+                    this.duration = this.duration.substring(0, this.duration.length - 1).substring(5);
+                    constants.forEach((value, key, map) => {
+                        if (this.duration.includes(key)) {
+                            if (typeof value === 'number') {
+                                this.duration = this.duration.replace(new RegExp(key, 'gm'), '' + value);
+                            } else {
+                                status.info = { type: 'error', msg: 'Duration must be a number or a numeric type constant.', errSpec: '"duration":"' + this.duration.replace(/\s/g, '') + '"' };
+                            }
+                        }
+                    })
+                    if (CanisUtil.checkEquation(this.duration, constants)) {
+                        this.duration = eval(this.duration);
+                    } else {
+                        status.info = { type: 'error', msg: 'Wrong equation.', errSpec: '"duration":"' + this.duration.replace(/\s/g, '') + '"' };
+                    }
+                } else {
+                    status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"duration":"' + this.duration.replace(/\s/g, '') + '"' };
+                }
             } else {//replace
                 if (typeof constants.get(this.duration) === 'number') {
                     this.duration = constants.get(this.duration);
@@ -99,7 +116,26 @@ class ActionSpec extends TimingSpec {
         } else if (this.duration && typeof this.duration === 'object') {
             if (typeof this.duration.minDuration === 'string') {
                 if (typeof constants.get(this.duration.minDuration) === 'undefined') {//check error in animation timing
-                    status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"minDuration":"' + this.duration.minDuration.replace(/\s/g, '') + '"' };
+                    //check if it is an equation
+                    if (this.duration.minDuration.indexOf("calc") === 0) {
+                        this.duration.minDuration = this.duration.minDuration.substring(0, this.duration.minDuration.length - 1).substring(5);
+                        constants.forEach((value, key, map) => {
+                            if (this.duration.minDuration.includes(key)) {
+                                if (typeof value === 'number') {
+                                    this.duration.minDuration = this.duration.minDuration.replace(new RegExp(key, 'gm'), '' + value);
+                                } else {
+                                    status.info = { type: 'error', msg: 'Duration must be a number or a numeric type constant.', errSpec: '"minDuration":"' + this.duration.minDuration.replace(/\s/g, '') + '"' };
+                                }
+                            }
+                        })
+                        if (CanisUtil.checkEquation(this.duration.minDuration, constants)) {
+                            this.duration.minDuration = eval(this.duration.minDuration);
+                        } else {
+                            status.info = { type: 'error', msg: 'Wrong equation.', errSpec: '"minDuration":"' + this.duration.minDuration.replace(/\s/g, '') + '"' };
+                        }
+                    } else {
+                        status.info = { type: 'error', msg: 'Wrong reference of the constant variables.', errSpec: '"minDuration":"' + this.duration.minDuration.replace(/\s/g, '') + '"' };
+                    }
                 } else {//replace
                     if (typeof constants.get(this.duration.minDuration) === 'number') {
                         this.duration.minDuration = constants.get(this.duration.minDuration);

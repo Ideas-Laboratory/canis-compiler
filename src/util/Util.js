@@ -4,6 +4,106 @@ import { parseSVG } from 'svg-path-parser'
 export class CanisUtil {
     constructor() { }
 
+    static checkEquation(string, constants) {
+        console.log(string);
+        console.log(constants);
+
+        // 剔除空白符
+        string = string.replace(/\s/g, '');
+
+        // 错误情况，空字符串
+        if ("" === string) {
+            // return false;
+        }
+        if (/^[\x\÷\+\-\*\/]/.test(string)) {
+            // console.error(& amp; quot; 运算符开头 & amp; quot;);
+            return false;
+        }
+
+        //错误情况，运算符结尾
+        if (/[\x\÷\+\-\*\/]$/.test(string)) {
+            // console.error(& amp; quot; 运算符结尾 & amp; quot;);
+            return false;
+        }
+
+        // 错误情况，(后面是运算符或者)
+        if (/\([\x\÷\+\-\*\/]/.test(string)) {
+            // console.error(& amp; quot; (后面是运算符或者) & amp; quot;);
+            return false;
+        }
+        // 错误情况，运算符连续
+        if (/[\x\÷\+\-\*\/]{2,}/.test(string)) {
+            return false;
+        }
+
+        // 空括号
+        if (/\(\)/.test(string)) {
+            return false;
+        }
+
+        // 错误情况，括号不配对
+        var stack = [];
+        for (var i = 0, item; i < string.length; i++) {
+            item = string.charAt(i);
+            if ('(' === item) {
+                stack.push('(');
+            } else if (')' === item) {
+                if (stack.length > 0) {
+                    stack.pop();
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        if (0 !== stack.length) {
+            return false;
+        }
+
+        // 错误情况，(后面是运算符 
+        if (/\([\x\÷\+\-\*\/]/.test(string)) {
+            return false;
+        }
+
+        // 错误情况，)前面是运算符
+        if (/[\x\÷\+\-\*\/]\)/.test(string)) {
+            return false;
+        }
+
+        // 错误情况，(前面不是运算符
+        if (/[\x\÷\+\-\*\/]\(/.test(string)) {
+            return false;
+        }
+
+        // 错误情况，)后面不是运算符
+        if (/\)[\x\÷\+\-\*\/]/.test(string)) {
+            return false;
+        }
+
+        // 错误情况，变量没有来自“待选公式变量”
+        var tmpStr = string.replace(/[\(\)\x\÷\+\-\*\/]{1,}/g, '`');
+        var array = tmpStr.split(',');
+        for (let i = 0, item; i < array.length; i++) {
+            item = array[i];
+            if (/[A-Z]/i.test(item) && 'undefined' == typeof (constants.get(item))) {
+                return false;
+            }
+        }
+        let stringarr = string.split(',');
+        // let objarr = Object.keys(obj);
+        for (let index = 0; index < stringarr.length; index++) {
+            if (typeof constants.get(stringarr[index]) !== 'undefined') {
+                if (stringarr[index + 1] == undefined) {
+                } else if (stringarr[index + 1] !== '+' && stringarr[index + 1] !== '.' && stringarr[index + 1] !== '-' && stringarr[index + 1] !== 'x' && stringarr[index + 1] !== '÷' && stringarr[index + 1] !== '(' && stringarr[index + 1] !== ')') {
+                    return false
+                }
+            }
+
+        }
+
+        return true;
+    }
+
     static deepClone(obj) {
         if (!obj || true == obj) //this also handles boolean as true and false
             return obj;
