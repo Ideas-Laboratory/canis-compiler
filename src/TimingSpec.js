@@ -98,6 +98,47 @@ class TimingSpec {
         }
     }
 
+    calELeOffsetTime(domMarks) {
+        let that = this;
+        let itemsStart = new Map();
+
+        //if the offset is an object, find the min value of the field in offset
+        let minAttrValue = 1000000;
+        if (typeof this.offset === 'object') {
+            domMarks.forEach(function (attrs, markId) {
+                if (minAttrValue > parseFloat(attrs['data-datum'][that.offset.field])) {
+                    minAttrValue = parseFloat(attrs['data-datum'][that.offset.field]);
+                }
+            })
+        }
+
+        domMarks.forEach(function (attrs, markId) {
+            let offsetValue = 0;
+            //judge the type of offset: number or object
+            if (typeof that.offset === 'number') {
+                offsetValue = that.offset;
+            } else if (typeof that.offset === 'object') {
+                offsetValue = that.offset.minOffset * parseFloat(attrs['data-datum'][that.offset.field]) / minAttrValue;
+            }
+            itemsStart.set(markId, offsetValue);
+
+            // switch (that.reference) {
+            //     case TimingSpec.timingRef.previousStart:
+            //         itemsStart.set(markId, lastStart + offsetValue - allItemsStart);
+            //         break;
+            //     case TimingSpec.timingRef.previousEnd:
+            //         itemsStart.set(markId, lastEnd + offsetValue - allItemsStart);
+            //         break;
+            //     case TimingSpec.timingRef.absolute:
+            //         itemsStart.set(markId, offsetValue + allItemsStart);
+            //         break;
+            //     default:
+            //         itemsStart.set(markId, lastStart + offsetValue - allItemsStart);
+            // }
+        })
+        return itemsStart;
+    }
+
     /**
      * add offset start time
      * @param {number} lastStart : start time of the last item
@@ -143,8 +184,6 @@ class TimingSpec {
                     offsetValue = that.offset;
                 } else if (typeof that.offset === 'object') {
                     offsetValue = that.offset.minOffset * parseFloat(attrs['data-datum'][that.offset.field]) / minAttrValue;
-                } else {
-                    offsetValue = 0;
                 }
 
                 switch (that.reference) {

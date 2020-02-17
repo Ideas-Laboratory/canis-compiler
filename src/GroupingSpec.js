@@ -7,7 +7,7 @@ class GroupingSpec extends TimingSpec {
         this._groupBy = 'id'; //optional
         this._reference = TimingSpec.timingRef.previousStart;
         this._delay = 0;
-        this.definedById = false;
+        this.definedById = false;//true defined by user, false: not defined by user
         this.sort = {};
         // this.root = {};
         this.grouping;//optional, another GroupingSpec object indicating more groupings
@@ -142,8 +142,7 @@ class GroupingSpec extends TimingSpec {
             this.updateTree(root, domMarks);
         }
         console.log('generated tree: ', root);
-        let orderedMarks = this.getMarkOrder(root);
-        return orderedMarks;
+        return this.getMarkOrderAndLeaves(root);
     }
 
     updateTree(t, domMarks) {
@@ -349,24 +348,35 @@ class GroupingSpec extends TimingSpec {
      * @param {Object} t
      * @param {Array} arr 
      */
-    getMarkOrder(t) {
-        let orderedMarks = [];
+    getMarkOrderAndLeaves(t) {
+        let orderedMarks = [], leaves = [];
         if (t != null) {
             let queue = [];
+            t.parentGroupRef = [];
+            t.parentGroupRefValue = [];
             queue.unshift(t);
             while (queue.length != 0) {
                 let item = queue.shift();
                 let children = item.children;
                 if (children.length <= 0) {
+                    if (item.definedById || (!item.definedById && item.parentGroupRef.length === 1)) {
+                        leaves.push(item);
+                    }
                     orderedMarks = [...orderedMarks, ...item.marks];
                 } else {
-                    for (let i = 0; i < children.length; i++)
+                    if (item.children[0].groupRef === 'id' && item.groupRef !== 'root' && !item.children[0].definedById) {
+                        leaves.push(item);
+                    }
+                    for (let i = 0; i < children.length; i++) {
+                        children[i].parentGroupRef = [...item.parentGroupRef, item.groupRef];
+                        children[i].parentGroupRefValue = [...item.parentGroupRefValue, item.refValue];
                         queue.push(children[i]);
+                    }
                 }
 
             }
         }
-        return orderedMarks;
+        return [orderedMarks, leaves];
     }
 
     /**

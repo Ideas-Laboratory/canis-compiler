@@ -4,6 +4,24 @@ import { parseSVG } from 'svg-path-parser'
 export class CanisUtil {
     constructor() { }
 
+    /**
+     * check whether arr2 is contained in arr1
+     * @param {*} arr1 
+     * @param {*} arr2 
+     */
+    static arrIsContained(arr1, arr2) {
+        if (arr2.length > arr1) {
+            return false;
+        }
+        for (let i = 0, len = arr2.length; i < len; i++) {
+            if (!arr1.includes(arr2[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     static checkEquation(string, constants) {
         console.log(string);
         console.log(constants);

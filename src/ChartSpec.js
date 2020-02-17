@@ -84,10 +84,20 @@ class ChartSpec {
     }
 
     static removeTransAndMerge() {
+        const that = this;
+        const datumMarkMapping = new Map();
         for (let i = 0; i < ChartSpec.charts.length; i++) {
             ChartSpec.charts[i].setAttribute('trans', '0,0');
-            ChartSpec.removeTransitions(ChartSpec.charts[i].children[0]);
+            ChartSpec.removeTransitions(ChartSpec.charts[i].children[0], datumMarkMapping);
         }
+        const datumMarkArr = Array.from(datumMarkMapping).map(item => item[1]);
+        console.log('marksWithSameDatum: ', datumMarkMapping, datumMarkArr);
+        datumMarkArr.forEach(mArr => {
+            mArr.forEach(mId => {
+                that.marksWithSameDatum.set(mId, mArr);
+            })
+        })
+        console.log('marks with same datum: ', this.marksWithSameDatum);
         this.svgChart = ChartSpec.mergeCharts();
     }
 
@@ -354,11 +364,14 @@ class ChartSpec {
         return bBoxes;
     }
 
-    static removeTransitions(t) {
+    static removeTransitions(t, datumMarkMapping) {
+        console.log('removing trans: ', t);
         let tr = t.getAttribute('transform');
         let parentTrans = t.parentNode.getAttribute('trans').split(',');
         if (t.classList.contains('mark')) {
-            let dataDatumAttrValue = JSON.parse(t.getAttribute('data-datum'));
+            console.log('deal with mark: ', t);
+            const dataDatumAttrValueStr = t.getAttribute('data-datum');
+            let dataDatumAttrValue = JSON.parse(dataDatumAttrValueStr);
             if (Array.isArray(dataDatumAttrValue)) {
                 dataDatumAttrValue = dataDatumAttrValue[0];
             }
@@ -369,10 +382,24 @@ class ChartSpec {
                     isNonDataMark = true;
                 }
             })
+            const tmpId = t.getAttribute('id');
+            console.log(isNonDataMark);
             if (isNonDataMark) {
-                this.nonDataMarkDatum.set(t.getAttribute('id'), dataDatumAttrValue);
+                this.nonDataMarkDatum.set(tmpId, dataDatumAttrValue);
             } else {
-                this.dataMarkDatum.set(t.getAttribute('id'), dataDatumAttrValue);
+                this.dataMarkDatum.set(tmpId, dataDatumAttrValue);
+                let pureDatum = {};
+                Object.keys(dataDatumAttrValue).forEach(key => {
+                    if (key.indexOf('_') !== 0) {
+                        pureDatum[key] = dataDatumAttrValue[key];
+                    }
+                })
+                let pureDatumStr = JSON.stringify(pureDatum);
+                if (typeof datumMarkMapping.get(pureDatumStr) === 'undefined') {
+                    datumMarkMapping.set(pureDatumStr, []);
+                }
+                console.log('marks with same data: ', pureDatumStr, tmpId);
+                datumMarkMapping.get(pureDatumStr).push(tmpId);
             }
         }
 
@@ -419,7 +446,7 @@ class ChartSpec {
         }
         if (t.children.length > 0) {
             for (let i = 0; i < t.children.length; i++) {
-                ChartSpec.removeTransitions(t.children[i]);
+                ChartSpec.removeTransitions(t.children[i], datumMarkMapping);
             }
         }
     }
@@ -439,6 +466,7 @@ class ChartSpec {
         }
 
     }
+
 }
 
 ChartSpec.CHART_URL = 'url';
@@ -451,6 +479,7 @@ ChartSpec.dataTrans = new Map();
 ChartSpec.svgChart;
 ChartSpec.chartUnderstanding = {};
 ChartSpec.dataMarkDatum = new Map();
+ChartSpec.marksWithSameDatum = new Map();
 ChartSpec.nonDataMarkDatum = new Map();
 
 export default ChartSpec;

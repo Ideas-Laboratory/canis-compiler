@@ -142,6 +142,7 @@ class CanisSpec {
             // console.log('charts are different');
             Animation.domMarks.clear();
             ChartSpec.dataMarkDatum.clear();
+            ChartSpec.marksWithSameDatum.clear();
             ChartSpec.nonDataMarkDatum.clear();
             ChartSpec.chartUnderstanding = {};
             Animation.animations.clear();
@@ -237,6 +238,21 @@ class CanisSpec {
                 //         break;
                 //     }
                 // }
+                //check align
+                if (spec.animations[i].align && typeof spec.animations[i].align === 'object') {
+                    hasError = this.checkAttrs(Animation.alignAttrs, spec.animations[i].align, status);
+                    if (hasError) {
+                        break;
+                    }
+                    //check align type
+                    if (typeof spec.animations[i].align.type !== 'undefined') {
+                        if (!Object.keys(Animation.alignTarget).includes(Animation.transAlign(spec.animations[i].align.type))) {
+                            hasError = true;
+                            status.info = { type: 'error', msg: 'The value of align has to be one of: element or object.', errSpec: '"type":"' + spec.animations[i].align.type.replace(/\s/g, '') + '"' };
+                            break;
+                        }
+                    }
+                }
                 //check offset object
                 if (spec.animations[i].offset && typeof spec.animations[i].offset === 'object') {
                     hasError = this.checkAttrs(TimingSpec.dataBindAttrs, spec.animations[i].offset, status);
