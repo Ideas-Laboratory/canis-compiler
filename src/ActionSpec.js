@@ -83,7 +83,7 @@ class ActionSpec extends TimingSpec {
         }
     }
 
-    replaceDurationConst(constants, status = null) {
+    replaceDurationConst(constants, status = {}) {
         if (typeof this.duration === 'string') {
             if (typeof constants.get(this.duration) === 'undefined') {//check error in animation timing
                 //check if it is an equation

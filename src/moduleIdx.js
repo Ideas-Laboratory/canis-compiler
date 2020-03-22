@@ -19,7 +19,7 @@ export default class Canis {
             this.canisObj = new CanisSpec();
         }
         return this.canisObj.init(spec).then(() => {
-            console.log('finsh init');
+            console.log('finish init');
             return this.canisObj.render(callback);
         })
     }

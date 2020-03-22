@@ -54,7 +54,7 @@ class GroupingSpec extends TimingSpec {
         return this._delay;
     }
     /***** end getters and setters *****/
-    replaceDelayConst(constants, status = null) {
+    replaceDelayConst(constants, status = {}) {
         if (typeof this.delay === 'string') {
             if (typeof constants.get(this.delay) === 'undefined') {//check error in animation timing
                 //check if it is an equation
@@ -141,7 +141,7 @@ class GroupingSpec extends TimingSpec {
         } else {// update the current tree
             this.updateTree(root, domMarks);
         }
-        console.log('generated tree: ', root);
+        // console.log('generated tree: ', root);
         return this.getMarkOrderAndLeaves(root);
     }
 

@@ -90,7 +90,7 @@ class CanisSpec {
     //     }
     // }
 
-    preprocessCharts(spec, diffChart, status = null) {
+    preprocessCharts(spec, diffChart, status = {}) {
         console.time('prepeocess charts');
         this.chartSpecs = [];
         let canisObj = spec;
@@ -341,7 +341,7 @@ class CanisSpec {
         return false;
     }
 
-    async init(spec, status = null) {
+    async init(spec, status = {}) {
         // console.log(spec);
         if (status) {
             this.hasError = this.checkSpec(spec, status);
@@ -374,6 +374,7 @@ class CanisSpec {
                 }
 
                 //deal with animations
+                console.log('animations in spec: ', canisObj, canisObj.animations);
                 this.animations = canisObj.animations;
 
                 if (Array.isArray(this.animations)) {
@@ -536,10 +537,10 @@ class CanisSpec {
 
     }
 
-    render(callback, status = null) {
+    render(callback, status = {}) {
         console.time('rendering');
         Animation.renderAnimation(status);
-        Animation.findKeyframes();
+        // Animation.findKeyframes();
         //map animation keyframes to lottie spec
         Animation.mapToLottieSpec();
 

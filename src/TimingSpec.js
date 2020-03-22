@@ -34,7 +34,7 @@ class TimingSpec {
     }
     /***** end getters and setters *****/
 
-    replaceOffsetConst(constants, status = null) {
+    replaceOffsetConst(constants, status = {}) {
         if (typeof this.offset === 'string') {
             if (typeof constants.get(this.offset) === 'undefined') {//check error in animation timing
                 //check if it is an equation
