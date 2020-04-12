@@ -11,7 +11,7 @@ class FacetSpec {
             if (Object.keys(FacetSpec.facetType).includes(type)) {
                 this._type = type;
             } else {
-                console.log('the facet type has to be one of "row" or "column", setting to default value "column".')
+                console.warn('the facet type has to be one of "row" or "column", setting to default value "column".')
                 this._type = FacetSpec.facetType.col;
             }
         }
@@ -39,7 +39,7 @@ class FacetSpec {
                         }
                     } else {
                         view.frames = [view.range[0], view.range[1]];
-                        console.log('range start and end mismatch');
+                        console.warn('range start and end mismatch');
                     }
                 }
                 return view;

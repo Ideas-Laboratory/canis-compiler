@@ -23,9 +23,6 @@ export class CanisUtil {
     }
 
     static checkEquation(string, constants) {
-        console.log(string);
-        console.log(constants);
-
         // 剔除空白符
         string = string.replace(/\s/g, '');
 
@@ -1115,19 +1112,9 @@ export class AssetTemplate {
 
         if (differentKeys.includes('d')) {
             const removeNumRegExp = new RegExp(/[0-9\.,\s]/g);
-            const s1 = 'M0,0L0,0';
-            const s2 = 'M 0,0 L 0,0';
-            const s3 = 'M 0.5,0 L 0,0.9';
-            const s4 = 'M0.5,0L0,0.9';
-            // console.log(s1.replace(removeNumRegExp, ''), s2.replace(removeNumRegExp, ''), s3.replace(removeNumRegExp, ''), s4.replace(removeNumRegExp, ''));
             return p1['d'].replace(removeNumRegExp, '') === p2['d'].replace(removeNumRegExp, '');
         }
 
         return differentKeys.every((k) => safeProps.indexOf(k) >= 0);
-    }
-
-    static checkElementsSelected(str) {
-
-        console.log(str);
     }
 }

@@ -61,21 +61,17 @@ class GroupingSpec extends TimingSpec {
                 if (this.delay.indexOf("calc") === 0) {
                     this.delay = this.delay.substring(0, this.delay.length - 1).substring(5);
                     constants.forEach((value, key, map) => {
-                        console.log("key is", key, value, this.delay, this.delay.includes(key));
                         if (this.delay.includes(key)) {
                             if (typeof value === 'number') {
                                 this.delay = this.delay.replace(new RegExp(key, 'gm'), '' + value);
-                                console.log('after replace: ', this.delay);
                             } else {
                                 status.info = { type: 'error', msg: 'Delay must be a number or a numeric type constant.', errSpec: '"delay":"' + this.delay.replace(/\s/g, '') + '"' };
                             }
                         }
                     })
                     if (CanisUtil.checkEquation(this.delay, constants)) {
-                        console.log('this is euq', this.delay);
                         this.delay = eval(this.delay);
                     } else {
-                        console.log('this is not euq', this.delay);
                         status.info = { type: 'error', msg: 'Wrong equation.', errSpec: '"delay":"' + this.delay.replace(/\s/g, '') + '"' };
                     }
                 } else {
@@ -83,7 +79,6 @@ class GroupingSpec extends TimingSpec {
                 }
             } else {//replace
                 if (typeof constants.get(this.delay) === 'number') {
-                    console.log('delay is number', constants.get(this.delay));
                     this.delay = constants.get(this.delay);
                 } else {
                     status.info = { type: 'error', msg: 'Delay must be a number or a numeric type constant.', errSpec: '"delay":"' + this.delay.replace(/\s/g, '') + '"' };
@@ -100,7 +95,6 @@ class GroupingSpec extends TimingSpec {
      * @param {JSON obj} groupingJson 
      */
     initGrouping(groupingJson) {
-        console.log('grouping json: ', groupingJson, this, this.grouping);
         this.groupBy = groupingJson.groupBy;
         if (groupingJson.groupBy === 'id') {
             this.definedById = true;
@@ -125,7 +119,7 @@ class GroupingSpec extends TimingSpec {
         }
     }
 
-    arrangeOrder(markIds, domMarks, root) {
+    arrangeOrder(markIds, domMarks, root, timingRef) {
         GroupingSpec.frames.clear();
         GroupingSpec.framesMark.clear();
         if (Object.keys(root).length === 0) {// generate new tree
@@ -135,13 +129,12 @@ class GroupingSpec extends TimingSpec {
             GroupingSpec.nodeId++;
             root.children = [];
             root.marks = markIds;
-            root.timingRef = TimingSpec.timingRef.previousStart;
+            root.timingRef = typeof timingRef === 'undefined' ? TimingSpec.timingRef.previousStart : timingRef;
             root.delay = 0;
             this.generateTree(root, domMarks);
         } else {// update the current tree
             this.updateTree(root, domMarks);
         }
-        // console.log('generated tree: ', root);
         return this.getMarkOrderAndLeaves(root);
     }
 
@@ -151,12 +144,11 @@ class GroupingSpec extends TimingSpec {
             const timingRef = this.reference;
             const delay = this.delay;
             if (typeof this.grouping !== 'undefined') {
-                let sameGrouping = false;
+                let sameGrouping = false;//whether this is the same grouping
                 if (typeof t.children[0] !== 'undefined') {
                     sameGrouping = t.children[0].groupRef === groupByRef;
                 }
 
-                console.log('whether this is same grouping: ', sameGrouping);
                 if (sameGrouping) {
                     let nodesThisLevel = new Map();
                     for (let i = 0, tmpNode; i < t.children.length | (tmpNode = t.children[i]); i++) {
@@ -190,7 +182,7 @@ class GroupingSpec extends TimingSpec {
             } else if (typeof domMarks.get(markId)[groupByRef] === 'undefined' && typeof datum[groupByRef] !== 'undefined') {
                 refValue = datum[groupByRef];
             } else {
-                console.log('error: grouping by an unknown attribute');
+                console.warn('error: grouping by an unknown attribute');
                 return;
             }
 
@@ -214,7 +206,7 @@ class GroupingSpec extends TimingSpec {
         }
         //order nodes of this level according to the 'sort' spec
         this.sortNodes(this.sort, t, nodesThisLevel, domMarks);
-        console.log('nodes this level: ', nodesThisLevel);
+        // console.log('nodes this level: ', nodesThisLevel);
         if (typeof this.grouping !== 'undefined') {
             for (let i = 0, tmpNode; i < t.children.length | (tmpNode = t.children[i]); i++) {
                 this.grouping.generateTree(tmpNode, domMarks);
@@ -417,7 +409,6 @@ class GroupingSpec extends TimingSpec {
             markAni.get(t.marks[i]).startTime += t.start;
             if (markAni.get(t.marks[i]).startTime + markAni.get(t.marks[i]).totalDuration > t.end) {
                 t.end = markAni.get(t.marks[i]).startTime + markAni.get(t.marks[i]).totalDuration;
-                // console.log('t end: ', t.end);
             }
         }
 
@@ -431,19 +422,6 @@ class GroupingSpec extends TimingSpec {
                 }
             }
         }
-        // console.log('*************');
-        // console.log(t.id, t.marks, GroupingSpec.frames.get(t.id));
-        // if (GroupingSpec.frames.get(t.id)) {//this is a keyframe
-        //     console.log('this is a keyframe', t.end);
-        //     GroupingSpec.frameTime.set(t.end, true);
-        // } else {
-        //     console.log('this is not a keyframe', t.end);
-        //     if (typeof GroupingSpec.frameTime.get(t.end) === 'undefined') {
-        //         console.log('setting to false');
-        //         GroupingSpec.frameTime.set(t.end, false);
-        //     }
-        // }
-
     }
 }
 

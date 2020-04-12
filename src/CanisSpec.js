@@ -26,7 +26,6 @@ class CanisSpec {
         conArr.forEach(c => {
             this._constants.set(c.name, c.value);
         })
-        console.log(this._constants);
     }
 
     get constants() {
@@ -61,7 +60,7 @@ class CanisSpec {
                         if (typeof idMapping.get(tmpAni.align.target) !== 'undefined') {
                             tmpAni.align.target = idMapping.get(tmpAni.align.target);
                         } else {
-                            console.log('aligning with an id that does not exist!');
+                            console.warn('aligning with an id that does not exist!');
                         }
                     }
                     return tmpAni;
@@ -76,27 +75,12 @@ class CanisSpec {
         return this._animations;
     }
 
-    // static loadSpec(url, callback) {
-    //     let xhr = new XMLHttpRequest(),
-    //         okStatus = document.location.protocol === "file:" ? 0 : 200;
-    //     xhr.open('GET', url, false);
-    //     xhr.overrideMimeType("text/html;charset=utf-8");
-    //     xhr.send(null);
-    //     if (xhr.status === okStatus) {
-    //         let spec = xhr.responseText;
-    //         callback(JSON.parse(spec));
-    //     } else if (xhr.status === 404) {
-    //         console.log('can not find ' + url + ' ! Please check the url.');
-    //     }
-    // }
-
     preprocessCharts(spec, diffChart, status = {}) {
         console.time('prepeocess charts');
         this.chartSpecs = [];
         let canisObj = spec;
 
-        if (diffChart) {
-            // console.log('using different chart, processing charts');
+        if (diffChart) {//using different chart, processing charts
             [canisObj.charts, this.hasError] = ChartSpec.chartPreProcessing(canisObj.charts, status);
             if (this.hasError) return canisObj;
             //deal with input charts
@@ -129,7 +113,7 @@ class CanisSpec {
 
     compareSpec(spec) {
         let diffChart = false;
-        console.log('comparing: ', this.currentSpec.charts, spec.charst);
+        // console.log('comparing: ', this.currentSpec.charts, spec.charst);
         if ((typeof this.currentSpec.constants !== 'undefined' && JSON.stringify(spec.constants) !== JSON.stringify(this.currentSpec.constants)) ||
             (typeof this.currentSpec.charts !== 'undefined' && JSON.stringify(spec.charts) !== JSON.stringify(this.currentSpec.charts)) ||
             typeof this.currentSpec.charts === 'undefined' ||
@@ -141,11 +125,13 @@ class CanisSpec {
         if (diffChart) {
             // console.log('charts are different');
             Animation.domMarks.clear();
+            Animation.allMarks = [];
             ChartSpec.dataMarkDatum.clear();
             ChartSpec.marksWithSameDatum.clear();
             ChartSpec.nonDataMarkDatum.clear();
-            ChartSpec.chartUnderstanding = {};
+            ChartSpec.chartUnderstanding = { mShape: 'shape' };
             Animation.animations.clear();
+            Animation.markClass.clear();
         }
         this.currentSpec = spec;
         return diffChart;
@@ -342,9 +328,10 @@ class CanisSpec {
     }
 
     async init(spec, status = {}) {
-        // console.log(spec);
-        if (status) {
+        if (JSON.stringify(status) !== '{}') {
             this.hasError = this.checkSpec(spec, status);
+        } else {
+            this.hasError = false;
         }
 
         if (!this.hasError) {
@@ -353,10 +340,12 @@ class CanisSpec {
             GroupingSpec.framesMark.clear();//clear keyframe record;
             if (spec.charts.length === 0) {//no charts specified
                 Animation.domMarks.clear();
+                Animation.allMarks = [];
                 ChartSpec.dataMarkDatum.clear();
                 ChartSpec.nonDataMarkDatum.clear();
-                ChartSpec.chartUnderstanding = {};
+                ChartSpec.chartUnderstanding = { mShape: 'shape' };
                 Animation.animations.clear();
+                Animation.markClass.clear();
                 if (document.getElementById('chartContainer')) {
                     document.getElementById('chartContainer').innerHTML = '';
                 }
@@ -365,7 +354,6 @@ class CanisSpec {
                 globalVar.jsMovin.setFrameRate(TimingSpec.FRAME_RATE);
 
                 const diffChart = this.compareSpec(spec);
-                // console.log('diff chart: ', diffChart);
                 let canisObj = await this.preprocessCharts(spec, diffChart, status);
 
                 //init user defined variables
@@ -374,7 +362,6 @@ class CanisSpec {
                 }
 
                 //deal with animations
-                console.log('animations in spec: ', canisObj, canisObj.animations);
                 this.animations = canisObj.animations;
 
                 if (Array.isArray(this.animations)) {
@@ -389,6 +376,13 @@ class CanisSpec {
                         document.body.appendChild(tmpContainer);
                         tmpContainer.innerHTML = ChartSpec.charts[animationJson.chartIdx].outerHTML;
                         let marks = tmpContainer.querySelectorAll(animationJson.selector);
+                        let tmpAllMarks = [];
+                        [].forEach.call(tmpContainer.querySelectorAll('.mark'), function (tm) {
+                            tmpAllMarks.push(tm.getAttribute('id'));
+                            let mClass = tm.getAttribute('class').split(' ');
+                            Animation.markClass.set(tm.getAttribute('id'), mClass[mClass.length - 1]);
+                        })
+                        Animation.allMarks = [...new Set([...Animation.allMarks, ...tmpAllMarks])];
                         if (marks.length === 0) {
                             if (typeof animationJson.selector === 'number') {
                                 status.info = { type: 'error', msg: 'The selector need to be a CSS selector', errSpec: '"selector":' + animationJson.selector };
@@ -406,7 +400,6 @@ class CanisSpec {
 
                         //check whether the animation is existed
                         //TODO: remove non existed animations in the current spec
-                        console.log('selector of this animation: ', animationJson, animationJson.selector);
                         let animation;
                         const aniKey = animationJson.chartIdx + '_' + animationJson.selector;
                         if (typeof Animation.animations.get(aniKey) !== 'undefined') {//already have this animation
@@ -427,7 +420,6 @@ class CanisSpec {
                         //replace contant variables
                         if (this.constants.size > 0) {
                             animation.replaceConstants(this.constants, status);
-                            console.log('translated animation: ', animation);
                         }
 
                         console.timeEnd('using dom');

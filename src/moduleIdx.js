@@ -19,7 +19,6 @@ export default class Canis {
             this.canisObj = new CanisSpec();
         }
         return this.canisObj.init(spec).then(() => {
-            console.log('finish init');
             return this.canisObj.render(callback);
         })
     }
@@ -38,9 +37,3 @@ export default class Canis {
 }
 
 export { ActionSpec, TimingSpec, ChartSpec, Animation}
-
-// module.exports = Canis;
-
-// module.exports = function(){
-//     console.log('this is testing !');
-// }
