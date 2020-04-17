@@ -12,6 +12,7 @@ class ActionSpec extends TimingSpec {
         this._duration = 0;
         this.startTime;//not set by the user
         this.attribute = [];
+        this.oriActionType;
     }
 
     /***** getters and setters *****/
@@ -69,6 +70,7 @@ class ActionSpec extends TimingSpec {
         this.offset = actionJson.offset;//timingSpec delay
         this.duration = actionJson.duration;//action duration
         this.easing = actionJson.easing;
+        this.oriActionType = actionJson.oriActionType;
 
         //attributes only take effect when type is custom
         if (typeof actionJson.attribute !== 'undefined') {
@@ -194,6 +196,7 @@ class ActionSpec extends TimingSpec {
                 offset: 0,
                 duration: actionJson.type === ActionSpec.actionTypes.transition ? actionJson.duration : 0,
                 type: ActionSpec.actionTargets.mark,
+                oriActionType: ActionSpec.actionTypes.custom,
                 animationType: ActionSpec.targetAnimationType.custom,
                 attribute: [{
                     attrName: changedAttr,
@@ -212,7 +215,8 @@ class ActionSpec extends TimingSpec {
                 offset: actionJson.offset,
                 easing: actionJson.easing,
                 duration: typeof actionJson.duration === 'undefined' ? TimingSpec.FRAME_RATE : actionJson.duration,
-                type: ActionSpec.actionTargets.mask
+                type: ActionSpec.actionTargets.mask,
+                oriActionType: actionJson.type
             };
             // let tmpObj2;
 

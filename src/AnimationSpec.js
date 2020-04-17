@@ -24,6 +24,7 @@ class Animation extends TimingSpec {
         this.root = {};
         this.leaves = [];
         this.marksInOrder = [];
+        this.anisAligned = [];
     }
 
     /***** getters and setters *****/
@@ -96,6 +97,7 @@ class Animation extends TimingSpec {
             for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
                 actionJson.chartIdx = animationJson.chartIdx;
                 let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, ChartSpec.dataTrans);//translate templates to no-templates
+                console.log('translated visual action: ', visAttrActionJsonArr);
                 for (let j = 0, visAttrActionJson; j < visAttrActionJsonArr.length | (visAttrActionJson = visAttrActionJsonArr[j]); j++) {
                     let tmpAction = new ActionSpec();
                     tmpAction.initAction(visAttrActionJson);
@@ -120,6 +122,10 @@ class Animation extends TimingSpec {
                     lastAnimation = value;
                 }
             })
+        }
+        if (typeof lastAnimation != 'undefined') {
+            console.log('cal ani time: ', this, lastAnimation, lastAnimation.anisAligned, Animation.animations);
+            lastAnimation.anisAligned.push(`${this.chartIdx}_${this.selector}`);
         }
 
         let that = this;
@@ -351,6 +357,10 @@ class Animation extends TimingSpec {
                         }
                     } else {//align with the corresponding leaf from last animation
                         currentLeafCurrentAni.alignTo = currentLeafLastAni.id;
+                        if (typeof currentLeafLastAni.alignWithLeaves === 'undefined') {
+                            currentLeafLastAni.alignWithLeaves = [];
+                        }
+                        currentLeafLastAni.alignWithLeaves.push(currentLeafCurrentAni);
                         alignToId = currentLeafLastAni.id;
                         ofstTime = this.calOfstTimeForLastAni(currentLeafCurrentAni, currentLeafLastAni, markAni);
                     }
@@ -387,6 +397,10 @@ class Animation extends TimingSpec {
                         }
                     } else {//align with the corresponding leaf from last animation
                         currentLeafCurrentAni.alignTo = currentLeafLastAni.id;
+                        if (typeof currentLeafLastAni.alignWithLeaves === 'undefined') {
+                            currentLeafLastAni.alignWithLeaves = [];
+                        }
+                        currentLeafLastAni.alignWithLeaves.push(currentLeafCurrentAni);
                         alignToId = currentLeafLastAni.id;
                         ofstTime = this.calOfstTimeForLastAni(currentLeafCurrentAni, currentLeafLastAni, markAni);
                     }
@@ -403,13 +417,15 @@ class Animation extends TimingSpec {
     }
 
     calOfstTimeForLastAni(leaf, leafToAlign, markAni) {
+        console.log('cal offset time: ', leaf, leafToAlign);
         let tmpOfstTime = 0;
         leaf.start = 1000000;
         leaf.end = 0;
+        let mStartTime = 0;
         switch (this.reference) {
             case TimingSpec.timingRef.previousStart:
+                mStartTime = leafToAlign.leafStart;
                 leaf.marks.forEach(mId => {
-                    const mStartTime = leafToAlign.leafStart;
                     const mDuration = markAni.get(mId).totalDuration;
                     markAni.get(mId).startTime = mStartTime;
                     if (mStartTime + mDuration - leafToAlign.leafEnd > tmpOfstTime) {
@@ -424,8 +440,27 @@ class Animation extends TimingSpec {
                 })
                 return tmpOfstTime;
             case TimingSpec.timingRef.previousEnd:
+                mStartTime = leafToAlign.leafEnd;
+                console.log('test1: ', mStartTime, leafToAlign.alignWithLeaves);
+                leafToAlign.alignWithLeaves.forEach(l => {
+                    if (typeof l.leafEnd !== 'undefined') {
+                        if (l.leafEnd > mStartTime) {
+                            mStartTime = l.leafEnd;
+                        }
+                    } else {
+                        l.marks.forEach(mId => {
+                            if (typeof Animation.allMarkAni.get(mId) !== 'undefined') {
+                                const mEndTime = Animation.allMarkAni.get(mId).startTime + Animation.allMarkAni.get(mId).totalDuration;
+                                if (mEndTime > mStartTime) {
+                                    mStartTime = mEndTime;
+                                }
+                            }
+                        })
+                    }
+                })
+                console.log('test2: ', mStartTime);
+
                 leaf.marks.forEach(mId => {
-                    const mStartTime = leafToAlign.leafEnd;
                     const mDuration = markAni.get(mId).totalDuration;
                     markAni.get(mId).startTime = mStartTime;
                     if (mStartTime + mDuration > tmpOfstTime) {
@@ -443,7 +478,8 @@ class Animation extends TimingSpec {
         }
     }
 
-    updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, alignWithAniId) {
+    updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, alignWithAniId, keepUpdating = true) {
+        const that = this;
         // let tmpAlignToId = '';
         if (alignToId !== '') {
             lastAnimation.leaves.forEach(l => {
@@ -456,9 +492,6 @@ class Animation extends TimingSpec {
                         l.alignWithIds = [];
                     }
                     l.alignWithIds.push(alignWithId);
-                    // if (typeof l.alignTo !== 'undefined') {
-                    //     tmpAlignToId = l.alignTo;
-                    // }
                 }
             })
         }
@@ -466,28 +499,83 @@ class Animation extends TimingSpec {
             const that = this;
             //find the leaves from last animation with the same start time as currentLeafLastAni
             lastAnimation.leaves.forEach(l => {
-                if (l.leafStart > currentLeafLastAni.leafStart) {
-                    let tmpLeafStart = 100000;
-                    l.marks.forEach(mId => {
-                        Animation.allMarkAni.get(mId).startTime += ofstTime;
-                        if (Animation.allMarkAni.get(mId).startTime < tmpLeafStart) {
-                            tmpLeafStart = Animation.allMarkAni.get(mId).startTime;
+                console.log('iupdating leaf: ', l, l.leafStart);
+                let currentLeafLastAniStart = currentLeafLastAni.leafStart;
+                if (typeof currentLeafLastAniStart === 'undefined') {
+                    currentLeafLastAniStart = 10000000;
+                    currentLeafLastAni.marks.forEach(mId => {
+                        if (Animation.allMarkAni.get(mId).startTime < currentLeafLastAniStart) {
+                            currentLeafLastAniStart = Animation.allMarkAni.get(mId).startTime;
                         }
-                        if (Animation.allMarkAni.get(mId).startTime + Animation.allMarkAni.get(mId).totalDuration > l.leafEnd) {
-                            l.leafEnd = Animation.allMarkAni.get(mId).startTime + Animation.allMarkAni.get(mId).totalDuration
-                        }
-                        if (l.leafEnd > lastAnimation.animationEndTime) {
-                            lastAnimation.animationEndTime = l.leafEnd;
-                        }
-                        Animation.allMarkAni.get(mId).actionAttrs.forEach(a => {
-                            a.startTime += ofstTime;
-                        })
                     })
-                    l.leafStart = tmpLeafStart;
                 }
+                if (typeof l.leafStart !== 'undefined') {
+                    if (l.leafStart > currentLeafLastAniStart) {
+                        let tmpLeafStart = 100000;
+                        l.marks.forEach(mId => {
+                            Animation.allMarkAni.get(mId).startTime += ofstTime;
+                            console.log('mID', mId, Animation.allMarkAni.get(mId).startTime);
+                            if (Animation.allMarkAni.get(mId).startTime < tmpLeafStart) {
+                                tmpLeafStart = Animation.allMarkAni.get(mId).startTime;
+                            }
+                            if (Animation.allMarkAni.get(mId).startTime + Animation.allMarkAni.get(mId).totalDuration > l.leafEnd) {
+                                l.leafEnd = Animation.allMarkAni.get(mId).startTime + Animation.allMarkAni.get(mId).totalDuration
+                            }
+                            if (l.leafEnd > lastAnimation.animationEndTime) {
+                                lastAnimation.animationEndTime = l.leafEnd;
+                            }
+                            Animation.allMarkAni.get(mId).actionAttrs.forEach(a => {
+                                a.startTime += ofstTime;
+                            })
+                        })
+                        l.leafStart = tmpLeafStart;
+                        console.log('updated leaf: ', l.leafStart);
+                    }
+                } else {
+                    l.marks.forEach(mId => {
+                        console.log('test!!!', currentLeafLastAniStart);
+                        if (Animation.allMarkAni.get(mId).startTime > currentLeafLastAniStart) {
+                            Animation.allMarkAni.get(mId).startTime += ofstTime;
+                            console.log('mID', mId, Animation.allMarkAni.get(mId).startTime);
+                            if (Animation.allMarkAni.get(mId).startTime + Animation.allMarkAni.get(mId).totalDuration > lastAnimation.animationEndTime) {
+                                lastAnimation.animationEndTime = Animation.allMarkAni.get(mId).startTime + Animation.allMarkAni.get(mId).totalDuration;
+                            }
+                            Animation.allMarkAni.get(mId).actionAttrs.forEach(a => {
+                                a.startTime += ofstTime;
+                            })
+                        }
+                    })
+                }
+
             })
+            //check whether there are other anis aligned to this one
+            console.log('checking whether to update aligned anis: ', lastAnimation.anisAligned, `${that.chartIdx}_${that.selector}`);
+            if (lastAnimation.anisAligned.length > 0) {
+                lastAnimation.anisAligned.forEach(aniId => {
+                    if (aniId !== `${that.chartIdx}_${that.selector}`) {
+                        const aniAligned = Animation.animations.get(aniId);
+                        console.log('updateing, ', aniAligned, currentLeafLastAni, currentLeafLastAni.alignWithLeaves, ofstTime);
+                        let currentleafAlignedAni;
+                        for (let i = 0, len = currentLeafLastAni.alignWithLeaves.length; i < len; i++) {
+                            let tmpLeaf = currentLeafLastAni.alignWithLeaves[i];
+                            for (let j = 0, len2 = aniAligned.leaves.length; j < len2; j++) {
+                                if (tmpLeaf.id === aniAligned.leaves[j].id) {
+                                    currentleafAlignedAni = tmpLeaf;
+                                    break;
+                                }
+                            }
+                            if (typeof currentleafAlignedAni !== 'undefined') {
+                                break;
+                            }
+                        }
+                        console.log('cu aligne ani: ', currentleafAlignedAni);
+                        that.updateLastAnimationTiming(aniAligned, currentleafAlignedAni, ofstTime, '', '', '', false);
+                    }
+                })
+            }
+
             //check whether need to keep updating 
-            if (typeof lastAnimation.align !== 'undefined') {
+            if (typeof lastAnimation.align !== 'undefined' && keepUpdating) {
                 if (lastAnimation.align.type === Animation.alignTarget.withEle) {
                     let tmpAni;
                     Animation.animations.forEach((value, key) => {

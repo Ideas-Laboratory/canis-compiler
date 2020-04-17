@@ -390,6 +390,7 @@ class ChartSpec {
                         pureDatum[key] = dataDatumAttrValue[key];
                     }
                 })
+                pureDatum.mShape = '';//ignore the difference of shape, this is for alignment
                 let pureDatumStr = JSON.stringify(pureDatum);
                 if (typeof datumMarkMapping.get(pureDatumStr) === 'undefined') {
                     datumMarkMapping.set(pureDatumStr, []);

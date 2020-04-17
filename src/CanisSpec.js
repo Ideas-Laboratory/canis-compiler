@@ -408,6 +408,7 @@ class CanisSpec {
                         } else {
                             animation = new Animation();
                             animation.translate(animationJson, usedChangedAttrs);//translate from json obj to Animation obj
+                            console.log('translated action: ', animation);
                             Animation.animations.set(aniKey, animation);
                         }
                         //auto fill align property for animations except the first one
