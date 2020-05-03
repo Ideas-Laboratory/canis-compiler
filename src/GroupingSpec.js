@@ -119,7 +119,7 @@ class GroupingSpec extends TimingSpec {
         }
     }
 
-    arrangeOrder(markIds, domMarks, root, timingRef) {
+    arrangeOrder(markIds, domMarks, root, timingRef, aligning) {
         GroupingSpec.frames.clear();
         GroupingSpec.framesMark.clear();
         if (Object.keys(root).length === 0) {// generate new tree
@@ -135,10 +135,12 @@ class GroupingSpec extends TimingSpec {
         } else {// update the current tree
             this.updateTree(root, domMarks);
         }
-        return this.getMarkOrderAndLeaves(root);
+        // console.log('root is: ', root);
+        return this.getMarkOrderAndLeaves(root, aligning);
     }
 
     updateTree(t, domMarks) {
+        // console.log('updating tree!');
         if (typeof t !== 'undefined') {
             const groupByRef = this.groupBy;
             const timingRef = this.reference;
@@ -170,6 +172,7 @@ class GroupingSpec extends TimingSpec {
     }
 
     generateTree(t, domMarks) {
+        // console.log('generating tree!!');
         const groupByRef = this.groupBy;
         const timingRef = this.reference;
         const delay = this.delay;
@@ -206,7 +209,7 @@ class GroupingSpec extends TimingSpec {
         }
         //order nodes of this level according to the 'sort' spec
         this.sortNodes(this.sort, t, nodesThisLevel, domMarks);
-        // console.log('nodes this level: ', nodesThisLevel);
+        // console.log('nodes this level: ', this.sort, nodesThisLevel, t);
         if (typeof this.grouping !== 'undefined') {
             for (let i = 0, tmpNode; i < t.children.length | (tmpNode = t.children[i]); i++) {
                 this.grouping.generateTree(tmpNode, domMarks);
@@ -223,7 +226,7 @@ class GroupingSpec extends TimingSpec {
                 for (let i = 0, refValue; i < specSort.order.length | (refValue = specSort.order[i]); i++) {
                     if (typeof nodesThisLevel.get(refValue) !== 'undefined') {
                         t.children.push(nodesThisLevel.get(refValue));
-                        that.appendFrame(t.id, nodesThisLevel.get(refValue).id, appendNum, nodesThisLevel.size);
+                        // that.appendFrame(t.id, nodesThisLevel.get(refValue).id, appendNum, nodesThisLevel.size);
                         appendNum++;
                     }
                 }
@@ -284,7 +287,7 @@ class GroupingSpec extends TimingSpec {
 
                     })
                     for (let i = 0, tmpNode; i < nodesThisLevelArr.length | (tmpNode = nodesThisLevelArr[i]); i++) {
-                        that.appendFrame(t.id, tmpNode.id, i, nodesThisLevelArr.length);
+                        // that.appendFrame(t.id, tmpNode.id, i, nodesThisLevelArr.length);
                         t.children.push(tmpNode[1]);
                     }
                 } else {
@@ -311,7 +314,7 @@ class GroupingSpec extends TimingSpec {
                         })
                     }
                     for (let i = 0, tmpNode; i < nodesThisLevelArr.length | (tmpNode = nodesThisLevelArr[i]); i++) {
-                        that.appendFrame(t.id, tmpNode.id, i, nodesThisLevelArr.length);
+                        // that.appendFrame(t.id, tmpNode.id, i, nodesThisLevelArr.length);
                         t.children.push(tmpNode[1]);
                     }
                 }
@@ -321,7 +324,7 @@ class GroupingSpec extends TimingSpec {
                 let count = 0;
                 nodesThisLevel.forEach(function (tmpNode, ref) {
                     t.children.push(tmpNode);
-                    that.appendFrame(t.id, tmpNode.id, count, nodesThisLevel.size);
+                    // that.appendFrame(t.id, tmpNode.id, count, nodesThisLevel.size);
                     count++;
                 })
         }
@@ -340,7 +343,7 @@ class GroupingSpec extends TimingSpec {
      * @param {Object} t
      * @param {Array} arr 
      */
-    getMarkOrderAndLeaves(t) {
+    getMarkOrderAndLeaves(t, aligning) {
         let orderedMarks = [], leaves = [];
         if (t != null) {
             let queue = [];
@@ -352,11 +355,25 @@ class GroupingSpec extends TimingSpec {
                 let children = item.children;
                 if (children.length <= 0) {
                     if (item.definedById || (!item.definedById && item.parentGroupRef.length === 1)) {
+                        if (aligning) {
+                            item.children = [];
+                            item.parentGroupRef = [item.parentGroupRef[0]];
+                            item.parentGroupRefValue = [item.parentGroupRefValue[0]];
+                            item.groupRef = 'id';
+                            item.refValue = item.marks[0];
+                        }
                         leaves.push(item);
                     }
                     orderedMarks = [...orderedMarks, ...item.marks];
                 } else {
                     if (item.children[0].groupRef === 'id' && item.groupRef !== 'root' && !item.children[0].definedById) {
+                        if (aligning) {
+                            item.children = [];
+                            item.parentGroupRef = [item.parentGroupRef[0]];
+                            item.parentGroupRefValue = [item.parentGroupRefValue[0]];
+                            item.groupRef = 'id';
+                            item.refValue = item.marks[0];
+                        }
                         leaves.push(item);
                     }
                     for (let i = 0; i < children.length; i++) {

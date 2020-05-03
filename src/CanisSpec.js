@@ -76,7 +76,7 @@ class CanisSpec {
     }
 
     preprocessCharts(spec, diffChart, status = {}) {
-        console.time('prepeocess charts');
+        // console.time('prepeocess charts');
         this.chartSpecs = [];
         let canisObj = spec;
 
@@ -107,7 +107,7 @@ class CanisSpec {
         globalVar.jsMovin.clearLayers();
         ChartSpec.addLottieMarkLayers(ChartSpec.svgChart);
 
-        console.timeEnd('prepeocess charts');
+        // console.timeEnd('prepeocess charts');
         return canisObj;
     }
 
@@ -369,9 +369,9 @@ class CanisSpec {
                     for (let aniIdx = 0; aniIdx < this.animations.length; aniIdx++) {
                         let animationJson = this.animations[aniIdx];
 
-                        console.time('using dom');
+                        // console.time('using dom');
                         //use the selector in animation to select marks and record dom attrs
-                        console.time('query dom');
+                        // console.time('query dom');
                         let tmpContainer = document.createElement('div');
                         document.body.appendChild(tmpContainer);
                         tmpContainer.innerHTML = ChartSpec.charts[animationJson.chartIdx].outerHTML;
@@ -391,7 +391,7 @@ class CanisSpec {
                             }
                             return;
                         }
-                        console.timeEnd('query dom');
+                        // console.timeEnd('query dom');
 
                         let usedChangedAttrs = [];
                         for (let i = 0; i < ChartSpec.changedAttrs.length; i++) {
@@ -401,14 +401,16 @@ class CanisSpec {
                         //check whether the animation is existed
                         //TODO: remove non existed animations in the current spec
                         let animation;
-                        const aniKey = animationJson.chartIdx + '_' + animationJson.selector;
+                        let aniKey = animationJson.chartIdx + '_' + animationJson.selector;
+                        if (aniKey === '0_.mark') {
+                            aniKey = `0_#${Animation.allMarks.join(', #')}`;
+                        }
                         if (typeof Animation.animations.get(aniKey) !== 'undefined') {//already have this animation
                             animation = Animation.animations.get(aniKey);
                             animation.translate(animationJson, usedChangedAttrs, true);
                         } else {
                             animation = new Animation();
                             animation.translate(animationJson, usedChangedAttrs);//translate from json obj to Animation obj
-                            console.log('translated action: ', animation);
                             Animation.animations.set(aniKey, animation);
                         }
                         //auto fill align property for animations except the first one
@@ -423,10 +425,9 @@ class CanisSpec {
                             animation.replaceConstants(this.constants, status);
                         }
 
-                        console.timeEnd('using dom');
+                        // console.timeEnd('using dom');
                         let markIds = [];//record all ids of selected marks
                         if (marks.length > 0) {
-                            console.time('extract mark dom');
                             [].forEach.call(marks, function (mark) {
                                 if (mark.classList.contains('mark')) {
                                     let markId = mark.getAttribute('id');
@@ -463,7 +464,6 @@ class CanisSpec {
                                                         }
                                                     }
                                                 }
-                                                // console.log(markJSON);
                                                 mark = CanisUtil.toDOM(markJSON);
                                             }
                                         }
@@ -517,10 +517,10 @@ class CanisSpec {
                                 }
                             })
                             // console.log('after', Animation.domMarks);
-                            console.timeEnd('extract mark dom');
                         }
                         // animation.calAniTime(markIds, lastAnimation);
                         animation.calAniTime(markIds);
+                        Animation.animations.get(aniKey).alignOnData = animation.alignOnData;
                         lastAnimation = animation;
                         document.body.removeChild(tmpContainer);
                     }
@@ -531,7 +531,7 @@ class CanisSpec {
     }
 
     render(callback, status = {}) {
-        console.time('rendering');
+        // console.time('rendering');
         Animation.renderAnimation(status);
         // Animation.findKeyframes();
         //map animation keyframes to lottie spec
@@ -540,7 +540,7 @@ class CanisSpec {
         //export lottie JSON
         let lottieJSON = globalVar.jsMovin.toJSON();
         CanisSpec.lottieJSON = lottieJSON;
-        console.timeEnd('rendering');
+        // console.timeEnd('rendering');
         if (status) {
             status.info = 'Done rendering.';
         }
