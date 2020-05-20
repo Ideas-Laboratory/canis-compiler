@@ -428,9 +428,16 @@ class CanisSpec {
                         // console.timeEnd('using dom');
                         let markIds = [];//record all ids of selected marks
                         if (marks.length > 0) {
+                            const idxForEachCls = new Map();
                             [].forEach.call(marks, function (mark) {
                                 if (mark.classList.contains('mark')) {
                                     let markId = mark.getAttribute('id');
+                                    let markCls = mark.getAttribute('class');
+                                    if (typeof idxForEachCls.get(markCls) === 'undefined') {
+                                        idxForEachCls.set(markCls, 0);
+                                    } else {
+                                        idxForEachCls.set(markCls, idxForEachCls.get(markCls) + 1);
+                                    }
                                     markIds.push(markId);
                                     if (typeof Animation.domMarks.get(markId) === 'undefined') {
                                         //process path
@@ -484,6 +491,10 @@ class CanisSpec {
                                         let dataDatumAttrValue = JSON.parse(mark.getAttribute('data-datum'));
                                         if (Array.isArray(dataDatumAttrValue)) {
                                             dataDatumAttrValue = dataDatumAttrValue[0];
+                                        }
+                                        dataDatumAttrValue.clsIdx = `a${idxForEachCls.get(markCls)}`;
+                                        if (typeof ChartSpec.nonDataMarkDatum.get(markId) !== 'undefined') {
+                                            ChartSpec.nonDataMarkDatum.get(markId).clsIdx = `a${idxForEachCls.get(markCls)}`;
                                         }
                                         tmpDomAttrObj['data-datum'] = dataDatumAttrValue;
                                         // CanisSpec.markData.set(markId, dataDatumAttrValue);

@@ -121,9 +121,12 @@ class Animation extends TimingSpec {
             Animation.animations.forEach((value, key) => {
                 if (this.align.target === value.id) {
                     lastAnimation = value;
-                    aligning = true;
-                    this._grouping = value.grouping;
-                    // this.grouping = value.grouping;
+                    if (this.align.type === Animation.alignTarget.withEle) {
+                        aligning = true;
+                        this._grouping = value.grouping;
+                        // this.grouping = value.grouping;
+                    }
+
                 }
             })
         }
@@ -151,12 +154,12 @@ class Animation extends TimingSpec {
         //construct tree while order the marks according to "sort"
         // console.log('current groupig: ', this.grouping);
         let tmpMarksInOrder = [], leavesOfAnimation = [];
-        if(aligning){
+        if (aligning) {
             [tmpMarksInOrder, leavesOfAnimation] = this._grouping.arrangeOrder(markIds, Animation.domMarks, this.root, this.reference, aligning);
-        }else{
+        } else {
             [tmpMarksInOrder, leavesOfAnimation] = this.grouping.arrangeOrder(markIds, Animation.domMarks, this.root, this.reference, aligning);
         }
-        if(aligning){
+        if (aligning) {
             this.root.children = leavesOfAnimation;
         }
         // console.log('after grouping: ', this.grouping);
