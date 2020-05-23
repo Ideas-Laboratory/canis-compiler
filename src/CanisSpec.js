@@ -129,7 +129,7 @@ class CanisSpec {
             ChartSpec.dataMarkDatum.clear();
             ChartSpec.marksWithSameDatum.clear();
             ChartSpec.nonDataMarkDatum.clear();
-            ChartSpec.chartUnderstanding = { mShape: 'shape' };
+            ChartSpec.chartUnderstanding = { mShape: ['shape'] };
             Animation.animations.clear();
             Animation.markClass.clear();
         }
@@ -343,7 +343,7 @@ class CanisSpec {
                 Animation.allMarks = [];
                 ChartSpec.dataMarkDatum.clear();
                 ChartSpec.nonDataMarkDatum.clear();
-                ChartSpec.chartUnderstanding = { mShape: 'shape' };
+                ChartSpec.chartUnderstanding = { mShape: ['shape'] };
                 Animation.animations.clear();
                 Animation.markClass.clear();
                 if (document.getElementById('chartContainer')) {

@@ -405,10 +405,16 @@ class ChartSpec {
                 tmpDataDatum = tmpDataDatum[0];
             }
             if (t.classList.contains('axis')) {
-                this.chartUnderstanding[tmpDataDatum.position] = 'position';
+                if (typeof this.chartUnderstanding[tmpDataDatum.position] === 'undefined'){
+                    this.chartUnderstanding[tmpDataDatum.position] = [];    
+                }
+                this.chartUnderstanding[tmpDataDatum.position].push('position');
             } else if (t.classList.contains('legend')) {
                 for (let channel in tmpDataDatum) {
-                    this.chartUnderstanding[tmpDataDatum[channel]] = channel;
+                    if (typeof this.chartUnderstanding[tmpDataDatum[channel]] === 'undefined'){
+                        this.chartUnderstanding[tmpDataDatum[channel]] = [];
+                    }
+                    this.chartUnderstanding[tmpDataDatum[channel]].push(channel);
                 }
             }
         }
@@ -473,7 +479,7 @@ ChartSpec.changedAttrs = [];
 ChartSpec.viewport = new Viewport();
 ChartSpec.dataTrans = new Map();
 ChartSpec.svgChart;
-ChartSpec.chartUnderstanding = { mShape: 'shape' };
+ChartSpec.chartUnderstanding = { mShape: ['shape'] };
 ChartSpec.dataMarkDatum = new Map();
 ChartSpec.marksWithSameDatum = new Map();
 ChartSpec.nonDataMarkDatum = new Map();
