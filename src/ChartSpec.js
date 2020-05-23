@@ -363,6 +363,29 @@ class ChartSpec {
     }
 
     static removeTransitions(t, datumMarkMapping) {
+        //extract fill, stroke and stroke-width out
+        if (typeof t.style.fill !== 'undefined') {
+            if (typeof t.getAttribute('fill') === 'undefined') {
+                t.setAttribute('fill', t.style.fill);
+            }
+            t.style.fill = null;
+        }
+        if (typeof t.style.stroke !== 'undefined') {
+            if (typeof t.getAttribute('stroke') === 'undefined') {
+                t.setAttribute('stroke', t.style.stroke);
+            }
+            t.style.stroke = null;
+        }
+        if (typeof t.style.strokeWidth !== 'undefined') {
+            if (typeof t.getAttribute('stroke-width') === 'undefined') {
+                t.setAttribute('stroke-width', t.style.strokeWidth);
+            }
+            t.style.strokeWidth = null;
+        }
+        if (t.getAttribute('stroke') === 'none'){
+            t.setAttribute('stroke-width', 0);
+        }
+
         let tr = t.getAttribute('transform');
         let parentTrans = t.parentNode.getAttribute('trans').split(',');
         if (t.classList.contains('mark')) {
@@ -405,13 +428,13 @@ class ChartSpec {
                 tmpDataDatum = tmpDataDatum[0];
             }
             if (t.classList.contains('axis')) {
-                if (typeof this.chartUnderstanding[tmpDataDatum.position] === 'undefined'){
-                    this.chartUnderstanding[tmpDataDatum.position] = [];    
+                if (typeof this.chartUnderstanding[tmpDataDatum.position] === 'undefined') {
+                    this.chartUnderstanding[tmpDataDatum.position] = [];
                 }
                 this.chartUnderstanding[tmpDataDatum.position].push('position');
             } else if (t.classList.contains('legend')) {
                 for (let channel in tmpDataDatum) {
-                    if (typeof this.chartUnderstanding[tmpDataDatum[channel]] === 'undefined'){
+                    if (typeof this.chartUnderstanding[tmpDataDatum[channel]] === 'undefined') {
                         this.chartUnderstanding[tmpDataDatum[channel]] = [];
                     }
                     this.chartUnderstanding[tmpDataDatum[channel]].push(channel);
