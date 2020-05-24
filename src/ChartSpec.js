@@ -364,20 +364,20 @@ class ChartSpec {
 
     static removeTransitions(t, datumMarkMapping) {
         //extract fill, stroke and stroke-width out
-        if (typeof t.style.fill !== 'undefined') {
-            if (typeof t.getAttribute('fill') === 'undefined') {
+        if (typeof t.style.fill !== 'undefined' && t.style.fill) {
+            if (typeof t.getAttribute('fill') === 'undefined' || !t.getAttribute('fill')) {
                 t.setAttribute('fill', t.style.fill);
             }
             t.style.fill = null;
         }
-        if (typeof t.style.stroke !== 'undefined') {
-            if (typeof t.getAttribute('stroke') === 'undefined') {
+        if (typeof t.style.stroke !== 'undefined' && t.style.stroke) {
+            if (typeof t.getAttribute('stroke') === 'undefined' || !t.getAttribute('stroke')) {
                 t.setAttribute('stroke', t.style.stroke);
             }
             t.style.stroke = null;
         }
-        if (typeof t.style.strokeWidth !== 'undefined') {
-            if (typeof t.getAttribute('stroke-width') === 'undefined') {
+        if (typeof t.style.strokeWidth !== 'undefined' && t.style.strokeWidth) {
+            if (typeof t.getAttribute('stroke-width') === 'undefined' || !t.getAttribute('stroke-width')) {
                 t.setAttribute('stroke-width', t.style.strokeWidth);
             }
             t.style.strokeWidth = null;
