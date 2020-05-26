@@ -386,7 +386,9 @@ class Animation extends TimingSpec {
                 }
 
                 //update timing of the current leaf from last animation
-                this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, this.id);
+                const tmpAniId = `${this.chartIdx}_#${this.marksInOrder.join(', #')}`;
+                this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, tmpAniId);
+                // this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, this.id);
             }
         } else {
             const leafNum = this.leaves.length;
@@ -427,7 +429,9 @@ class Animation extends TimingSpec {
                 }
 
                 //update timing of the current leaf from last animation
-                this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, this.id);
+                const tmpAniId = `${this.chartIdx}_#${this.marksInOrder.join(', #')}`;
+                this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, tmpAniId);
+                // this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, this.id);
             }
         }
 
