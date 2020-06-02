@@ -68,7 +68,15 @@ class ChartSpec {
                     status.info = { type: 'error', msg: 'Can not find ' + chartSpecs[i].source + ' ! Please check the url.', errSpec: '"source":"' + chartSpecs[i].source.replace(/\s/g, '') + '"' };
                 }
             } else {
-                // console.log(chartSpecs[i].source, typeof chartSpecs[i].source);
+                // console.log('test chart source: ', chartSpecs[i], chartSpecs[i].source, typeof chartSpecs[i].source);
+                const tmpDiv = document.createElement('div');
+                tmpDiv.innerHTML = chartSpecs[i].source;
+                const svgContent = tmpDiv.children[0];
+                let viewBoxNums = svgContent.getAttribute('viewBox').split(' ');
+                defaultWidth = parseFloat(viewBoxNums[2]);
+                defaultHeight = parseFloat(viewBoxNums[3]);
+                ChartSpec.charts.push(svgContent);
+                nameCharts.set(chartSpecs[i].id, ChartSpec.charts.length - 1);
             }
         }
 

@@ -23,6 +23,7 @@ class Animation extends TimingSpec {
         this.animationEndTime = 0;
         this.root = {};
         this.leaves = [];
+        this.allMarksThisAni = [];
         this.marksInOrder = [];
         this.anisAligned = [];
         this.alignOnData = false;
@@ -564,7 +565,6 @@ class Animation extends TimingSpec {
 
             })
             //check whether there are other anis aligned to this one
-            // console.log('checking whether to update aligned anis: ', lastAnimation.anisAligned, `${that.chartIdx}_${that.selector}`);
             if (lastAnimation.anisAligned.length > 0) {
                 lastAnimation.anisAligned.forEach(aniId => {
                     if (aniId !== `${that.chartIdx}_${that.selector}`) {

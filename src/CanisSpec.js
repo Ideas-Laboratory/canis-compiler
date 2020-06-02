@@ -368,7 +368,6 @@ class CanisSpec {
                     let lastAnimation;
                     for (let aniIdx = 0; aniIdx < this.animations.length; aniIdx++) {
                         let animationJson = this.animations[aniIdx];
-
                         // console.time('using dom');
                         //use the selector in animation to select marks and record dom attrs
                         // console.time('query dom');
@@ -401,6 +400,15 @@ class CanisSpec {
                         //check whether the animation is existed
                         //TODO: remove non existed animations in the current spec
                         let animation;
+                        let markIds = [];
+                        if (marks.length > 0) {
+                            [].forEach.call(marks, function (mark) {
+                                markIds.push(mark.getAttribute('id'));
+                            })
+                        }
+                        // let aniKey = animationJson.chartIdx + '_#' + markIds.join(', #');//updated for aniId
+                        // animationJson.id = aniKey;
+
                         let aniKey = animationJson.chartIdx + '_' + animationJson.selector;
                         if (aniKey === '0_.mark') {
                             aniKey = `0_#${Animation.allMarks.join(', #')}`;
@@ -426,7 +434,7 @@ class CanisSpec {
                         }
 
                         // console.timeEnd('using dom');
-                        let markIds = [];//record all ids of selected marks
+                        // let markIds = [];//record all ids of selected marks
                         if (marks.length > 0) {
                             const idxForEachCls = new Map();
                             [].forEach.call(marks, function (mark) {
@@ -438,7 +446,7 @@ class CanisSpec {
                                     } else {
                                         idxForEachCls.set(markCls, idxForEachCls.get(markCls) + 1);
                                     }
-                                    markIds.push(markId);
+                                    // markIds.push(markId);
                                     if (typeof Animation.domMarks.get(markId) === 'undefined') {
                                         //process path
                                         if (mark.tagName === 'path') {//consider the linkage shape later
