@@ -368,6 +368,7 @@ class CanisSpec {
                     let lastAnimation;
                     for (let aniIdx = 0; aniIdx < this.animations.length; aniIdx++) {
                         let animationJson = this.animations[aniIdx];
+
                         // console.time('using dom');
                         //use the selector in animation to select marks and record dom attrs
                         // console.time('query dom');
@@ -391,6 +392,7 @@ class CanisSpec {
                             return;
                         }
                         // console.timeEnd('query dom');
+                        animationJson.selector = this.sortSelector(animationJson.selector);
 
                         let usedChangedAttrs = [];
                         for (let i = 0; i < ChartSpec.changedAttrs.length; i++) {
@@ -408,7 +410,7 @@ class CanisSpec {
                         }
                         // let aniKey = animationJson.chartIdx + '_#' + markIds.join(', #');//updated for aniId
                         // animationJson.id = aniKey;
-
+                        console.log('selector is: ', animationJson.selector);
                         let aniKey = animationJson.chartIdx + '_' + animationJson.selector;
                         if (aniKey === '0_.mark') {
                             aniKey = `0_#${Animation.allMarks.join(', #')}`;
@@ -542,11 +544,27 @@ class CanisSpec {
                         Animation.animations.get(aniKey).alignOnData = animation.alignOnData;
                         lastAnimation = animation;
                         document.body.removeChild(tmpContainer);
+                        console.log('test marks in order in the end: ', animation.marksInOrder);
                     }
                 }
             }
         }
 
+    }
+
+    sortSelector(selector) {
+        const selectorBlocks = selector.split(', ');//should be in the form #mark1 #mark2 ...
+        if (selectorBlocks.length > 0) {
+            console.log('before sort selector: ', selectorBlocks);
+            selectorBlocks.sort((a, b) => {
+                const numA = parseInt(a.substring(5));
+                const numB = parseInt(b.substring(5));
+                return numA - numB;
+            })
+            console.log('after sort seelctor', selectorBlocks);
+            return selectorBlocks.join(', ');
+        }
+        return selector;
     }
 
     render(callback, status = {}) {

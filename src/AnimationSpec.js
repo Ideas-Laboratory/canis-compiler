@@ -165,7 +165,7 @@ class Animation extends TimingSpec {
         }
         // console.log('after grouping: ', this.grouping);
         this.marksInOrder = tmpMarksInOrder;
-        // console.log('marks in order: ', this.marksInOrder, leavesOfAnimation);
+        console.log('marks in order within: ', this.marksInOrder, leavesOfAnimation);
         this.leaves = leavesOfAnimation;
 
         let markAni = new Map();//the time specs and action specs of each mark, for now using Map, check later to see whether it is worthy to change to Array
@@ -338,17 +338,20 @@ class Animation extends TimingSpec {
                 marksSameDatum.push(...ChartSpec.marksWithSameDatum.get(mId));
             })
             marksSameDatum = [...new Set(marksSameDatum)];
+            // console.log('marks same datum: ', marksSameDatum, that.leaves);
             for (let i = 0, len = that.leaves.length, tmpL; i < len | (tmpL = that.leaves[i]); i++) {
                 if (typeof leafMapping.get(i) === 'undefined') {
                     leafMapping.set(i, []);
                 }
+                // console.log('checking: ', marksSameDatum, tmpL.marks);
                 if (CanisUtil.arrIsContained(marksSameDatum, tmpL.marks)) {
+                    // console.log('contained');
                     leafMapping.get(i).push(leafIdx);
                     that.alignOnData = true;
                 }
             }
         })
-        // console.log('whether align on data: ', this, this.alignOnData, this.leaves);
+        console.log('whether align on data: ', this, this.alignOnData, this.leaves);
         if (!this.alignOnData) {//align one after another
             const leafNum = this.leaves.length > lastAnimation.leaves.length ? this.leaves.length : lastAnimation.leaves.length;
             let ofstTime = 0;//record the time offset for each leaf of the last 
@@ -387,7 +390,9 @@ class Animation extends TimingSpec {
                 }
 
                 //update timing of the current leaf from last animation
-                const tmpAniId = `${this.chartIdx}_#${this.marksInOrder.join(', #')}`;
+                // const tmpAniId = `${this.chartIdx}_#${this.marksInOrder.join(', #')}`;
+                const tmpAniId = `${this.chartIdx}_${this.selector}`;
+                console.log('align on nondata: aniId', tmpAniId);
                 this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, tmpAniId);
                 // this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, this.id);
             }
@@ -430,7 +435,9 @@ class Animation extends TimingSpec {
                 }
 
                 //update timing of the current leaf from last animation
-                const tmpAniId = `${this.chartIdx}_#${this.marksInOrder.join(', #')}`;
+                // const tmpAniId = `${this.chartIdx}_#${this.marksInOrder.join(', #')}`;
+                const tmpAniId = `${this.chartIdx}_${this.selector}`;
+                console.log('align on data: aniId', tmpAniId);
                 this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, tmpAniId);
                 // this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, this.id);
             }

@@ -390,7 +390,7 @@ class ChartSpec {
             }
             t.style.strokeWidth = null;
         }
-        if (t.getAttribute('stroke') === 'none'){
+        if (t.getAttribute('stroke') === 'none') {
             t.setAttribute('stroke-width', 0);
         }
 
@@ -402,7 +402,17 @@ class ChartSpec {
             if (Array.isArray(dataDatumAttrValue)) {
                 dataDatumAttrValue = dataDatumAttrValue[0];
             }
-            dataDatumAttrValue['mShape'] = t.tagName;
+            //get mshape using the type in class like Shape1, Symbol1
+            const tClass = t.getAttribute('class');
+            const blocks = tClass.split(' ');
+            let shapeName = '';
+            for (let i = 0, len = blocks.length; i < len; i++) {
+                if (blocks[i] === 'mark') {
+                    shapeName = blocks[i + 1];
+                    break;
+                }
+            }
+            dataDatumAttrValue['mShape'] = shapeName;
             let isNonDataMark = false;
             Array.from(t.classList).forEach((c) => {
                 c = c.toLowerCase();
