@@ -222,14 +222,17 @@ class GroupingSpec extends TimingSpec {
         t.children = [];
         switch (typeof specSort.order) {
             case 'object'://Array
+                console.log('generating children: ', t, nodesThisLevel, specSort.order);
                 let appendNum = 0;
                 for (let i = 0, refValue; i < specSort.order.length | (refValue = specSort.order[i]); i++) {
+                    refValue = isNaN(Number(refValue)) ? refValue : Number(refValue);
                     if (typeof nodesThisLevel.get(refValue) !== 'undefined') {
                         t.children.push(nodesThisLevel.get(refValue));
                         // that.appendFrame(t.id, nodesThisLevel.get(refValue).id, appendNum, nodesThisLevel.size);
                         appendNum++;
                     }
                 }
+                console.log(t.children);
                 break;
             case 'string'://'ascending' | 'descending'
                 //check whether have come to the lowest level
@@ -344,6 +347,7 @@ class GroupingSpec extends TimingSpec {
      * @param {Array} arr 
      */
     getMarkOrderAndLeaves(t, aligning) {
+        console.log('getting leaves: ', t);
         let orderedMarks = [], leaves = [];
         if (t != null) {
             let queue = [];
@@ -352,6 +356,7 @@ class GroupingSpec extends TimingSpec {
             queue.unshift(t);
             while (queue.length != 0) {
                 let item = queue.shift();
+                console.log('current item: ', item);
                 let children = item.children;
                 if (children.length <= 0) {
                     if (item.definedById || (!item.definedById && item.parentGroupRef.length === 1)) {

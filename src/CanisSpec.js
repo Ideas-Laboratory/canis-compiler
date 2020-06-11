@@ -380,7 +380,13 @@ class CanisSpec {
                         [].forEach.call(tmpContainer.querySelectorAll('.mark'), function (tm) {
                             tmpAllMarks.push(tm.getAttribute('id'));
                             let mClass = tm.getAttribute('class').split(' ');
-                            Animation.markClass.set(tm.getAttribute('id'), mClass[mClass.length - 1]);
+                            let markType = '';
+                            for (let i = 0, len = mClass.length; i < len; i++) {
+                                if (mClass[i] === 'mark') {
+                                    markType = mClass[i + 1];
+                                }
+                            }
+                            Animation.markClass.set(tm.getAttribute('id'), markType);
                         })
                         Animation.allMarks = [...new Set([...Animation.allMarks, ...tmpAllMarks])];
                         if (marks.length === 0) {
