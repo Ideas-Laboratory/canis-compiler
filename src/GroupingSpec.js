@@ -222,13 +222,19 @@ class GroupingSpec extends TimingSpec {
         t.children = [];
         switch (typeof specSort.order) {
             case 'object'://Array
-                console.log('generating children: ', t, nodesThisLevel, specSort.order);
+                // console.log('generating children: ', t, nodesThisLevel, specSort.order);
                 let appendNum = 0;
                 for (let i = 0, refValue; i < specSort.order.length | (refValue = specSort.order[i]); i++) {
-                    refValue = isNaN(Number(refValue)) ? refValue : Number(refValue);
+                    if (!isNaN(Number(refValue))) {// this refvalue is not number
+                        let refValueNum = Number(refValue);
+                        if (typeof nodesThisLevel.get(refValueNum) !== 'undefined') {
+                            t.children.push(nodesThisLevel.get(refValueNum));
+                            appendNum++;
+                        }
+                    }
+
                     if (typeof nodesThisLevel.get(refValue) !== 'undefined') {
                         t.children.push(nodesThisLevel.get(refValue));
-                        // that.appendFrame(t.id, nodesThisLevel.get(refValue).id, appendNum, nodesThisLevel.size);
                         appendNum++;
                     }
                 }
@@ -356,7 +362,7 @@ class GroupingSpec extends TimingSpec {
             queue.unshift(t);
             while (queue.length != 0) {
                 let item = queue.shift();
-                console.log('current item: ', item);
+                // console.log('current item: ', item);
                 let children = item.children;
                 if (children.length <= 0) {
                     if (item.definedById || (!item.definedById && item.parentGroupRef.length === 1)) {
