@@ -416,7 +416,7 @@ class CanisSpec {
                         }
                         // let aniKey = animationJson.chartIdx + '_#' + markIds.join(', #');//updated for aniId
                         // animationJson.id = aniKey;
-                        console.log('selector is: ', animationJson.selector);
+                        // console.log('selector is: ', animationJson.selector);
                         let aniKey = animationJson.chartIdx + '_' + animationJson.selector;
                         if (aniKey === '0_.mark') {
                             aniKey = `0_#${Animation.allMarks.join(', #')}`;

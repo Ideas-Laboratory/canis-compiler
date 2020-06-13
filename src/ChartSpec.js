@@ -200,6 +200,8 @@ class ChartSpec {
         for (let j = 0; j < attrNames.length; j++) {
             nullStatus[attrNames[j]] = null;
         }
+        console.log('current charts to merge: ', ChartSpec.charts);
+
         for (let i = 0; i < ChartSpec.charts.length; i++) {
             let tmpChart = ChartSpec.charts[i];
             let marks = tmpChart.querySelectorAll('.mark');
@@ -225,6 +227,8 @@ class ChartSpec {
                 })
             }
         }
+
+        console.log('mark status used to check changed attrs: ', markStatus);
 
         //find the changed attributes
         ChartSpec.changedAttrs = [];
@@ -323,6 +327,8 @@ class ChartSpec {
             }
         }
 
+        console.log('changed attrs to recored in data trans: ', ChartSpec.changedAttrs);
+
         //set data-trans of chart 0
         ChartSpec.dataTrans = new Map();
         for (let j = 0; j < allMarks.length; j++) {
@@ -344,6 +350,7 @@ class ChartSpec {
             ChartSpec.dataTrans.set(allMarks[j], dataTransArr);
             let markDom = ChartSpec.charts[0].querySelector('#' + allMarks[j]);
             markDom.setAttribute('data-transition', JSON.stringify({ "dataTrans": dataTransArr }, null, '\t'))
+            console.log('merged mark: ', markDom);
         }
 
         return ChartSpec.charts[0];

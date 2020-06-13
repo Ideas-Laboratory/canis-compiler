@@ -165,7 +165,6 @@ class Animation extends TimingSpec {
         }
         // console.log('after grouping: ', this.grouping);
         this.marksInOrder = tmpMarksInOrder;
-        console.log('marks in order within: ', this.marksInOrder, leavesOfAnimation);
         this.leaves = leavesOfAnimation;
 
         let markAni = new Map();//the time specs and action specs of each mark, for now using Map, check later to see whether it is worthy to change to Array
@@ -351,7 +350,7 @@ class Animation extends TimingSpec {
                 }
             }
         })
-        console.log('whether align on data: ', this, this.alignOnData, this.leaves);
+        // console.log('whether align on data: ', this, this.alignOnData, this.leaves);
         if (!this.alignOnData) {//align one after another
             const leafNum = this.leaves.length > lastAnimation.leaves.length ? this.leaves.length : lastAnimation.leaves.length;
             let ofstTime = 0;//record the time offset for each leaf of the last 
@@ -392,7 +391,7 @@ class Animation extends TimingSpec {
                 //update timing of the current leaf from last animation
                 // const tmpAniId = `${this.chartIdx}_#${this.marksInOrder.join(', #')}`;
                 const tmpAniId = `${this.chartIdx}_${this.selector}`;
-                console.log('align on nondata: aniId', tmpAniId);
+                // console.log('align on nondata: aniId', tmpAniId);
                 this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, tmpAniId);
                 // this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, this.id);
             }
@@ -437,7 +436,7 @@ class Animation extends TimingSpec {
                 //update timing of the current leaf from last animation
                 // const tmpAniId = `${this.chartIdx}_#${this.marksInOrder.join(', #')}`;
                 const tmpAniId = `${this.chartIdx}_${this.selector}`;
-                console.log('align on data: aniId', tmpAniId);
+                // console.log('align on data: aniId', tmpAniId);
                 this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, tmpAniId);
                 // this.updateLastAnimationTiming(lastAnimation, currentLeafLastAni, ofstTime, alignToId, alignWithId, this.id);
             }
@@ -734,6 +733,7 @@ class Animation extends TimingSpec {
                                         if (lc === 'shape') {
                                             //transform the start d and end d to shape specification
                                             let fromPosi = [0, 0], toPosi = [0, 0];
+                                            // console.log('translating d to lottie spec: ', fromValue, toValue);
                                             [fromPosi, fromValue] = CanisUtil.transDToLottieSpec(fromValue);
                                             [toPosi, toValue] = CanisUtil.transDToLottieSpec(toValue);
                                             globalVar.markLayers.get(markId).setAnimatableProperty(
@@ -816,6 +816,7 @@ class Animation extends TimingSpec {
                                 break;
                             //create circle mask with thick border
                             case ActionSpec.targetAnimationType.wheel:
+                                // console.log('going to get path offset: ', d);
                                 let pathOffset = CanisUtil.getPathOffset(targetMark.getAttribute('d'));
                                 let tmpOffsetX = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cx'] + tmpBbox[0] - pathOffset[0];
                                 let tmpOffsetY = that.finalStatus.get(markId)[tmpActionSpec.chartIdx]['cy'] + tmpBbox[1] - pathOffset[1];

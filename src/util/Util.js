@@ -665,6 +665,7 @@ export class CanisUtil {
 
     static getPathOffset(d) {
         const pathData = d
+        console.log('test path data: ', pathData);
         const pathDataSeries = parseSVG(pathData)
         const pathMaker = new PathMaker()
         let pathDataWithType;
