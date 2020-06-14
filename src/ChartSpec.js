@@ -357,7 +357,8 @@ class ChartSpec {
     }
 
     static getBBoxes() {
-        let svg = document.getElementById('chartContainer').children[0];
+        // let svg = document.getElementById('chartContainer').children[0];
+        let svg = document.getElementById('visChart');
         let marks = svg.querySelectorAll('[id^="mark"]');
         let bBoxes = new Map();
         if (marks.length > 0) {

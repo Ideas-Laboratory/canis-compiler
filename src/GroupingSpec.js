@@ -132,6 +132,7 @@ class GroupingSpec extends TimingSpec {
             root.timingRef = typeof timingRef === 'undefined' ? TimingSpec.timingRef.previousStart : timingRef;
             root.delay = 0;
             this.generateTree(root, domMarks);
+            console.log('generated tree: ', root);
         } else {// update the current tree
             this.updateTree(root, domMarks);
         }
