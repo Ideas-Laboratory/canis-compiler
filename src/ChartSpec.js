@@ -105,6 +105,7 @@ class ChartSpec {
             })
         })
         this.svgChart = ChartSpec.mergeCharts();
+        console.log('merged chart: ', this.svgChart);
     }
 
     static facetViews(nameCharts, facet) {
@@ -200,7 +201,7 @@ class ChartSpec {
         for (let j = 0; j < attrNames.length; j++) {
             nullStatus[attrNames[j]] = null;
         }
-        console.log('current charts to merge: ', ChartSpec.charts);
+        // console.log('current charts to merge: ', ChartSpec.charts);
 
         for (let i = 0; i < ChartSpec.charts.length; i++) {
             let tmpChart = ChartSpec.charts[i];
@@ -228,7 +229,7 @@ class ChartSpec {
             }
         }
 
-        console.log('mark status used to check changed attrs: ', markStatus);
+        // console.log('mark status used to check changed attrs: ', markStatus);
 
         //find the changed attributes
         ChartSpec.changedAttrs = [];
@@ -327,7 +328,7 @@ class ChartSpec {
             }
         }
 
-        console.log('changed attrs to recored in data trans: ', ChartSpec.changedAttrs);
+        // console.log('changed attrs to recored in data trans: ', ChartSpec.changedAttrs);
 
         //set data-trans of chart 0
         ChartSpec.dataTrans = new Map();
@@ -350,7 +351,7 @@ class ChartSpec {
             ChartSpec.dataTrans.set(allMarks[j], dataTransArr);
             let markDom = ChartSpec.charts[0].querySelector('#' + allMarks[j]);
             markDom.setAttribute('data-transition', JSON.stringify({ "dataTrans": dataTransArr }, null, '\t'))
-            console.log('merged mark: ', markDom);
+            // console.log('merged mark: ', markDom);
         }
 
         return ChartSpec.charts[0];

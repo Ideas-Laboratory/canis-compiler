@@ -135,8 +135,9 @@ class GroupingSpec extends TimingSpec {
             console.log('generated tree: ', root);
         } else {// update the current tree
             this.updateTree(root, domMarks);
+            console.log('updated tree: ', root);
         }
-        // console.log('root is: ', root);
+        console.log('root is: ', root);
         return this.getMarkOrderAndLeaves(root, aligning);
     }
 
@@ -239,7 +240,6 @@ class GroupingSpec extends TimingSpec {
                         appendNum++;
                     }
                 }
-                console.log(t.children);
                 break;
             case 'string'://'ascending' | 'descending'
                 //check whether have come to the lowest level
@@ -354,7 +354,7 @@ class GroupingSpec extends TimingSpec {
      * @param {Array} arr 
      */
     getMarkOrderAndLeaves(t, aligning) {
-        console.log('getting leaves: ', t);
+        // console.log('getting leaves: ', t);
         let orderedMarks = [], leaves = [];
         if (t != null) {
             let queue = [];

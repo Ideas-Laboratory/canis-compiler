@@ -33,6 +33,7 @@ class CanisSpec {
     }
 
     set animations(aniJson) {
+        console.log('assigning animations: ', this.chartSpecs, aniJson);
         let idxAniJson = aniJson.map(tmpAni => {
             tmpAni.chartIdx = 0
             return tmpAni;
@@ -44,6 +45,7 @@ class CanisSpec {
             chartNum = this.chartSpecs.length;
         }
         if (chartNum > 1) {//more than 1 input chart
+            console.log('going to clone animations: ', chartNum, aniJson);
             for (let i = 1; i < chartNum - 1; i++) {
                 let tmpAniJson = CanisUtil.deepClone(aniJson);
                 tmpAniJson[0].reference = TimingSpec.timingRef.previousEnd;
@@ -77,10 +79,10 @@ class CanisSpec {
 
     preprocessCharts(spec, diffChart, status = {}) {
         // console.time('prepeocess charts');
-        this.chartSpecs = [];
         let canisObj = spec;
 
-        if (diffChart) {//using different chart, processing charts
+        // if (diffChart) {//using different chart, processing charts
+            this.chartSpecs = [];
             [canisObj.charts, this.hasError] = ChartSpec.chartPreProcessing(canisObj.charts, status);
             if (this.hasError) return canisObj;
             //deal with input charts
@@ -103,7 +105,7 @@ class CanisSpec {
             ChartSpec.removeTransAndMerge();
             document.getElementById('chartContainer').innerHTML = '';
             document.getElementById('chartContainer').appendChild(ChartSpec.svgChart);
-        }
+        // }
         globalVar.jsMovin.clearLayers();
         ChartSpec.addLottieMarkLayers(ChartSpec.svgChart);
 
@@ -363,7 +365,7 @@ class CanisSpec {
 
                 //deal with animations
                 this.animations = canisObj.animations;
-
+                console.log('all animations: ', this.animations);
                 if (Array.isArray(this.animations)) {
                     let lastAnimation;
                     for (let aniIdx = 0; aniIdx < this.animations.length; aniIdx++) {
@@ -550,7 +552,7 @@ class CanisSpec {
                         Animation.animations.get(aniKey).alignOnData = animation.alignOnData;
                         lastAnimation = animation;
                         document.body.removeChild(tmpContainer);
-                        console.log('test marks in order in the end: ', animation.marksInOrder);
+                        // console.log('test marks in order in the end: ', animation.marksInOrder);
                     }
                 }
             }
@@ -561,13 +563,13 @@ class CanisSpec {
     sortSelector(selector) {
         const selectorBlocks = selector.split(', ');//should be in the form #mark1 #mark2 ...
         if (selectorBlocks.length > 0) {
-            console.log('before sort selector: ', selectorBlocks);
+            // console.log('before sort selector: ', selectorBlocks);
             selectorBlocks.sort((a, b) => {
                 const numA = parseInt(a.substring(5));
                 const numB = parseInt(b.substring(5));
                 return numA - numB;
             })
-            console.log('after sort seelctor', selectorBlocks);
+            // console.log('after sort seelctor', selectorBlocks);
             return selectorBlocks.join(', ');
         }
         return selector;
