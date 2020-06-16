@@ -105,7 +105,7 @@ class ChartSpec {
             })
         })
         this.svgChart = ChartSpec.mergeCharts();
-        console.log('merged chart: ', this.svgChart);
+        // console.log('merged chart: ', this.svgChart);
     }
 
     static facetViews(nameCharts, facet) {

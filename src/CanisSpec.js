@@ -33,7 +33,7 @@ class CanisSpec {
     }
 
     set animations(aniJson) {
-        console.log('assigning animations: ', this.chartSpecs, aniJson);
+        // console.log('assigning animations: ', this.chartSpecs, aniJson);
         let idxAniJson = aniJson.map(tmpAni => {
             tmpAni.chartIdx = 0
             return tmpAni;
@@ -45,7 +45,7 @@ class CanisSpec {
             chartNum = this.chartSpecs.length;
         }
         if (chartNum > 1) {//more than 1 input chart
-            console.log('going to clone animations: ', chartNum, aniJson);
+            // console.log('going to clone animations: ', chartNum, aniJson);
             for (let i = 1; i < chartNum - 1; i++) {
                 let tmpAniJson = CanisUtil.deepClone(aniJson);
                 tmpAniJson[0].reference = TimingSpec.timingRef.previousEnd;
@@ -365,7 +365,6 @@ class CanisSpec {
 
                 //deal with animations
                 this.animations = canisObj.animations;
-                console.log('all animations: ', this.animations);
                 if (Array.isArray(this.animations)) {
                     let lastAnimation;
                     for (let aniIdx = 0; aniIdx < this.animations.length; aniIdx++) {
