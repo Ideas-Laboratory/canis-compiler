@@ -334,7 +334,9 @@ class Animation extends TimingSpec {
         lastAnimation.leaves.forEach((l, leafIdx) => {
             let marksSameDatum = [];
             l.marks.forEach(mId => {
-                marksSameDatum.push(...ChartSpec.marksWithSameDatum.get(mId));
+                if (typeof ChartSpec.marksWithSameDatum.get(mId) !== 'undefined'){
+                    marksSameDatum.push(...ChartSpec.marksWithSameDatum.get(mId));
+                }
             })
             marksSameDatum = [...new Set(marksSameDatum)];
             // console.log('marks same datum: ', marksSameDatum, that.leaves);
