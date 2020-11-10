@@ -331,7 +331,8 @@ class CanisSpec {
 
     async init(spec, status = {}) {
         if (JSON.stringify(status) !== '{}') {
-            this.hasError = this.checkSpec(spec, status);
+            this.hasError = false;
+            // this.hasError = this.checkSpec(spec, status);
         } else {
             this.hasError = false;
         }
