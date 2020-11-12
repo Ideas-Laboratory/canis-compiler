@@ -383,7 +383,6 @@ class CanisSpec {
                 if (canisObj.effectTmpls && typeof canisObj.effectTmpls !== 'undefined') {
                     ActionSpec.assignActionTmpls(canisObj.effectTmpls, status);
                 }
-                console.log('effect tmpls: ', ActionSpec.actionTmpls);
 
                 //deal with animations
                 this.animations = canisObj.animations;

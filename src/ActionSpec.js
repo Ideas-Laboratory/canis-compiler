@@ -204,9 +204,7 @@ class ActionSpec extends TimingSpec {
      */
     static transToVisualAttrAction(actionJson, chartIdx, changedAttrs, dataTrans, status = {}) {
         //repalce action templates if there is any
-        console.log('action tmpls: ', this.actionTmpls, actionJson);
         actionJson = this.replaceActionTmpls(actionJson);
-        console.log('replaced action: ', actionJson);
 
         //trans to visual attrs
         let actionJsonArr = [];
