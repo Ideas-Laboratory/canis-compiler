@@ -13,6 +13,7 @@ class CanisSpec {
         this.currentSpec = {};
         this.canisObj = {};
         this._constants = new Map();
+        // this._actionTmpls = new Map();
         this.chartSpecs;
         this.facet;
         this._animations;
@@ -31,6 +32,20 @@ class CanisSpec {
     get constants() {
         return this._constants;
     }
+
+    // set actionTmpls(actionArr) {
+    //     this._actionTmpls.clear();
+    //     actionArr.forEach(a => {
+    //         if(!a.name || typeof a.name === 'undefined'){
+    //             a.name = '';
+    //         }
+    //         this._actionTmpls.set(a.name, a);
+    //     })
+    // }
+
+    // get actionTmpls() {
+    //     return this._actionTmpls;
+    // }
 
     set animations(aniJson) {
         // console.log('assigning animations: ', this.chartSpecs, aniJson);
@@ -82,29 +97,29 @@ class CanisSpec {
         let canisObj = spec;
 
         // if (diffChart) {//using different chart, processing charts
-            this.chartSpecs = [];
-            [canisObj.charts, this.hasError] = ChartSpec.chartPreProcessing(canisObj.charts, status);
-            if (this.hasError) return canisObj;
-            //deal with input charts
-            for (let i = 0; i < canisObj.charts.length; i++) {
-                const chartName = typeof canisObj.charts[i].id === 'undefined' ? 'chart' + i : canisObj.charts[i].id;
-                const chartType = typeof canisObj.charts[i].type === 'undefined' ? ChartSpec.CHART_URL : canisObj.charts[i].type;
-                const tmpChart = new ChartSpec(chartName, chartType, canisObj.charts[i].source);
-                this.chartSpecs.push(tmpChart);
-            }
-            //init facet
-            if (canisObj.facet) {
-                this.facet = new FacetSpec(canisObj.facet.type, canisObj.facet.views);
-            }
-            this.hasError = ChartSpec.loadCharts(this.chartSpecs, this.facet, status);
-            if (this.hasError) return canisObj;
+        this.chartSpecs = [];
+        [canisObj.charts, this.hasError] = ChartSpec.chartPreProcessing(canisObj.charts, status);
+        if (this.hasError) return canisObj;
+        //deal with input charts
+        for (let i = 0; i < canisObj.charts.length; i++) {
+            const chartName = typeof canisObj.charts[i].id === 'undefined' ? 'chart' + i : canisObj.charts[i].id;
+            const chartType = typeof canisObj.charts[i].type === 'undefined' ? ChartSpec.CHART_URL : canisObj.charts[i].type;
+            const tmpChart = new ChartSpec(chartName, chartType, canisObj.charts[i].source);
+            this.chartSpecs.push(tmpChart);
+        }
+        //init facet
+        if (canisObj.facet) {
+            this.facet = new FacetSpec(canisObj.facet.type, canisObj.facet.views);
+        }
+        this.hasError = ChartSpec.loadCharts(this.chartSpecs, this.facet, status);
+        if (this.hasError) return canisObj;
 
-            //set viewport for jsmovin
-            globalVar.jsMovin.setViewport(ChartSpec.viewport.chartWidth, ChartSpec.viewport.chartHeight);
+        //set viewport for jsmovin
+        globalVar.jsMovin.setViewport(ChartSpec.viewport.chartWidth, ChartSpec.viewport.chartHeight);
 
-            ChartSpec.removeTransAndMerge();
-            document.getElementById('chartContainer').innerHTML = '';
-            document.getElementById('chartContainer').appendChild(ChartSpec.svgChart);
+        ChartSpec.removeTransAndMerge();
+        document.getElementById('chartContainer').innerHTML = '';
+        document.getElementById('chartContainer').appendChild(ChartSpec.svgChart);
         // }
         globalVar.jsMovin.clearLayers();
         ChartSpec.addLottieMarkLayers(ChartSpec.svgChart);
@@ -134,6 +149,7 @@ class CanisSpec {
             ChartSpec.chartUnderstanding = { mShape: ['shape'] };
             Animation.animations.clear();
             Animation.markClass.clear();
+            ActionSpec.actionTmpls.clear();
         }
         this.currentSpec = spec;
         return diffChart;
@@ -349,6 +365,7 @@ class CanisSpec {
                 ChartSpec.chartUnderstanding = { mShape: ['shape'] };
                 Animation.animations.clear();
                 Animation.markClass.clear();
+                ActionSpec.actionTmpls.clear();
                 if (document.getElementById('chartContainer')) {
                     document.getElementById('chartContainer').innerHTML = '';
                 }
@@ -363,6 +380,10 @@ class CanisSpec {
                 if (canisObj.constants && typeof canisObj.constants !== 'undefined') {
                     this.constants = canisObj.constants;
                 }
+                if (canisObj.effectTmpls && typeof canisObj.effectTmpls !== 'undefined') {
+                    ActionSpec.assignActionTmpls(canisObj.effectTmpls, status);
+                }
+                console.log('effect tmpls: ', ActionSpec.actionTmpls);
 
                 //deal with animations
                 this.animations = canisObj.animations;
@@ -416,19 +437,16 @@ class CanisSpec {
                                 markIds.push(mark.getAttribute('id'));
                             })
                         }
-                        // let aniKey = animationJson.chartIdx + '_#' + markIds.join(', #');//updated for aniId
-                        // animationJson.id = aniKey;
-                        // console.log('selector is: ', animationJson.selector);
                         let aniKey = animationJson.chartIdx + '_' + animationJson.selector;
                         if (aniKey === '0_.mark') {
                             aniKey = `0_#${Animation.allMarks.join(', #')}`;
                         }
                         if (typeof Animation.animations.get(aniKey) !== 'undefined') {//already have this animation
                             animation = Animation.animations.get(aniKey);
-                            animation.translate(animationJson, usedChangedAttrs, true);
+                            animation.translate(animationJson, usedChangedAttrs, true, status);
                         } else {
                             animation = new Animation();
-                            animation.translate(animationJson, usedChangedAttrs);//translate from json obj to Animation obj
+                            animation.translate(animationJson, usedChangedAttrs, false, status);//translate from json obj to Animation obj
                             Animation.animations.set(aniKey, animation);
                         }
                         //auto fill align property for animations except the first one

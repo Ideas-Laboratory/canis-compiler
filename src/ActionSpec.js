@@ -6,6 +6,7 @@ class ActionSpec extends TimingSpec {
     constructor() {
         super();
         this.chartIdx = 0;
+        this._extend = '';
         this._type = ActionSpec.actionTypes.appear;
         this.animationType = '';//not set by the user
         this._easing = ActionSpec.easingType.easeLinear;
@@ -16,6 +17,7 @@ class ActionSpec extends TimingSpec {
     }
 
     /***** getters and setters *****/
+    // set 
     set type(tp) {
         if (typeof tp !== 'undefined') {
             if (Object.keys(ActionSpec.actionTypes).includes(tp)) {
@@ -149,10 +151,64 @@ class ActionSpec extends TimingSpec {
         }
     }
 
+    static assignActionTmpls(actionTmplJson, status = {}) {
+        //assign Animation action templates
+        this.actionTmpls.clear();
+        actionTmplJson.forEach(a => {
+            if (!a.name || typeof a.name === 'undefined') {
+                a.name = '';
+            }
+            this.actionTmpls.set(a.name, a);
+        })
+        //replace the templates reference inside the templates
+        this.actionTmpls.forEach((currentTmpl, currentName) => {
+            const extendName = currentTmpl.extend;
+            if (extendName && typeof extendName !== 'undefined') {
+                const extendTmpl = this.actionTmpls.get(extendName);
+                if (typeof extendTmpl !== 'undefined') {
+                    Object.keys(extendTmpl).forEach(k => {
+                        if (k !== 'name' && typeof currentTmpl[k] === 'undefined') {
+                            currentTmpl[k] = extendTmpl[k];
+                        }
+                    })
+                    delete currentTmpl.extend;
+                    this.actionTmpls.set(currentName, currentTmpl);
+                } else {
+                    status.info = { type: 'error', msg: 'cannot find the inherited template.', errSpec: '"extend":"' + extendName + '"' };
+                }
+            }
+        })
+    }
+
+    static replaceActionTmpls(actionJson, status = {}) {
+        if (actionJson.extend && typeof actionJson.extend !== 'undefined') {
+            const extendTmpl = this.actionTmpls.get(actionJson.extend);
+            if (typeof extendTmpl !== 'undefined') {
+                Object.keys(extendTmpl).forEach(k => {
+                    if (k !== 'name' && typeof actionJson[k] === 'undefined') {
+                        actionJson[k] = extendTmpl[k];
+                    }
+                })
+                delete actionJson.extend;
+                return actionJson;
+            } else {
+                status.info = { type: 'error', msg: 'cannot find the inherited template.', errSpec: '"extend":"' + actionJson.extend + '"' };
+                return actionJson;
+            }
+        }
+        return actionJson;
+    }
+
     /**
      * translate template animations to 'custom' type with the transition on some visual attributes
      */
-    static transToVisualAttrAction(actionJson, chartIdx, changedAttrs, dataTrans) {
+    static transToVisualAttrAction(actionJson, chartIdx, changedAttrs, dataTrans, status = {}) {
+        //repalce action templates if there is any
+        console.log('action tmpls: ', this.actionTmpls, actionJson);
+        actionJson = this.replaceActionTmpls(actionJson);
+        console.log('replaced action: ', actionJson);
+
+        //trans to visual attrs
         let actionJsonArr = [];
 
         //generate pre-render actions
@@ -527,6 +583,7 @@ class ActionSpec extends TimingSpec {
     }
 }
 
+ActionSpec.actionTmpls = new Map();//record all action templates, key: tmplate name, value: action obj
 ActionSpec.attrs = ['type', 'offset', 'reference', 'easing', 'duration'];
 
 ActionSpec.actionTypes = {

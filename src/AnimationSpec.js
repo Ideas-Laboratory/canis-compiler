@@ -78,7 +78,7 @@ class Animation extends TimingSpec {
      * translate from json object to Animation object
      * @param {JSON obj} animationJson 
      */
-    translate(animationJson, usedChangedAttrs, updating = false) {
+    translate(animationJson, usedChangedAttrs, updating, status={}) {
         this.chartIdx = animationJson.chartIdx;
         if (!updating) {
             this.selector = animationJson.selector;//init selector
@@ -98,7 +98,7 @@ class Animation extends TimingSpec {
             }
             for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
                 actionJson.chartIdx = animationJson.chartIdx;
-                let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, ChartSpec.dataTrans);//translate templates to no-templates
+                let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, ChartSpec.dataTrans, status);//translate templates to no-templates
                 // console.log('translated visual action: ', visAttrActionJsonArr);
                 for (let j = 0, visAttrActionJson; j < visAttrActionJsonArr.length | (visAttrActionJson = visAttrActionJsonArr[j]); j++) {
                     let tmpAction = new ActionSpec();
@@ -334,7 +334,7 @@ class Animation extends TimingSpec {
         lastAnimation.leaves.forEach((l, leafIdx) => {
             let marksSameDatum = [];
             l.marks.forEach(mId => {
-                if (typeof ChartSpec.marksWithSameDatum.get(mId) !== 'undefined'){
+                if (typeof ChartSpec.marksWithSameDatum.get(mId) !== 'undefined') {
                     marksSameDatum.push(...ChartSpec.marksWithSameDatum.get(mId));
                 }
             })
@@ -894,40 +894,40 @@ Animation.frameTime = new Map();//key: time, value: whether this time point is a
 Animation.animations = new Map();//record all animations, key:, value: animation obj
 Animation.finalStatus = new Map();//record the final visual status of each mark, eg: key:mark1, value: {opacity: 1, height: 226}
 Animation.allMarkAni = new Map();
-Animation.easeFuncs = {
-    easeInQuad: (p) => {
-        return p * p;
-    },
-    easeOutQuad: (p) => {
-        return - p * (p - 2);
-    },
-    easeInOutQuad: (p) => {
-        if ((p / 2) < 1) return 1 / 2 * p * p;
-        return - ((--p) * (p - 2) - 1) / 2;
-    },
-    easeInCubic: (p) => {
-        return p * p * p;
-    },
-    easeOutCubic: (p) => {
-        return (p = p - 1) * p * p + 1;
-    },
-    easeInOutCubic: (p) => {
-        if ((p /= 0.5) < 1) return p * p * p / 2;
-        return ((p -= 2) * p * p + 2) / 2;
-    },
-    easeOutBounce: (p) => {
-        let ratio = 0;
-        if (p < (1 / 2.75)) {
-            ratio = 7.5625 * p * p;
-        } else if (p < (2 / 2.75)) {
-            ratio = 7.5625 * (p -= (1.5 / 2.75)) * p + 0.75;
-        } else if (p < (2.5 / 2.75)) {
-            ratio = 7.5625 * (p -= (2.25 / 2.75)) * p + 0.9375;
-        } else {
-            ratio = 7.5625 * (p -= (2.625 / 2.75)) * p + 0.984375;
-        }
-        return ratio;
-    }
-}
+// Animation.easeFuncs = {
+//     easeInQuad: (p) => {
+//         return p * p;
+//     },
+//     easeOutQuad: (p) => {
+//         return - p * (p - 2);
+//     },
+//     easeInOutQuad: (p) => {
+//         if ((p / 2) < 1) return 1 / 2 * p * p;
+//         return - ((--p) * (p - 2) - 1) / 2;
+//     },
+//     easeInCubic: (p) => {
+//         return p * p * p;
+//     },
+//     easeOutCubic: (p) => {
+//         return (p = p - 1) * p * p + 1;
+//     },
+//     easeInOutCubic: (p) => {
+//         if ((p /= 0.5) < 1) return p * p * p / 2;
+//         return ((p -= 2) * p * p + 2) / 2;
+//     },
+//     easeOutBounce: (p) => {
+//         let ratio = 0;
+//         if (p < (1 / 2.75)) {
+//             ratio = 7.5625 * p * p;
+//         } else if (p < (2 / 2.75)) {
+//             ratio = 7.5625 * (p -= (1.5 / 2.75)) * p + 0.75;
+//         } else if (p < (2.5 / 2.75)) {
+//             ratio = 7.5625 * (p -= (2.25 / 2.75)) * p + 0.9375;
+//         } else {
+//             ratio = 7.5625 * (p -= (2.625 / 2.75)) * p + 0.984375;
+//         }
+//         return ratio;
+//     }
+// }
 
 export default Animation;
