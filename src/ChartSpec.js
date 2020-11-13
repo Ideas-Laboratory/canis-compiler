@@ -203,7 +203,8 @@ class ChartSpec {
         }
         // console.log('current charts to merge: ', ChartSpec.charts);
 
-        for (let i = 0; i < ChartSpec.charts.length; i++) {
+        for (let i = 0; i < this.charts.length; i++) {
+            this.markSetsDuringTrans[i] = { enter: [], update: [], exit: [] }//init ChartSpec.markSetsDuringTrans
             let tmpChart = ChartSpec.charts[i];
             let marks = tmpChart.querySelectorAll('.mark');
             if (marks.length > 0) {
@@ -269,9 +270,18 @@ class ChartSpec {
 
         //add missing marks to each chart
         allMarks = Array.from(allMarks);
+        let markEnterExit = new Map();
         for (let i = 0; i < ChartSpec.charts.length; i++) {
             for (let j = 0; j < allMarks.length; j++) {
+                if (typeof markEnterExit.get(allMarks[j]) === 'undefined') {
+                    markEnterExit.set(allMarks[j], false);//init mark enter exit status
+                }
+
                 if (ChartSpec.charts[i].querySelectorAll('#' + allMarks[j]).length === 0) {//chart i does not have mark j
+                    if (markEnterExit.get(allMarks[j])) {//it exists in previous chart
+                        this.markSetsDuringTrans[i].exit.push(allMarks[j]);
+                        markEnterExit.set(allMarks[j], false);
+                    }
                     let markStr = markTempletes.get(allMarks[j]);
                     let tmpDiv = document.createElement('div');
                     tmpDiv.innerHTML = markStr;
@@ -323,12 +333,20 @@ class ChartSpec {
                     let svgMark = parser.parseFromString(markStr, "image/svg+xml").lastChild.children[0];
                     ChartSpec.charts[i].querySelector('#chartContent').appendChild(svgMark);
                     markStatus.get(allMarks[j])[i] = statusObj;
+                } else {//this mark is in this chart 
+                    if (markEnterExit.get(allMarks[j])) {//it exists in previous chart
+                        this.markSetsDuringTrans[i].update.push(allMarks[j]);
+                    } else {
+                        this.markSetsDuringTrans[i].enter.push(allMarks[j]);
+                        markEnterExit.set(allMarks[j], true);
+                    }
                 }
 
             }
         }
 
         // console.log('changed attrs to recored in data trans: ', ChartSpec.changedAttrs);
+        console.log('mark sets between charts: ', ChartSpec.markSetsDuringTrans);
 
         //set data-trans of chart 0
         ChartSpec.dataTrans = new Map();
@@ -526,8 +544,10 @@ ChartSpec.CHART_CONTENT = 'content';
 ChartSpec.charts = [];
 ChartSpec.attrs = ['id', 'source', 'start', 'end'];
 ChartSpec.changedAttrs = [];
+
 ChartSpec.viewport = new Viewport();
-ChartSpec.dataTrans = new Map();
+ChartSpec.dataTrans = new Map();//key:markid, value:array of values corresponding to each chart
+ChartSpec.markSetsDuringTrans = []; // value: {enter: markid array, update: markid array, exit: markid array}
 ChartSpec.svgChart;
 ChartSpec.chartUnderstanding = { mShape: ['shape'] };
 ChartSpec.dataMarkDatum = new Map();

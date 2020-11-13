@@ -23,7 +23,7 @@ class Animation extends TimingSpec {
         this.animationEndTime = 0;
         this.root = {};
         this.leaves = [];
-        this.allMarksThisAni = [];
+        // this.allMarksThisAni = [];
         this.marksInOrder = [];
         this.anisAligned = [];
         this.alignOnData = false;
@@ -503,7 +503,6 @@ class Animation extends TimingSpec {
                     }
                 })
                 return tmpOfstTime;
-            default:
         }
     }
 
@@ -699,6 +698,7 @@ class Animation extends TimingSpec {
 
     static mapToLottieSpec() {
         let that = this;
+        console.log('going to map to lottie spec: ', this.allMarkAni);
         this.allMarkAni.forEach(function (value, markId) {
             for (let i = 0; i < value.actionAttrs.length; i++) {
                 let tmpActionSpec = value.actionAttrs[i];
@@ -868,6 +868,7 @@ class Animation extends TimingSpec {
     static resetAll() {
         this.wholeEndTime = 0;
         this.allMarkAni.clear();
+        this.allMarkAniTrans.clear();
         this.frameTime.clear();
         // this.domMarks.clear();
         this.finalStatus.clear();
@@ -894,6 +895,7 @@ Animation.frameTime = new Map();//key: time, value: whether this time point is a
 Animation.animations = new Map();//record all animations, key:, value: animation obj
 Animation.finalStatus = new Map();//record the final visual status of each mark, eg: key:mark1, value: {opacity: 1, height: 226}
 Animation.allMarkAni = new Map();
+Animation.allMarkAniTrans = new Map();//key: markId, value: Array<{}>
 // Animation.easeFuncs = {
 //     easeInQuad: (p) => {
 //         return p * p;

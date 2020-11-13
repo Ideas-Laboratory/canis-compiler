@@ -340,7 +340,7 @@ class ActionSpec extends TimingSpec {
                     tmpObj.maskType = MaskType.InvertAlpha;
                     tmpObj.attribute = [{
                         attrName: 'scaleY',
-                        from: 1,
+                        from: 0.5,
                         to: 0
                     }];
                     break;
@@ -592,6 +592,7 @@ ActionSpec.actionTypes = {
     wipeRight: 'wipe right',
     wheel: 'wheel',
     appear: 'appear',
+    test: 'test',
     disappear: 'disappear',
     circle: 'circle',
     grow: 'grow',
@@ -622,6 +623,7 @@ ActionSpec.targetAnimationType = {
     wheel: 'wheel',
     circle: 'circle',
     appear: 'appear',
+    test: 'test',
     grow: 'grow',
     custom: 'custom',
     mistake: 'mistake'
