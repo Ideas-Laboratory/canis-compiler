@@ -59,9 +59,10 @@ class CanisSpec {
         } else {
             chartNum = this.chartSpecs.length;
         }
+        console.log('assigning animations: ', chartNum, JSON.stringify(aniJson, null, 2));
         if (chartNum > 1) {//more than 1 input chart
             // console.log('going to clone animations: ', chartNum, aniJson);
-            for (let i = 1; i < chartNum - 1; i++) {
+            for (let i = 1; i < chartNum; i++) {
                 let tmpAniJson = CanisUtil.deepClone(aniJson);
                 tmpAniJson[0].reference = TimingSpec.timingRef.previousEnd;
                 //record animation id and replace it in align property
@@ -70,8 +71,10 @@ class CanisSpec {
                 let tmpIdxAniJson = tmpAniJson.map(tmpAni => {
                     tmpAni.chartIdx = i;
                     if (typeof tmpAni.id !== 'undefined') {
-                        const newId = '_ani_' + i + '_' + tmpAniIdx;
+                        // const newId = '_ani_' + i + '_' + tmpAniIdx;
+                        const newId = i + '.' + tmpAni.id;
                         idMapping.set(tmpAni.id, newId);
+                        tmpAni.id = newId;
                     }
                     if (typeof tmpAni.align !== 'undefined') {
                         if (typeof idMapping.get(tmpAni.align.target) !== 'undefined') {
@@ -82,9 +85,11 @@ class CanisSpec {
                     }
                     return tmpAni;
                 })
+                // console.log('pushing', i, JSON.stringify(tmpIdxAniJson, null, 2));
                 idxAniJson.push(...tmpIdxAniJson);
             }
         }
+        console.log('assigned animations: ', JSON.stringify(idxAniJson, null, 2));
         this._animations = idxAniJson;
     }
 
@@ -124,6 +129,44 @@ class CanisSpec {
         globalVar.jsMovin.clearLayers();
         ChartSpec.addLottieMarkLayers(ChartSpec.svgChart);
 
+        //parse the animations, split the animation json according to the mark sets (enter, update, exit)
+        //1. split the aniunit according to (enter, update, exit)
+        //2. duplicate aniunits according to number of charts and the mark sets between charts
+        //TODO: marks should be selected according to the mark sets (enter, update, exit)
+        let tmpAniJsons = []
+        canisObj.animations.forEach(tmpAniJson => {
+            if (typeof tmpAniJson.elements !== 'undefined') {
+                const oriId = typeof tmpAniJson.id === 'undefined' ? tmpAniJson.selector : tmpAniJson.id;
+                const markSetTypes = ['enter', 'update', 'exit'];
+                markSetTypes.forEach(mst => {
+                    if (typeof tmpAniJson.elements[mst] !== 'undefined') {
+                        let enterAniJson = {
+                            id: oriId.concat('.', mst, '.effects[', 0, ']'),
+                            marksetType: mst,
+                            selector: tmpAniJson.selector
+                        }
+                        Object.keys(tmpAniJson.elements[mst]).forEach(k => {
+                            enterAniJson[k] = tmpAniJson.elements[mst][k];
+                        })
+                        tmpAniJsons.push(enterAniJson);
+                    }
+                })
+            } else {
+                tmpAniJsons.push(tmpAniJson);
+            }
+        })
+        // let tmpAniJsonsCopy = JSON.parse(JSON.stringify(tmpAniJsons));
+        // tmpAniJsonsCopy[0].reference = TimingSpec.timingRef.previousEnd;
+        // // console.log('parsed aniunits: ', tmpAniJsons, ChartSpec.markSetsDuringTrans, tmpAniJsonsCopy);
+        // for (let i = 0; i < ChartSpec.charts.length - 1; i++) {
+        //     for (let j = 0; j < tmpAniJsonsCopy.length; j++) {
+        //         tmpAniJsonsCopy[j].chartIdx = i + 1;
+        //     }
+        //     console.log(JSON.stringify(tmpAniJsonsCopy));
+        //     tmpAniJsons = [...tmpAniJsons, ...tmpAniJsonsCopy];
+        // }
+        // console.log('parsed aniunits: ', tmpAniJsons);
+        canisObj.animations = tmpAniJsons;
         // console.timeEnd('prepeocess charts');
         return canisObj;
     }
@@ -386,6 +429,7 @@ class CanisSpec {
 
                 //deal with animations
                 this.animations = canisObj.animations;
+                console.log('animations in canisObj', this.animations);
                 if (Array.isArray(this.animations)) {
                     let lastAnimation;
                     for (let aniIdx = 0; aniIdx < this.animations.length; aniIdx++) {
@@ -397,7 +441,27 @@ class CanisSpec {
                         let tmpContainer = document.createElement('div');
                         document.body.appendChild(tmpContainer);
                         tmpContainer.innerHTML = ChartSpec.charts[animationJson.chartIdx].outerHTML;
-                        let marks = tmpContainer.querySelectorAll(animationJson.selector);
+
+                        console.log('animation json going to process: ', animationJson, ChartSpec.markSetsDuringTrans);
+                        let allTargetMarks = tmpContainer.querySelectorAll(animationJson.selector);
+                        const entireMarkSet = ChartSpec.markSetsDuringTrans[animationJson.chartIdx][animationJson.marksetType];
+                        let markIds = [], marks = [];
+                        if (allTargetMarks.length > 0) {
+                            [].forEach.call(allTargetMarks, function (m) {
+                                const mId = m.getAttribute('id');
+                                if (typeof entireMarkSet !== 'undefined') {
+                                    if (entireMarkSet.includes(mId)) {
+                                        markIds.push(mId);
+                                        marks.push(m)
+                                    }
+                                } else {//need to delete this else
+                                    markIds.push(mId);
+                                    marks.push(m)
+                                }
+                            })
+                        }
+                        console.log('marks in this aniunit: ', markIds);
+
                         let tmpAllMarks = [];
                         [].forEach.call(tmpContainer.querySelectorAll('.mark'), function (tm) {
                             tmpAllMarks.push(tm.getAttribute('id'));
@@ -417,7 +481,7 @@ class CanisSpec {
                             } else {
                                 status.info = { type: 'error', msg: 'The selector ' + animationJson.selector + ' selects no marks', errSpec: '"selector":"' + animationJson.selector.replace(/\s/g, '') + '"' };
                             }
-                            return;
+                            continue;
                         }
                         // console.timeEnd('query dom');
                         animationJson.selector = this.sortSelector(animationJson.selector);
@@ -430,12 +494,7 @@ class CanisSpec {
                         //check whether the animation is existed
                         //TODO: remove non existed animations in the current spec
                         let animation;
-                        let markIds = [];
-                        if (marks.length > 0) {
-                            [].forEach.call(marks, function (mark) {
-                                markIds.push(mark.getAttribute('id'));
-                            })
-                        }
+
                         let aniKey = animationJson.chartIdx + '_' + animationJson.selector;
                         if (aniKey === '0_.mark') {
                             aniKey = `0_#${Animation.allMarks.join(', #')}`;

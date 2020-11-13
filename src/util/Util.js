@@ -139,6 +139,10 @@ export class CanisUtil {
         return result;
     }
 
+    static arrayIntersact(arr1, arr2) {
+        return arr1.filter(v => arr2.includes(v));
+    }
+
     static formatTime(time) {
         let currentTimeS = parseInt(time / 1000);
         let currentTimeMS = parseInt(time % 1000 / 10);
