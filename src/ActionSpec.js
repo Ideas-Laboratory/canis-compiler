@@ -582,7 +582,7 @@ class ActionSpec extends TimingSpec {
 }
 
 ActionSpec.actionTmpls = new Map();//record all action templates, key: tmplate name, value: action obj
-ActionSpec.attrs = ['type', 'offset', 'reference', 'easing', 'duration'];
+ActionSpec.attrs = ['extend', 'type', 'offset', 'reference', 'easing', 'duration'];
 
 ActionSpec.actionTypes = {
     fade: 'fade',
@@ -597,6 +597,8 @@ ActionSpec.actionTypes = {
     circle: 'circle',
     grow: 'grow',
     custom: 'custom',
+    translateX: 'translate X',
+    translateY: 'translate Y',
     fadeOut: 'fade out',
     wipeOutFromLeft: 'wipe out from left',
     wipeOutFromTop: 'wipe out from top',
@@ -626,7 +628,8 @@ ActionSpec.targetAnimationType = {
     test: 'test',
     grow: 'grow',
     custom: 'custom',
-    mistake: 'mistake'
+    mistake: 'mistake',
+    translate: 'translate'
 }
 
 ActionSpec.easingType = {

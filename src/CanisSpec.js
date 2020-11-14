@@ -445,22 +445,28 @@ class CanisSpec {
                         console.log('animation json going to process: ', animationJson, ChartSpec.markSetsDuringTrans);
                         let allTargetMarks = tmpContainer.querySelectorAll(animationJson.selector);
                         const entireMarkSet = ChartSpec.markSetsDuringTrans[animationJson.chartIdx][animationJson.marksetType];
-                        let markIds = [], marks = [];
+                        let markIds = [], marks = [], newSelector = '';
                         if (allTargetMarks.length > 0) {
-                            [].forEach.call(allTargetMarks, function (m) {
+                            [].forEach.call(allTargetMarks, (m, i) => {
                                 const mId = m.getAttribute('id');
                                 if (typeof entireMarkSet !== 'undefined') {
                                     if (entireMarkSet.includes(mId)) {
+                                        newSelector = newSelector.concat('#', mId, ',')
                                         markIds.push(mId);
                                         marks.push(m)
                                     }
-                                } else {//need to delete this else
-                                    markIds.push(mId);
-                                    marks.push(m)
                                 }
+                                // else {//need to delete this else
+                                //     markIds.push(mId);
+                                //     marks.push(m)
+                                // }
                             })
                         }
-                        console.log('marks in this aniunit: ', markIds);
+                        //replace selector
+                        newSelector = newSelector.substring(0, newSelector.length - 1);
+                        console.log('the selector is: ', newSelector);
+                        this.animations[aniIdx].selector = newSelector;
+                        console.log('marks in this aniunit: ', markIds, newSelector);
 
                         let tmpAllMarks = [];
                         [].forEach.call(tmpContainer.querySelectorAll('.mark'), function (tm) {

@@ -99,7 +99,7 @@ class Animation extends TimingSpec {
             for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
                 actionJson.chartIdx = animationJson.chartIdx;
                 let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, ChartSpec.dataTrans, status);//translate templates to no-templates
-                // console.log('translated visual action: ', visAttrActionJsonArr);
+                console.log('translated visual action: ', visAttrActionJsonArr);
                 for (let j = 0, visAttrActionJson; j < visAttrActionJsonArr.length | (visAttrActionJson = visAttrActionJsonArr[j]); j++) {
                     let tmpAction = new ActionSpec();
                     tmpAction.initAction(visAttrActionJson);
