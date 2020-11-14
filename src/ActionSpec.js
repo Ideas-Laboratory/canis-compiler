@@ -458,6 +458,17 @@ class ActionSpec extends TimingSpec {
                         to: 1
                     }];
                     break;
+
+                case ActionSpec.actionTypes.translateX:
+                    console.log('test transition: ', dataTrans, chartIdx);
+                    tmpObj.animationType = ActionSpec.targetAnimationType.fade;
+                    tmpObj.type = ActionSpec.actionTargets.mark;
+                    tmpObj.attribute = [{
+                        attrName: 'opacity',
+                        from: 0,
+                        to: 1
+                    }];
+                    break;
                 // case ActionSpec.actionTypes.custom:
                 //     tmpObj.type = ActionSpec.actionTargets.mark;
                 //     tmpObj.animationType = ActionSpec.targetAnimationType.custom;
