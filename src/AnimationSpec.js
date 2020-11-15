@@ -78,7 +78,7 @@ class Animation extends TimingSpec {
      * translate from json object to Animation object
      * @param {JSON obj} animationJson 
      */
-    translate(animationJson, usedChangedAttrs, updating, status={}) {
+    translate(animationJson, usedChangedAttrs, updating, marksThisAni, status={}) {
         this.chartIdx = animationJson.chartIdx;
         if (!updating) {
             this.selector = animationJson.selector;//init selector
@@ -98,7 +98,7 @@ class Animation extends TimingSpec {
             }
             for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
                 actionJson.chartIdx = animationJson.chartIdx;
-                let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, ChartSpec.dataTrans, status);//translate templates to no-templates
+                let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, marksThisAni, status);//translate templates to no-templates
                 console.log('translated visual action: ', visAttrActionJsonArr);
                 for (let j = 0, visAttrActionJson; j < visAttrActionJsonArr.length | (visAttrActionJson = visAttrActionJsonArr[j]); j++) {
                     let tmpAction = new ActionSpec();

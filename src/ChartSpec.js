@@ -266,7 +266,7 @@ class ChartSpec {
         if (ChartSpec.changedAttrs.indexOf('d') >= 0) {
             diffCmds = CanisUtil.findDiffCmds(markStatus);
         }
-        // console.log('changed attributes: ', ChartSpec.changedAttrs);
+        console.log('changed attributes: ', ChartSpec.changedAttrs);
 
         //add missing marks to each chart
         allMarks = Array.from(allMarks);

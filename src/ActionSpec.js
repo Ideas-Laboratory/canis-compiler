@@ -1,6 +1,8 @@
 import TimingSpec from './TimingSpec.js';
+import ChartSpec from './ChartSpec.js';
 import { globalVar } from './util/GlobalVar.js';
 import { EasingFactory, MaskType } from 'jsmovin';
+import { CanisUtil } from './util/Util.js';
 
 class ActionSpec extends TimingSpec {
     constructor() {
@@ -202,7 +204,7 @@ class ActionSpec extends TimingSpec {
     /**
      * translate template animations to 'custom' type with the transition on some visual attributes
      */
-    static transToVisualAttrAction(actionJson, chartIdx, changedAttrs, dataTrans, status = {}) {
+    static transToVisualAttrAction(actionJson, chartIdx, changedAttrs, markIds, status = {}) {
         //repalce action templates if there is any
         actionJson = this.replaceActionTmpls(actionJson);
 
@@ -210,57 +212,57 @@ class ActionSpec extends TimingSpec {
         let actionJsonArr = [];
 
         //generate pre-render actions
-        for (let i = 0; i < changedAttrs.length; i++) {
-            let changedAttr = changedAttrs[i];
-            let fromArr = [], toArr = [];
-            dataTrans.forEach(function (transArr, markId) {
-                if (chartIdx + 1 < transArr.length) {
-                    if (changedAttr === 'd' || changedAttr === 'textContent' || changedAttr === 'fill' || changedAttr === 'stroke') {
-                        let tmpFromItem = [markId, !transArr[chartIdx][changedAttr] ? (changedAttr === 'd' ? 'm0,0' : transArr[chartIdx][changedAttr]) : transArr[chartIdx][changedAttr]],
-                            tmpToItem = [markId, !transArr[chartIdx + 1][changedAttr] ? (changedAttr === 'd' ? 'm0,0' : transArr[chartIdx + 1][changedAttr]) : transArr[chartIdx + 1][changedAttr]];
-                        if (changedAttr === 'd') {
-                            let tmpFromPath = document.createElementNS('http://www.w3.org/2000/svg', 'path'),
-                                tmpToPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                            tmpFromPath.setAttributeNS(null, 'd', !transArr[chartIdx][changedAttr] ? 'm0,0' : transArr[chartIdx][changedAttr]);
-                            tmpToPath.setAttributeNS(null, 'd', !transArr[chartIdx + 1][changedAttr] ? 'm0,0' : transArr[chartIdx + 1][changedAttr]);
-                            let tmpFromPathLen = tmpFromPath.getTotalLength(),
-                                tmpToPathLen = tmpToPath.getTotalLength();
-                            let stepNum = 300, fromPathStepLen = tmpFromPathLen / stepNum, toPathStepLen = tmpToPathLen / stepNum;
-                            let fromDiscritPath = [], toDiscritPath = [];
-                            for (let i = 0; i < stepNum; i++) {
-                                let tmpFromPnt = tmpFromPath.getPointAtLength(fromPathStepLen * i),
-                                    tmpToPnt = tmpToPath.getPointAtLength(toPathStepLen * i);
-                                fromDiscritPath.push([tmpFromPnt.x, tmpFromPnt.y]);
-                                toDiscritPath.push([tmpToPnt.x, tmpToPnt.y]);
-                            }
-                            tmpFromItem.push(fromDiscritPath);
-                            tmpToItem.push(toDiscritPath);
-                        }
-                        fromArr.push(tmpFromItem);
-                        toArr.push(tmpToItem);
-                    } else {
-                        fromArr.push([markId, parseFloat(transArr[chartIdx][changedAttr])]);
-                        toArr.push([markId, parseFloat(transArr[chartIdx + 1][changedAttr])]);
-                    }
-                }
-            })
-            let preObj = {
-                chartIdx: actionJson.chartIdx,
-                reference: TimingSpec.timingRef.previousStart,
-                offset: 0,
-                duration: actionJson.type === ActionSpec.actionTypes.transition ? actionJson.duration : 0,
-                type: ActionSpec.actionTargets.mark,
-                oriActionType: ActionSpec.actionTypes.custom,
-                animationType: ActionSpec.targetAnimationType.custom,
-                attribute: [{
-                    attrName: changedAttr,
-                    from: fromArr,
-                    to: toArr
-                }]
-            }
+        // for (let i = 0; i < changedAttrs.length; i++) {
+        //     let changedAttr = changedAttrs[i];
+        //     let fromArr = [], toArr = [];
+        //     dataTrans.forEach(function (transArr, markId) {
+        //         if (chartIdx + 1 < transArr.length) {
+        //             if (changedAttr === 'd' || changedAttr === 'textContent' || changedAttr === 'fill' || changedAttr === 'stroke') {
+        //                 let tmpFromItem = [markId, !transArr[chartIdx][changedAttr] ? (changedAttr === 'd' ? 'm0,0' : transArr[chartIdx][changedAttr]) : transArr[chartIdx][changedAttr]],
+        //                     tmpToItem = [markId, !transArr[chartIdx + 1][changedAttr] ? (changedAttr === 'd' ? 'm0,0' : transArr[chartIdx + 1][changedAttr]) : transArr[chartIdx + 1][changedAttr]];
+        //                 if (changedAttr === 'd') {
+        //                     let tmpFromPath = document.createElementNS('http://www.w3.org/2000/svg', 'path'),
+        //                         tmpToPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        //                     tmpFromPath.setAttributeNS(null, 'd', !transArr[chartIdx][changedAttr] ? 'm0,0' : transArr[chartIdx][changedAttr]);
+        //                     tmpToPath.setAttributeNS(null, 'd', !transArr[chartIdx + 1][changedAttr] ? 'm0,0' : transArr[chartIdx + 1][changedAttr]);
+        //                     let tmpFromPathLen = tmpFromPath.getTotalLength(),
+        //                         tmpToPathLen = tmpToPath.getTotalLength();
+        //                     let stepNum = 300, fromPathStepLen = tmpFromPathLen / stepNum, toPathStepLen = tmpToPathLen / stepNum;
+        //                     let fromDiscritPath = [], toDiscritPath = [];
+        //                     for (let i = 0; i < stepNum; i++) {
+        //                         let tmpFromPnt = tmpFromPath.getPointAtLength(fromPathStepLen * i),
+        //                             tmpToPnt = tmpToPath.getPointAtLength(toPathStepLen * i);
+        //                         fromDiscritPath.push([tmpFromPnt.x, tmpFromPnt.y]);
+        //                         toDiscritPath.push([tmpToPnt.x, tmpToPnt.y]);
+        //                     }
+        //                     tmpFromItem.push(fromDiscritPath);
+        //                     tmpToItem.push(toDiscritPath);
+        //                 }
+        //                 fromArr.push(tmpFromItem);
+        //                 toArr.push(tmpToItem);
+        //             } else {
+        //                 fromArr.push([markId, parseFloat(transArr[chartIdx][changedAttr])]);
+        //                 toArr.push([markId, parseFloat(transArr[chartIdx + 1][changedAttr])]);
+        //             }
+        //         }
+        //     })
+        //     let preObj = {
+        //         chartIdx: actionJson.chartIdx,
+        //         reference: TimingSpec.timingRef.previousStart,
+        //         offset: 0,
+        //         duration: actionJson.type === ActionSpec.actionTypes.transition ? actionJson.duration : 0,
+        //         type: ActionSpec.actionTargets.mark,
+        //         oriActionType: ActionSpec.actionTypes.custom,
+        //         animationType: ActionSpec.targetAnimationType.custom,
+        //         attribute: [{
+        //             attrName: changedAttr,
+        //             from: fromArr,
+        //             to: toArr
+        //         }]
+        //     }
 
-            actionJsonArr.push(preObj);
-        }
+        //     actionJsonArr.push(preObj);
+        // }
 
         if (actionJson.type !== ActionSpec.actionTypes.transition) {
             let tmpObj = {
@@ -439,7 +441,6 @@ class ActionSpec extends TimingSpec {
                         }
                     ];
                     break;
-
                 case ActionSpec.actionTypes.wheel:
                     tmpObj.animationType = ActionSpec.targetAnimationType.wheel;
                     tmpObj.maskType = MaskType.InvertAlpha;
@@ -458,15 +459,31 @@ class ActionSpec extends TimingSpec {
                         to: 1
                     }];
                     break;
-
                 case ActionSpec.actionTypes.translateX:
-                    console.log('test transition: ', dataTrans, chartIdx);
-                    tmpObj.animationType = ActionSpec.targetAnimationType.fade;
+                    console.log('test transition: ', ChartSpec.dataTrans, chartIdx);
+                    tmpObj.animationType = ActionSpec.targetAnimationType.custom;
                     tmpObj.type = ActionSpec.actionTargets.mark;
+                    //generate from and to array
+                    let fromArr = [], toArr = [];
+                    ChartSpec.dataTrans.forEach(function (transArr, markId) {
+                        if (chartIdx < transArr.length && markIds.includes(markId)) {//mark is selected in this animation
+                            const transXFromD = transArr[chartIdx - 1]['d'];
+                            const transXToD = transArr[chartIdx]['d'];
+                            const translatedD = CanisUtil.dTransX(transXFromD, transXToD);
+                            console.log('trans X from', transXFromD);
+                            console.log('trans X to', transXToD);
+                            console.log('transed X', translatedD);
+                            fromArr.push([markId, transXFromD]);
+                            toArr.push([markId, translatedD]);
+                            transArr[chartIdx - 1]['d'] = translatedD;
+                            ChartSpec.dataTrans.set(markId, transArr[chartIdx - 1]['d']);
+                        }
+                    })
+                    console.log('translated ', ChartSpec.dataTrans);
                     tmpObj.attribute = [{
-                        attrName: 'opacity',
-                        from: 0,
-                        to: 1
+                        attrName: 'd',
+                        from: fromArr,
+                        to: toArr
                     }];
                     break;
                 // case ActionSpec.actionTypes.custom:
@@ -484,6 +501,8 @@ class ActionSpec extends TimingSpec {
             }
             actionJsonArr.push(tmpObj);
         }
+
+        console.log('action json in attributes: ', actionJsonArr);
 
         return actionJsonArr;
     }
@@ -640,7 +659,7 @@ ActionSpec.targetAnimationType = {
     grow: 'grow',
     custom: 'custom',
     mistake: 'mistake',
-    translate: 'translate'
+    translateX: 'translateX'
 }
 
 ActionSpec.easingType = {

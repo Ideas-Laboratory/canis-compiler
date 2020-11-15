@@ -507,10 +507,10 @@ class CanisSpec {
                         }
                         if (typeof Animation.animations.get(aniKey) !== 'undefined') {//already have this animation
                             animation = Animation.animations.get(aniKey);
-                            animation.translate(animationJson, usedChangedAttrs, true, status);
+                            animation.translate(animationJson, usedChangedAttrs, true, markIds, status);
                         } else {
                             animation = new Animation();
-                            animation.translate(animationJson, usedChangedAttrs, false, status);//translate from json obj to Animation obj
+                            animation.translate(animationJson, usedChangedAttrs, false, markIds, status);//translate from json obj to Animation obj
                             Animation.animations.set(aniKey, animation);
                         }
                         //auto fill align property for animations except the first one

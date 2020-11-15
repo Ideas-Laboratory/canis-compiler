@@ -234,6 +234,76 @@ export class CanisUtil {
         return obj;
     }
 
+    /**
+     * @param d: d in path
+     * @param stepNum: number of steps (points)
+     * @result: points on path (can do morphin)
+     */
+    static discretizePathToPnts(d, stepNum) {
+        let tmpPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        tmpPath.setAttributeNS(null, 'd', d);
+        let tmpPathLen = tmpPath.getTotalLength();
+        let pathStepLen = tmpPathLen / stepNum;
+        let discritPath = [];
+        for (let i = 0; i < stepNum; i++) {
+            let tmpPnt = tmpPath.getPointAtLength(pathStepLen * i);
+            discritPath.push([tmpPnt.x, tmpPnt.y]);
+        }
+        return discritPath;
+    }
+
+    /**
+     * 
+     * @param {*} oriD 
+     * @param {*} targetD 
+     * @result: translate x coord of M
+     */
+    static dTransX(oriD, targetD) {
+        oriD = oriD.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
+        targetD = targetD.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
+        let cmdRegExp = new RegExp(/[mMlLhHvVcCsSqQtTaAzZ][^mMlLhHvVcCsSqQtTaAzZ]*/g);
+        let resultCmd = '';
+        let oriCmds = oriD.match(cmdRegExp);
+        let targetCmds = targetD.match(cmdRegExp);
+        let oriX = 0, targetX = 0, diffX = 0;
+        if (oriCmds) {
+            for (let i = 0; i < oriCmds.length; i++) {
+                let cmdName = oriCmds[i].substring(0, 1);
+                if (cmdName.toLowerCase() === 'm') {
+                    oriX = parseFloat(oriCmds[i].substring(1).split(',')[0]);
+                    break;
+                }
+            }
+        }
+        if (targetCmds) {
+            for (let i = 0; i < targetCmds.length; i++) {
+                let cmdName = targetCmds[i].substring(0, 1);
+                if (cmdName.toLowerCase() === 'm') {
+                    targetX = parseFloat(targetCmds[i].substring(1).split(',')[0]);
+                    break;
+                }
+            }
+        }
+        diffX = targetX - oriX;
+
+        if (oriCmds) {
+            for (let i = 0; i < oriCmds.length; i++) {
+                let cmdName = oriCmds[i].substring(0, 1);
+                let cmdValue = oriCmds[i].substring(1);
+                resultCmd += cmdName;
+                if (cmdName.toLowerCase() === 'm') {
+                    let nums = cmdValue.split(',');
+                    resultCmd += ((parseFloat(nums[0]) + diffX) + ',' + nums[1]);
+                } else {
+                    resultCmd += cmdValue
+                }
+            }
+            // if (oriD.charAt(oriD.length - 1).toLowerCase() === 'z') {
+            //     resultCmd += 'Z';
+            // }
+        }
+        return resultCmd;
+    }
 
     static toDOM(obj) {
         if (typeof obj == 'string') {
