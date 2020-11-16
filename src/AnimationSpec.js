@@ -78,7 +78,7 @@ class Animation extends TimingSpec {
      * translate from json object to Animation object
      * @param {JSON obj} animationJson 
      */
-    translate(animationJson, usedChangedAttrs, updating, marksThisAni, status={}) {
+    translate(animationJson, usedChangedAttrs, updating, marksThisAni, status = {}) {
         this.chartIdx = animationJson.chartIdx;
         if (!updating) {
             this.selector = animationJson.selector;//init selector
@@ -96,7 +96,37 @@ class Animation extends TimingSpec {
             if (updating) {
                 this.actions = [];
             }
+
+            //merge start with transX, transY, scaleX and scaleY
+            let mergedTransJson = {}, mergedTrans = false, mergeTransJsonIdx = -1;
+            let mergedEffects = [];
             for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
+                if (actionJson.type === ActionSpec.actionTypes.translateX || actionJson.type === ActionSpec.actionTypes.translateY) {
+                    Object.keys(actionJson).forEach((key, idx) => {
+                        if (key === 'type') {
+                            if (!mergedTrans) {
+                                mergedTransJson[key] = actionJson[key];
+                                mergeTransJsonIdx = idx;
+                                mergedTrans = true;
+                                mergedEffects.push({});
+                            } else {
+                                mergedTransJson[key] = ActionSpec.actionTypes.translateXY;
+                            }
+                        } else {
+                            mergedTransJson[key] = actionJson[key];
+                        }
+                    })
+                }else{
+                    mergedEffects.push(actionJson);
+                }
+            }
+            if (mergeTransJsonIdx >= 0){
+                mergedEffects[mergeTransJsonIdx] = mergedTransJson;
+            }
+            console.log('merged actions: ', mergedEffects);
+
+            //translate actions to updates of visual channels
+            for (let i = 0, actionJson; i < mergedEffects.length | (actionJson = mergedEffects[i]); i++) {
                 actionJson.chartIdx = animationJson.chartIdx;
                 let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, marksThisAni, status);//translate templates to no-templates
                 console.log('translated visual action: ', visAttrActionJsonArr);

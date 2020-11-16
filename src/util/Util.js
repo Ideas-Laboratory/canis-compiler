@@ -1,5 +1,6 @@
 import { PathMaker } from 'jsmovin';
 import { parseSVG } from 'svg-path-parser'
+import ActionSpec from '../ActionSpec';
 
 export class CanisUtil {
     constructor() { }
@@ -252,55 +253,160 @@ export class CanisUtil {
         return discritPath;
     }
 
+    static checkDSameShape(d1, d2) {
+        let sameShape = false;
+        if (typeof d1 !== 'undefined' && typeof d2 !== 'undefined') {
+            let d1Cmds = [], d2Cmds = [];
+            let cmdRegExp = new RegExp(/[mMlLhHvVcCsSqQtTaAzZ][^mMlLhHvVcCsSqQtTaAzZ]*/g);
+            if (typeof d1 === 'string') {
+                d1 = d1.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
+                d1Cmds = d1.match(cmdRegExp);
+            } else if (d1 instanceof Array) {
+                d1Cmds = d1;
+            }
+
+            if (typeof d2 === 'string') {
+                d2 = d2.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
+                d2Cmds = d2.match(cmdRegExp);
+            } else if (d2 instanceof Array) {
+                d2Cmds = d2;
+            }
+
+            //check if they are of same shape
+            sameShape = d1Cmds.length === d2Cmds.length;
+            if (sameShape) {
+                for (let i = 0; i < d1Cmds.length; i++) {
+                    let d1CmdName = d1Cmds[i].substring(0, 1);
+                    let d2CmdName = d2Cmds[i].substring(0, 1);
+                    if (d1CmdName !== d2CmdName) {
+                        sameShape = false;
+                        break;
+                    }
+                }
+            }
+        } else {
+            console.error('undefined d in checkDSameShape!');
+        }
+        return sameShape
+    }
+
     /**
-     * 
+     * check whether 2 d are the same shape
+     * if same shape:
+     *  - calculate diffX and diffY using the first M command
+     *  - calculate scaleX and scaleY using the diff of the end point of the corresonding command
+     * if different shapes:
+     *  - just calculate diffX and diffY using the first M command
+     *  - morphin
      * @param {*} oriD 
      * @param {*} targetD 
+     * @param {*} transType: 'transX', 'transY'
      * @result: translate x coord of M
      */
-    static dTransX(oriD, targetD) {
-        oriD = oriD.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
-        targetD = targetD.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
-        let cmdRegExp = new RegExp(/[mMlLhHvVcCsSqQtTaAzZ][^mMlLhHvVcCsSqQtTaAzZ]*/g);
+    static dTrans(oriD, targetD, transType) {
         let resultCmd = '';
-        let oriCmds = oriD.match(cmdRegExp);
-        let targetCmds = targetD.match(cmdRegExp);
-        let oriX = 0, targetX = 0, diffX = 0;
-        if (oriCmds) {
-            for (let i = 0; i < oriCmds.length; i++) {
-                let cmdName = oriCmds[i].substring(0, 1);
-                if (cmdName.toLowerCase() === 'm') {
-                    oriX = parseFloat(oriCmds[i].substring(1).split(',')[0]);
-                    break;
-                }
-            }
-        }
-        if (targetCmds) {
-            for (let i = 0; i < targetCmds.length; i++) {
-                let cmdName = targetCmds[i].substring(0, 1);
-                if (cmdName.toLowerCase() === 'm') {
-                    targetX = parseFloat(targetCmds[i].substring(1).split(',')[0]);
-                    break;
-                }
-            }
-        }
-        diffX = targetX - oriX;
+        if (typeof oriD !== 'undefined' && typeof targetD !== 'undefined') {
+            oriD = oriD.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
+            targetD = targetD.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
+            let cmdRegExp = new RegExp(/[mMlLhHvVcCsSqQtTaAzZ][^mMlLhHvVcCsSqQtTaAzZ]*/g);
+            let oriCmds = oriD.match(cmdRegExp);
+            let targetCmds = targetD.match(cmdRegExp);
 
-        if (oriCmds) {
-            for (let i = 0; i < oriCmds.length; i++) {
-                let cmdName = oriCmds[i].substring(0, 1);
-                let cmdValue = oriCmds[i].substring(1);
-                resultCmd += cmdName;
-                if (cmdName.toLowerCase() === 'm') {
-                    let nums = cmdValue.split(',');
-                    resultCmd += ((parseFloat(nums[0]) + diffX) + ',' + nums[1]);
-                } else {
-                    resultCmd += cmdValue
+            //check if they are of same shape
+            let sameShape = this.checkDSameShape(oriCmds, targetCmds);
+            if (sameShape) {//translate according to translate, scale, or morphin as specified 
+                let oriX = 0, targetX = 0, diffX = 0, oriY = 0, targetY = 0, diffY = 0;
+                if (oriCmds) {
+                    for (let i = 0; i < oriCmds.length; i++) {
+                        let cmdName = oriCmds[i].substring(0, 1);
+                        if (cmdName.toLowerCase() === 'm') {
+                            const cmdValues = oriCmds[i].substring(1).split(',');
+                            oriX = parseFloat(cmdValues[0]);
+                            oriY = parseFloat(cmdValues[1]);
+                            break;
+                        }
+                    }
                 }
+                if (targetCmds) {
+                    for (let i = 0; i < targetCmds.length; i++) {
+                        let cmdName = targetCmds[i].substring(0, 1);
+                        if (cmdName.toLowerCase() === 'm') {
+                            const cmdValues = targetCmds[i].substring(1).split(',');
+                            targetX = parseFloat(cmdValues[0]);
+                            targetY = parseFloat(cmdValues[1]);
+                            break;
+                        }
+                    }
+                }
+                diffX = targetX - oriX;
+                diffY = targetY - oriY;
+
+                if (oriCmds) {
+                    for (let i = 0; i < oriCmds.length; i++) {
+                        let cmdName = oriCmds[i].substring(0, 1);
+                        let cmdValue = oriCmds[i].substring(1);
+                        resultCmd += cmdName;
+
+                        let nums = cmdValue.split(',');
+                        switch (cmdName) {
+                            case 'M':
+                            case 'L':
+                            case 'C':
+                            case 'S':
+                            case 'Q':
+                            case 'T':
+                                nums.forEach((num, idx) => {
+                                    if (idx % 2 === 0) {
+                                        resultCmd += ((parseFloat(num) + ((transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY) ? diffX : 0)) + ',');
+                                    } else {
+                                        resultCmd += ((parseFloat(num) + ((transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY) ? diffY : 0)) + (idx === nums.length - 1 ? '' : ','));
+                                    }
+                                })
+                                break;
+                            case 'm':
+                                if (i === 0) {
+                                    if (transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY) {
+                                        resultCmd += ((parseFloat(nums[0]) + diffX) + ',' + nums[1]);
+                                    }
+                                }
+                                break;
+                            case 'H':
+                                if (transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY) {
+                                    resultCmd += (parseFloat(cmdValue) + diffX);
+                                }
+                                break;
+                            case 'V':
+                                if (transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY) {
+                                    resultCmd += (parseFloat(cmdValue) + diffY);
+                                }
+                                break;
+                            case 'A':
+                                nums.forEach((num, idx) => {
+                                    if (idx === 5 && (transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY)) {
+                                        resultCmd += (parseFloat(num) + diffX);
+                                    } else if (idx === 6 && (transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY)) {
+                                        resultCmd += (parseFloat(num) + diffY);
+                                    } else {
+                                        resultCmd += num;
+                                    }
+                                    if (idx < nums.length - 1) {
+                                        resultCmd += ',';
+                                    }
+                                })
+                                break;
+                            default:
+                                resultCmd += cmdValue;
+                        }
+                        if (cmdName.toLowerCase() === 'z') {
+                            break;//remove redundent 'Z'
+                        }
+                    }
+                }
+            } else {//translate according to translate, morphin as specified
+
             }
-            // if (oriD.charAt(oriD.length - 1).toLowerCase() === 'z') {
-            //     resultCmd += 'Z';
-            // }
+        } else {
+            console.error('undefined d in dTrans!');
         }
         return resultCmd;
     }

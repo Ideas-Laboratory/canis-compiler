@@ -71,7 +71,7 @@ class ActionSpec extends TimingSpec {
         this.animationType = actionJson.animationType;//animation type
         this.maskType = typeof actionJson.maskType === 'undefined' ? MaskType.Alpha : actionJson.maskType;
         this.reference = actionJson.reference;//timingSpec reference
-        this.offset = actionJson.offset;//timingSpec delay
+        this.offset = actionJson.delay;//timingSpec delay
         this.duration = actionJson.duration;//action duration
         this.easing = actionJson.easing;
         this.oriActionType = actionJson.oriActionType;
@@ -460,6 +460,8 @@ class ActionSpec extends TimingSpec {
                     }];
                     break;
                 case ActionSpec.actionTypes.translateX:
+                case ActionSpec.actionTypes.translateY:
+                case ActionSpec.actionTypes.translateXY:
                     console.log('test transition: ', ChartSpec.dataTrans, chartIdx);
                     tmpObj.animationType = ActionSpec.targetAnimationType.custom;
                     tmpObj.type = ActionSpec.actionTargets.mark;
@@ -467,16 +469,24 @@ class ActionSpec extends TimingSpec {
                     let fromArr = [], toArr = [];
                     ChartSpec.dataTrans.forEach(function (transArr, markId) {
                         if (chartIdx < transArr.length && markIds.includes(markId)) {//mark is selected in this animation
-                            const transXFromD = transArr[chartIdx - 1]['d'];
-                            const transXToD = transArr[chartIdx]['d'];
-                            const translatedD = CanisUtil.dTransX(transXFromD, transXToD);
-                            console.log('trans X from', transXFromD);
-                            console.log('trans X to', transXToD);
-                            console.log('transed X', translatedD);
-                            fromArr.push([markId, transXFromD]);
+                            const transFromD = transArr[chartIdx - 1]['d'];
+                            const transToD = transArr[chartIdx]['d'];
+                            const translatedD = CanisUtil.dTrans(transFromD, transToD, actionJson.type);
+                            if (markId === 'mark52') {
+                                if (actionJson.type === ActionSpec.actionTypes.translateX) {
+                                    console.log('trans X from', transFromD);
+                                    console.log('trans X to', transToD);
+                                    console.log('transed X', translatedD);
+                                } else {
+                                    console.log('trans Y from', transFromD);
+                                    console.log('trans Y to', transToD);
+                                    console.log('transed Y', translatedD);
+                                }
+                            }
+                            fromArr.push([markId, transFromD]);
                             toArr.push([markId, translatedD]);
                             transArr[chartIdx - 1]['d'] = translatedD;
-                            ChartSpec.dataTrans.set(markId, transArr[chartIdx - 1]['d']);
+                            ChartSpec.dataTrans.set(markId, transArr);
                         }
                     })
                     console.log('translated ', ChartSpec.dataTrans);
@@ -486,6 +496,7 @@ class ActionSpec extends TimingSpec {
                         to: toArr
                     }];
                     break;
+
                 // case ActionSpec.actionTypes.custom:
                 //     tmpObj.type = ActionSpec.actionTargets.mark;
                 //     tmpObj.animationType = ActionSpec.targetAnimationType.custom;
@@ -629,6 +640,7 @@ ActionSpec.actionTypes = {
     custom: 'custom',
     translateX: 'translate X',
     translateY: 'translate Y',
+    translateXY: 'translate XY',
     fadeOut: 'fade out',
     wipeOutFromLeft: 'wipe out from left',
     wipeOutFromTop: 'wipe out from top',
@@ -658,8 +670,7 @@ ActionSpec.targetAnimationType = {
     test: 'test',
     grow: 'grow',
     custom: 'custom',
-    mistake: 'mistake',
-    translateX: 'translateX'
+    mistake: 'mistake'
 }
 
 ActionSpec.easingType = {
