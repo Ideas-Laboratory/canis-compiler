@@ -471,8 +471,9 @@ class ActionSpec extends TimingSpec {
                         if (chartIdx < transArr.length && markIds.includes(markId)) {//mark is selected in this animation
                             const transFromD = transArr[chartIdx - 1]['d'];
                             const transToD = transArr[chartIdx]['d'];
+                            console.log('calculating dtrans: ', markId);
                             const translatedD = CanisUtil.dTrans(transFromD, transToD, actionJson.type);
-                            if (markId === 'mark52') {
+                            if (markId === 'mark109') {
                                 if (actionJson.type === ActionSpec.actionTypes.translateX) {
                                     console.log('trans X from', transFromD);
                                     console.log('trans X to', transToD);
@@ -496,7 +497,7 @@ class ActionSpec extends TimingSpec {
                         to: toArr
                     }];
                     break;
-
+                
                 // case ActionSpec.actionTypes.custom:
                 //     tmpObj.type = ActionSpec.actionTargets.mark;
                 //     tmpObj.animationType = ActionSpec.targetAnimationType.custom;
@@ -641,6 +642,9 @@ ActionSpec.actionTypes = {
     translateX: 'translate X',
     translateY: 'translate Y',
     translateXY: 'translate XY',
+    scaleX: 'scale X',
+    scaleY: 'scale Y',
+    scaleXY: 'scale XY',
     fadeOut: 'fade out',
     wipeOutFromLeft: 'wipe out from left',
     wipeOutFromTop: 'wipe out from top',

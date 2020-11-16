@@ -290,6 +290,80 @@ export class CanisUtil {
         return sameShape
     }
 
+    static findDStartEnd(cmds) {
+        let startX = 0, startY = 0, relativeEndX = 0, relativeEndY = 0, endX = 0, endY = 0;//endX = startX + relativeEndX
+        if (cmds) {
+            for (let i = 0; i < cmds.length; i++) {
+                let cmdName = cmds[i].substring(0, 1);
+                const cmdValues = cmds[i].substring(1).split(',');
+                switch (cmdName) {
+                    case 'M':
+                    case 'm':
+                        startX = parseFloat(cmdValues[0]);
+                        startY = parseFloat(cmdValues[1]);
+                        break;
+                    case 'L':
+                    case 'T':
+                        endX = parseFloat(cmdValues[0]);
+                        endY = parseFloat(cmdValues[1]);
+                        break;
+                    case 'l':
+                    case 't':
+                        relativeEndX = parseFloat(cmdValues[0]);
+                        relativeEndY = parseFloat(cmdValues[1]);
+                        break;
+                    case 'H':
+                        endX = parseFloat(cmdValues[0]);
+                        break;
+                    case 'h':
+                        relativeEndX = parseFloat(cmdValues[0]);
+                        break;
+                    case 'V':
+                        endY = parseFloat(cmdValues[0]);
+                        break;
+                    case 'v':
+                        relativeEndY = parseFloat(cmdValues[0]);
+                        break;
+                    case 'C':
+                        endX = parseFloat(cmdValues[4]);
+                        endY = parseFloat(cmdValues[5]);
+                        break;
+                    case 'c':
+                        relativeEndX = parseFloat(cmdValues[4]);
+                        relativeEndY = parseFloat(cmdValues[5]);
+                        break;
+                    case 'S':
+                    case 'Q':
+                        endX = parseFloat(cmdValues[2]);
+                        endY = parseFloat(cmdValues[3]);
+                        break;
+                    case 's':
+                    case 'q':
+                        relativeEndX = parseFloat(cmdValues[2]);
+                        relativeEndY = parseFloat(cmdValues[3]);
+                        break;
+                    case 'A':
+                    case 'a':
+                        relativeEndX = parseFloat(cmdValues[0]) * 2;
+                        relativeEndY = parseFloat(cmdValues[1]) * 2;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        } else {
+            console.error('wrong d in findDStartEnd!');
+        }
+        return {
+            startX: startX,
+            startY: startY,
+            endX: endX,
+            endY: endY,
+            relativeEndX: relativeEndX,
+            relativeEndY: relativeEndY
+        }
+    }
+
     /**
      * check whether 2 d are the same shape
      * if same shape:
@@ -315,32 +389,37 @@ export class CanisUtil {
             //check if they are of same shape
             let sameShape = this.checkDSameShape(oriCmds, targetCmds);
             if (sameShape) {//translate according to translate, scale, or morphin as specified 
-                let oriX = 0, targetX = 0, diffX = 0, oriY = 0, targetY = 0, diffY = 0;
-                if (oriCmds) {
-                    for (let i = 0; i < oriCmds.length; i++) {
-                        let cmdName = oriCmds[i].substring(0, 1);
-                        if (cmdName.toLowerCase() === 'm') {
-                            const cmdValues = oriCmds[i].substring(1).split(',');
-                            oriX = parseFloat(cmdValues[0]);
-                            oriY = parseFloat(cmdValues[1]);
-                            break;
-                        }
-                    }
-                }
-                if (targetCmds) {
-                    for (let i = 0; i < targetCmds.length; i++) {
-                        let cmdName = targetCmds[i].substring(0, 1);
-                        if (cmdName.toLowerCase() === 'm') {
-                            const cmdValues = targetCmds[i].substring(1).split(',');
-                            targetX = parseFloat(cmdValues[0]);
-                            targetY = parseFloat(cmdValues[1]);
-                            break;
-                        }
-                    }
-                }
-                diffX = targetX - oriX;
-                diffY = targetY - oriY;
+                let diffX = 0, diffY = 0, diffScaleX = 0, diffScaleY = 0;
+                const oriStartEnd = this.findDStartEnd(oriCmds);
+                const targetStartEnd = this.findDStartEnd(targetCmds);
 
+                diffX = targetStartEnd.startX - oriStartEnd.startX;
+                diffY = targetStartEnd.startY - oriStartEnd.startY;
+                if (typeof oriStartEnd.relativeEndX !== 'undefined' && typeof targetStartEnd.relativeEndX !== 'undefined') {
+                    diffScaleX = targetStartEnd.relativeEndX - oriStartEnd.relativeEndX;
+                    diffScaleY = targetStartEnd.relativeEndY - oriStartEnd.relativeEndY;
+                } else {
+                    diffScaleX = targetStartEnd.endX - oriStartEnd.endX - diffX;
+                    diffScaleY = targetStartEnd.endY - oriStartEnd.endY - diffY;
+                }
+                console.log(oriStartEnd, targetStartEnd, 'diff XY: ', diffX, diffY, 'diff scale XY: ', diffScaleX, diffScaleY);
+
+                //calculate offset X and Y for the end point in each command in d 
+                const absXOffset = 0, absYOffset = 0, relativeXOffset = 0, relativeYOffset = 0;
+                if (transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY) {
+                    absXOffset = diffX;
+                } else if (transType === ActionSpec.actionTypes.scaleX || transType === ActionSpec.actionTypes.scaleXY) {
+                    absXOffset = diffX + diffScaleX;
+                    relativeXOffset = diffScaleX;
+                }
+                if (transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY) {
+                    absYOffset = diffY;
+                } else if (transType === ActionSpec.actionTypes.scaleY || transType === ActionSpec.actionTypes.scaleXY) {
+                    absYOffset = diffY + diffScaleY;
+                    relativeYOffset = diffScaleY;
+                }
+
+                //add the offset to the commands
                 if (oriCmds) {
                     for (let i = 0; i < oriCmds.length; i++) {
                         let cmdName = oriCmds[i].substring(0, 1);
@@ -350,42 +429,91 @@ export class CanisUtil {
                         let nums = cmdValue.split(',');
                         switch (cmdName) {
                             case 'M':
+                            case 'm':
+                                resultCmd += ((parseFloat(nums[0]) + ((transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY) ? diffX : 0))
+                                    + ',' + (parseFloat(nums[1])
+                                        + ((transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY) ? diffY : 0)));
+                                break;
                             case 'L':
-                            case 'C':
+                            case 'T':
+                                resultCmd += ((parseFloat(nums[0]) + absXOffset) + ',' + (parseFloat(nums[1]) + absYOffset));
+                                break;
+                            case 'l':
+                            case 't':
+                                resultCmd += ((parseFloat(nums[0]) + relativeXOffset) + ',' + (parseFloat(nums[1]) + relativeYOffset));
+                                break;
                             case 'S':
                             case 'Q':
-                            case 'T':
+                            case 'C':
+                                const step = cmdName === 'C' ? 3 : 2;
                                 nums.forEach((num, idx) => {
                                     if (idx % 2 === 0) {
-                                        resultCmd += ((parseFloat(num) + ((transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY) ? diffX : 0)) + ',');
+                                        if (transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY) {
+                                            resultCmd += ((parseFloat(num) + absXOffset) + ',');
+                                        } else if (transType === ActionSpec.actionTypes.scaleX || transType === ActionSpec.actionTypes.scaleXY) {
+                                            resultCmd += ((parseFloat(num) + (1 + idx / 2) * absXOffset / step) + ',');
+                                        }
                                     } else {
-                                        resultCmd += ((parseFloat(num) + ((transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY) ? diffY : 0)) + (idx === nums.length - 1 ? '' : ','));
+                                        if (transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY) {
+                                            resultCmd += (parseFloat(num) + absYOffset);
+                                        } else if (transType === ActionSpec.actionTypes.scaleY || transType === ActionSpec.actionTypes.scaleXY) {
+                                            resultCmd += (parseFloat(num) + (1 + Math.floor(idx / 2)) * absYOffset / step);
+                                        }
+                                        resultCmd += (idx === nums.length - 1 ? '' : ',');
                                     }
                                 })
                                 break;
-                            case 'm':
-                                if (i === 0) {
-                                    if (transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY) {
-                                        resultCmd += ((parseFloat(nums[0]) + diffX) + ',' + nums[1]);
+                            case 's':
+                            case 'q':
+                            case 'c':
+                                const step2 = cmdName === 'c' ? 3 : 2;
+                                nums.forEach((num, idx) => {
+                                    if (idx % 2 === 0) {
+                                        if (transType === ActionSpec.actionTypes.scaleX || transType === ActionSpec.actionTypes.scaleXY) {
+                                            resultCmd += ((parseFloat(num) + (1 + idx / 2) * relativeXOffset / step2) + ',');
+                                        }
+                                    } else {
+                                        if (transType === ActionSpec.actionTypes.scaleY || transType === ActionSpec.actionTypes.scaleXY) {
+                                            resultCmd += (parseFloat(num) + (1 + Math.floor(idx / 2)) * relativeYOffset / step2);
+                                        }
+                                        resultCmd += (idx === nums.length - 1 ? '' : ',');
                                     }
-                                }
+                                })
                                 break;
                             case 'H':
-                                if (transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY) {
-                                    resultCmd += (parseFloat(cmdValue) + diffX);
+                                if (transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY || transType === ActionSpec.actionTypes.scaleX || transType === ActionSpec.actionTypes.scaleXY) {
+                                    resultCmd += (parseFloat(cmdValue) + absXOffset);
+                                }
+                                break;
+                            case 'h':
+                                if (transType === ActionSpec.actionTypes.scaleX || transType === ActionSpec.actionTypes.scaleXY) {
+                                    resultCmd += (parseFloat(cmdValue) + relativeXOffset);
                                 }
                                 break;
                             case 'V':
-                                if (transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY) {
-                                    resultCmd += (parseFloat(cmdValue) + diffY);
+                                if (transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY || transType === ActionSpec.actionTypes.scaleY || transType === ActionSpec.actionTypes.scaleXY) {
+                                    resultCmd += (parseFloat(cmdValue) + absYOffset);
                                 }
                                 break;
+                            case 'v':
+                                if (transType === ActionSpec.actionTypes.scaleY || transType === ActionSpec.actionTypes.scaleXY) {
+                                    resultCmd += (parseFloat(cmdValue) + relativeYOffset);
+                                }
+                                break;
+
+
+
+                            //pick up here
                             case 'A':
                                 nums.forEach((num, idx) => {
                                     if (idx === 5 && (transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY)) {
-                                        resultCmd += (parseFloat(num) + diffX);
+                                        resultCmd += (parseFloat(num) + absXOffset);
                                     } else if (idx === 6 && (transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY)) {
                                         resultCmd += (parseFloat(num) + diffY);
+                                    } else if (idx === 0 && (transType === ActionSpec.actionTypes.scaleX || transType === ActionSpec.actionTypes.scaleXY)) {
+
+                                    } else if (idx === 1 && (transType === ActionSpec.actionTypes.scaleY || transType === ActionSpec.actionTypes.scaleXY)) {
+
                                     } else {
                                         resultCmd += num;
                                     }
