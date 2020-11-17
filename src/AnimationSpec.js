@@ -98,35 +98,77 @@ class Animation extends TimingSpec {
             }
 
             //merge start with transX, transY, scaleX and scaleY
-            let mergedTransJson = {}, mergedTrans = false, mergeTransJsonIdx = -1;
-            let mergedEffects = [];
+            const mergeIdxs = [[]];//array of array, like [[0, 1], [3,4,5]];
             for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
-                if (actionJson.type === ActionSpec.actionTypes.translateX || actionJson.type === ActionSpec.actionTypes.translateY) {
-                    Object.keys(actionJson).forEach((key, idx) => {
-                        if (key === 'type') {
-                            if (!mergedTrans) {
-                                mergedTransJson[key] = actionJson[key];
-                                mergeTransJsonIdx = idx;
-                                mergedTrans = true;
-                                mergedEffects.push({});
-                            } else {
-                                mergedTransJson[key] = ActionSpec.actionTypes.translateXY;
-                            }
-                        } else {
-                            mergedTransJson[key] = actionJson[key];
-                        }
-                    })
-                }else{
-                    mergedEffects.push(actionJson);
+                if (actionJson.reference === TimingSpec.timingRef.previousStart || typeof actionJson.reference === 'undefined') {
+                    mergeIdxs[mergeIdxs.length - 1].push(i);
+                } else {
+                    mergeIdxs.push([i]);
                 }
             }
-            if (mergeTransJsonIdx >= 0){
-                mergedEffects[mergeTransJsonIdx] = mergedTransJson;
-            }
-            console.log('merged actions: ', mergedEffects);
+            console.log('action index to merge: ', mergeIdxs);
+            const mergedActions = [];
+            const mergableActionTypes = [ActionSpec.actionTypes.translateX, ActionSpec.actionTypes.translateY, ActionSpec.actionTypes.translateXY, ActionSpec.actionTypes.scaleX, ActionSpec.actionTypes.scaleY, ActionSpec.actionTypes.scaleXY];
+            mergeIdxs.forEach((actionIdxs) => {
+                //check whether the recorded actions can be merged according to their effect type
+                let mergedActionJson = {}, merged = false, count = 0, mergeType = [false, false, false, false];//mergeType: [transX, transY, scaleX, scaleY], false:not transiting, true:transiting
+                actionIdxs.forEach(aIdx => {
+                    const tmpActionJson = animationJson.effects[aIdx];
+                    if (mergableActionTypes.includes(tmpActionJson.type)) {
+                        merged = true;
+                        count++;
+                        Object.keys(tmpActionJson).forEach(k => {
+                            mergedActionJson[k] = tmpActionJson[k];
+                        })
+                        mergeType[0] = (tmpActionJson.type === ActionSpec.actionTypes.translateX || tmpActionJson.type === ActionSpec.actionTypes.translateXY || mergeType[0]);
+                        mergeType[1] = (tmpActionJson.type === ActionSpec.actionTypes.translateY || tmpActionJson.type === ActionSpec.actionTypes.translateXY || mergeType[1]);
+                        mergeType[2] = (tmpActionJson.type === ActionSpec.actionTypes.scaleX || tmpActionJson.type === ActionSpec.actionTypes.scaleXY || mergeType[2]);
+                        mergeType[3] = (tmpActionJson.type === ActionSpec.actionTypes.scaleY || tmpActionJson.type === ActionSpec.actionTypes.scaleXY || mergeType[3]);
+                    } else {
+                        mergedActions.push(tmpActionJson);
+                    }
+                })
+                if (merged) {
+                    if (count > 1) {
+                        mergedActionJson.type = ActionSpec.actionTypes.mergedTransition;
+                        mergedActionJson.mergeType = mergeType;
+                    }
+                    mergedActions.push(mergedActionJson);
+                }
+
+            })
+
+
+            // let mergedTransJson = {}, mergedTrans = false, mergeTransJsonIdx = -1;
+            // let mergedEffects = [];
+            // for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
+
+            //     if (actionJson.type === ActionSpec.actionTypes.translateX || actionJson.type === ActionSpec.actionTypes.translateY) {
+            //         Object.keys(actionJson).forEach((key, idx) => {
+            //             if (key === 'type') {
+            //                 if (!mergedTrans) {
+            //                     mergedTransJson[key] = actionJson[key];
+            //                     mergeTransJsonIdx = idx;
+            //                     mergedTrans = true;
+            //                     mergedEffects.push({});
+            //                 } else {
+            //                     mergedTransJson[key] = ActionSpec.actionTypes.translateXY;
+            //                 }
+            //             } else {
+            //                 mergedTransJson[key] = actionJson[key];
+            //             }
+            //         })
+            //     } else {
+            //         mergedEffects.push(actionJson);
+            //     }
+            // }
+            // if (mergeTransJsonIdx >= 0) {
+            //     mergedEffects[mergeTransJsonIdx] = mergedTransJson;
+            // }
+            console.log('merged actions: ', mergedActions);
 
             //translate actions to updates of visual channels
-            for (let i = 0, actionJson; i < mergedEffects.length | (actionJson = mergedEffects[i]); i++) {
+            for (let i = 0, actionJson; i < mergedActions.length | (actionJson = mergedActions[i]); i++) {
                 actionJson.chartIdx = animationJson.chartIdx;
                 let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, marksThisAni, status);//translate templates to no-templates
                 console.log('translated visual action: ', visAttrActionJsonArr);

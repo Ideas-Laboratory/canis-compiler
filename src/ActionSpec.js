@@ -462,6 +462,10 @@ class ActionSpec extends TimingSpec {
                 case ActionSpec.actionTypes.translateX:
                 case ActionSpec.actionTypes.translateY:
                 case ActionSpec.actionTypes.translateXY:
+                case ActionSpec.actionTypes.scaleX:
+                case ActionSpec.actionTypes.scaleY:
+                case ActionSpec.actionTypes.scaleXY:
+                case ActionSpec.actionTypes.mergedTransition:
                     console.log('test transition: ', ChartSpec.dataTrans, chartIdx);
                     tmpObj.animationType = ActionSpec.targetAnimationType.custom;
                     tmpObj.type = ActionSpec.actionTargets.mark;
@@ -472,17 +476,11 @@ class ActionSpec extends TimingSpec {
                             const transFromD = transArr[chartIdx - 1]['d'];
                             const transToD = transArr[chartIdx]['d'];
                             console.log('calculating dtrans: ', markId);
-                            const translatedD = CanisUtil.dTrans(transFromD, transToD, actionJson.type);
+                            const translatedD = CanisUtil.dTrans(transFromD, transToD, actionJson);
                             if (markId === 'mark109') {
-                                if (actionJson.type === ActionSpec.actionTypes.translateX) {
-                                    console.log('trans X from', transFromD);
-                                    console.log('trans X to', transToD);
-                                    console.log('transed X', translatedD);
-                                } else {
-                                    console.log('trans Y from', transFromD);
-                                    console.log('trans Y to', transToD);
-                                    console.log('transed Y', translatedD);
-                                }
+                                console.log('trans from', transFromD);
+                                console.log('trans to', transToD);
+                                console.log('transed', translatedD);
                             }
                             fromArr.push([markId, transFromD]);
                             toArr.push([markId, translatedD]);
@@ -497,7 +495,7 @@ class ActionSpec extends TimingSpec {
                         to: toArr
                     }];
                     break;
-                
+
                 // case ActionSpec.actionTypes.custom:
                 //     tmpObj.type = ActionSpec.actionTargets.mark;
                 //     tmpObj.animationType = ActionSpec.targetAnimationType.custom;
@@ -645,6 +643,7 @@ ActionSpec.actionTypes = {
     scaleX: 'scale X',
     scaleY: 'scale Y',
     scaleXY: 'scale XY',
+    mergedTransition: 'merge transition',
     fadeOut: 'fade out',
     wipeOutFromLeft: 'wipe out from left',
     wipeOutFromTop: 'wipe out from top',
