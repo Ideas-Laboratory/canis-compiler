@@ -137,7 +137,8 @@ class CanisSpec {
         canisObj.animations.forEach(tmpAniJson => {
             if (typeof tmpAniJson.elements !== 'undefined') {
                 const oriId = typeof tmpAniJson.id === 'undefined' ? tmpAniJson.selector : tmpAniJson.id;
-                const markSetTypes = ['enter', 'update', 'exit'];
+                // const markSetTypes = ['enter', 'update', 'exit'];
+                const markSetTypes = Object.keys(tmpAniJson.elements);
                 markSetTypes.forEach(mst => {
                     if (typeof tmpAniJson.elements[mst] !== 'undefined') {
                         let enterAniJson = {
@@ -165,7 +166,7 @@ class CanisSpec {
         //     console.log(JSON.stringify(tmpAniJsonsCopy));
         //     tmpAniJsons = [...tmpAniJsons, ...tmpAniJsonsCopy];
         // }
-        // console.log('parsed aniunits: ', tmpAniJsons);
+        console.log('parsed aniunits: ', tmpAniJsons);
         canisObj.animations = tmpAniJsons;
         // console.timeEnd('prepeocess charts');
         return canisObj;
