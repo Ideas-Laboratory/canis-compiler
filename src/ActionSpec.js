@@ -643,6 +643,7 @@ ActionSpec.actionTypes = {
     scaleX: 'scale X',
     scaleY: 'scale Y',
     scaleXY: 'scale XY',
+    text: 'text',
     mergedTransition: 'merge transition',
     fadeOut: 'fade out',
     wipeOutFromLeft: 'wipe out from left',

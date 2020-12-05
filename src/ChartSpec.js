@@ -59,7 +59,7 @@ class ChartSpec {
                     let viewBoxNums = svgContent.getAttribute('viewBox').split(' ');
                     defaultWidth = parseFloat(viewBoxNums[2]);
                     defaultHeight = parseFloat(viewBoxNums[3]);
-                    ChartSpec.charts.push(svgContent);
+                    ChartSpec.charts.push(new Chart(svgContent));
                     nameCharts.set(chartSpecs[i].id, ChartSpec.charts.length - 1);
                 } else if (xhr.status === 404) {
                     nullCharts.unshift(i);
@@ -75,7 +75,7 @@ class ChartSpec {
                 let viewBoxNums = svgContent.getAttribute('viewBox').split(' ');
                 defaultWidth = parseFloat(viewBoxNums[2]);
                 defaultHeight = parseFloat(viewBoxNums[3]);
-                ChartSpec.charts.push(svgContent);
+                ChartSpec.charts.push(new Chart(svgContent));
                 nameCharts.set(chartSpecs[i].id, ChartSpec.charts.length - 1);
             }
         }
@@ -95,8 +95,8 @@ class ChartSpec {
         const that = this;
         const datumMarkMapping = new Map();
         for (let i = 0; i < ChartSpec.charts.length; i++) {
-            ChartSpec.charts[i].setAttribute('trans', '0,0');
-            ChartSpec.removeTransitions(ChartSpec.charts[i].children[0], datumMarkMapping);
+            ChartSpec.charts[i].svgContent.setAttribute('trans', '0,0');
+            ChartSpec.removeTransitions(ChartSpec.charts[i].svgContent.children[0], datumMarkMapping);
         }
         const datumMarkArr = Array.from(datumMarkMapping).map(item => item[1]);
         datumMarkArr.forEach(mArr => {
@@ -116,7 +116,7 @@ class ChartSpec {
                 for (let j = 0; j < facet.views.length; j++) {
                     let chartName = facet.views[j].frames[i];
                     if (typeof nameCharts.get(chartName) !== 'undefined') {
-                        tmpRecorder.push(ChartSpec.charts[nameCharts.get(chartName)].cloneNode(true));
+                        tmpRecorder.push(ChartSpec.charts[nameCharts.get(chartName)].svgContent.cloneNode(true));
                     } else {
                         console.warn('chart name ' + chartName + ' is undefined !');
                     }
@@ -186,7 +186,7 @@ class ChartSpec {
                     }
                 }
             }
-            resultCharts.push(tmpCharts[0]);
+            resultCharts.push(new Chart(tmpCharts[0]));
         }
         ChartSpec.charts = resultCharts;
         this.viewport.setViewport(widthAfterFacet, heightAfterFacet);
@@ -205,7 +205,8 @@ class ChartSpec {
 
         for (let i = 0; i < this.charts.length; i++) {
             this.markSetsDuringTrans[i] = { enter: [], update: [], exit: [] }//init ChartSpec.markSetsDuringTrans
-            let tmpChart = ChartSpec.charts[i];
+            let tmpChart = ChartSpec.charts[i].svgContent;
+            console.log('tmpChart: ', tmpChart);
             let marks = tmpChart.querySelectorAll('.mark');
             if (marks.length > 0) {
                 [].forEach.call(marks, (m) => {
@@ -277,7 +278,7 @@ class ChartSpec {
                     markEnterExit.set(allMarks[j], false);//init mark enter exit status
                 }
 
-                if (ChartSpec.charts[i].querySelectorAll('#' + allMarks[j]).length === 0) {//chart i does not have mark j
+                if (ChartSpec.charts[i].svgContent.querySelectorAll('#' + allMarks[j]).length === 0) {//chart i does not have mark j
                     if (markEnterExit.get(allMarks[j])) {//it exists in previous chart
                         this.markSetsDuringTrans[i].exit.push(allMarks[j]);
                         markEnterExit.set(allMarks[j], false);
@@ -331,7 +332,7 @@ class ChartSpec {
                     markStr = '<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500">' + mark.outerHTML + '</svg>';
                     let parser = new DOMParser();
                     let svgMark = parser.parseFromString(markStr, "image/svg+xml").lastChild.children[0];
-                    ChartSpec.charts[i].querySelector('#chartContent').appendChild(svgMark);
+                    ChartSpec.charts[i].svgContent.querySelector('#chartContent').appendChild(svgMark);
                     markStatus.get(allMarks[j])[i] = statusObj;
                 } else {//this mark is in this chart 
                     if (markEnterExit.get(allMarks[j])) {//it exists in previous chart
@@ -367,12 +368,12 @@ class ChartSpec {
             }
             //copy the status of the 1st chart as the init status
             ChartSpec.dataTrans.set(allMarks[j], dataTransArr);
-            let markDom = ChartSpec.charts[0].querySelector('#' + allMarks[j]);
+            let markDom = ChartSpec.charts[0].svgContent.querySelector('#' + allMarks[j]);
             markDom.setAttribute('data-transition', JSON.stringify({ "dataTrans": dataTransArr }, null, '\t'))
             // console.log('merged mark: ', markDom);
         }
-
-        return ChartSpec.charts[0];
+        console.log('chart 0: ', ChartSpec.charts[0]);
+        return ChartSpec.charts[0].svgContent;
     }
 
     static getBBoxes() {
@@ -468,6 +469,7 @@ class ChartSpec {
         }
 
         if (t.classList.contains('axis') || t.classList.contains('legend')) {
+            console.log('datum: ', t.getAttribute('data-datum'));
             const tmpDataDatum = JSON.parse(t.getAttribute('data-datum'));
             if (Array.isArray(tmpDataDatum)) {
                 tmpDataDatum = tmpDataDatum[0];
@@ -555,3 +557,19 @@ ChartSpec.marksWithSameDatum = new Map();
 ChartSpec.nonDataMarkDatum = new Map();
 
 export default ChartSpec;
+
+class Chart {
+    constructor(svgContent) {
+        this.svgContent = svgContent;
+        this.scales = this.findScales();//Array<{type:string, domain:Array<number|string>, range:Array<number>}>
+        this.oriCoords = this.findOriCoords();
+    }
+
+    findScales() {
+
+    }
+
+    findOriCoords() {
+
+    }
+}

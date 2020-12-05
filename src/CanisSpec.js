@@ -166,7 +166,7 @@ class CanisSpec {
         //     console.log(JSON.stringify(tmpAniJsonsCopy));
         //     tmpAniJsons = [...tmpAniJsons, ...tmpAniJsonsCopy];
         // }
-        console.log('parsed aniunits: ', tmpAniJsons);
+        // console.log('parsed aniunits: ', tmpAniJsons);
         canisObj.animations = tmpAniJsons;
         // console.timeEnd('prepeocess charts');
         return canisObj;
@@ -392,7 +392,7 @@ class CanisSpec {
     async init(spec, status = {}) {
         if (JSON.stringify(status) !== '{}') {
             this.hasError = false;
-            // this.hasError = this.checkSpec(spec, status);
+            // this.hasError = this.checkSpec(spec, status);//TODO: add check sules for the new spec
         } else {
             this.hasError = false;
         }
@@ -441,7 +441,7 @@ class CanisSpec {
                         // console.time('query dom');
                         let tmpContainer = document.createElement('div');
                         document.body.appendChild(tmpContainer);
-                        tmpContainer.innerHTML = ChartSpec.charts[animationJson.chartIdx].outerHTML;
+                        tmpContainer.innerHTML = ChartSpec.charts[animationJson.chartIdx].svgContent.outerHTML;
 
                         console.log('animation json going to process: ', animationJson, ChartSpec.markSetsDuringTrans);
                         let allTargetMarks = tmpContainer.querySelectorAll(animationJson.selector);
