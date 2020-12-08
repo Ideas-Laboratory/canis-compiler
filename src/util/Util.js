@@ -374,6 +374,223 @@ export class CanisUtil {
         return scale.range[0] + (scale.range[1] - scale.range[0]) * (val - scale.domain[0]) / (scale.domain[1] - scale.domain[0]);
     }
 
+    static toApproxNum(num) {
+        return parseFloat(parseFloat(num).toFixed(2));
+    }
+
+    static orderDCmdsCoords(dCmds) {
+        const yCoords = [], xCoords = [];
+        for (let i = 0; i < dCmds.length; i++) {
+            const cmdName = dCmds[i].substring(0, 1);
+            const cmdValue = dCmds[i].substring(1);
+            let nums = cmdValue.split(',');
+            switch (cmdName) {
+                case 'M':
+                case 'm':
+                case 'L':
+                case 'l':
+                case 'T':
+                case 't':
+                    xCoords.push(this.toApproxNum(nums[0]));
+                    yCoords.push(this.toApproxNum(nums[1]));
+                    break;
+                case 'S':
+                case 'Q':
+                case 'C':
+                case 's':
+                case 'q':
+                case 'c':
+                    nums.forEach((num, idx) => {
+                        if (idx % 2 === 0) {//x
+                            xCoords.push(this.toApproxNum(num));
+                        } else {
+                            yCoords.push(this.toApproxNum(num));
+                        }
+                    })
+                    break;
+                case 'H':
+                case 'h':
+                    xCoords.push(this.toApproxNum(cmdValue));
+                    break;
+                case 'V':
+                case 'v':
+                    yCoords.push(this.toApproxNum(cmdValue));
+                    break;
+                case 'A':
+                case 'a':
+                    nums.forEach((num, idx) => {
+                        if (idx === 5) {
+                            xCoords.push(this.toApproxNum(num));
+                        } else if (idx === 6) {
+                            yCoords.push(this.toApproxNum(num));
+                        }
+                    })
+                    break;
+            }
+        }
+        console.log('result coords: ', xCoords, yCoords, [...new Set(yCoords)], [...new Set(yCoords)].sort(), [...new Set(yCoords)].sort().reverse());
+        return {
+            xCoords: [...new Set(xCoords)].sort((a, b) => {
+                return a - b;
+            }),
+            yCoords: [...new Set(yCoords)].sort((a, b) => {
+                return b - a;
+            })
+        };
+    }
+
+    /**
+     * rescale size on one direction
+     */
+    static rescaleSizeOneDirect(dCmds, direct, sortedValsThisDirect, diff) {
+        // const maxVal = sortedValsThisDirect[sortedValsThisDirect.length - 1];
+        // const minVal = sortedValsThisDirect[0];
+        const resultCmds = [];
+        for (let i = 0; i < dCmds.length; i++) {
+            const cmdName = dCmds[i].substring(0, 1);
+            const cmdValue = dCmds[i].substring(1);
+            let nums = cmdValue.split(',');
+            switch (cmdName) {
+                case 'M':
+                case 'm':
+                case 'L':
+                case 'l':
+                case 'T':
+                case 't':
+                    let xVal = parseFloat(nums[0]);
+                    let yVal = parseFloat(nums[1]);
+                    let xRatio = sortedValsThisDirect.indexOf(this.toApproxNum(xVal));
+                    let yRatio = sortedValsThisDirect.indexOf(this.toApproxNum(yVal));
+                    if (cmdName === 'm' || cmdName === 'l' || cmdName === 't') {
+                        xRatio = sortedValsThisDirect.indexOf(this.toApproxNum(xVal)) === 0 ? 0 : 1;
+                        yRatio = sortedValsThisDirect.indexOf(this.toApproxNum(yVal)) === 0 ? 0 : 1;
+                    }
+                    console.log('y ratio is: ', yRatio);
+                    if (direct === 'x') {
+                        xVal += (diff * (xRatio / (sortedValsThisDirect.length - 1)));
+                    } else if (direct === 'y') {
+                        yVal -= (diff * (yRatio / (sortedValsThisDirect.length - 1)));
+                    }
+                    resultCmds.push(cmdName + xVal + ',' + yVal);
+                    break;
+                case 'S':
+                case 'Q':
+                case 'C':
+                case 's':
+                case 'q':
+                case 'c':
+                    let tmpCmd = cmdName;
+                    nums.forEach((num, idx) => {
+                        let numVal = parseFloat(num);
+                        let numRatio = sortedValsThisDirect.indexOf(this.toApproxNum(numVal));
+                        if (cmdName === 's' || cmdName === 'q' || cmdName === 'c') {
+                            numRatio = sortedValsThisDirect.indexOf(this.toApproxNum(numVal)) === 0 ? 0 : 1;
+                        }
+                        if (idx % 2 === 0 && direct === 'x') {//x
+                            numVal += (diff * (numRatio / (sortedValsThisDirect.length - 1)));
+                        } else if (idx % 2 === 1 && direct === 'y') {
+                            numVal -= (diff * (numRatio / (sortedValsThisDirect.length - 1)));
+                        }
+                        tmpCmd += numVal + (idx === nums.length - 1 ? '' : ',');
+                    })
+                    resultCmds.push(tmpCmd);
+                    break;
+                case 'H':
+                case 'h':
+                    if (direct === 'x') {
+                        let xVal = parseFloat(cmdValue);
+                        let xRatio = sortedValsThisDirect.indexOf(this.toApproxNum(xVal));
+                        if (cmdName === 'h') {
+                            xRatio = sortedValsThisDirect.indexOf(this.toApproxNum(xVal)) === 0 ? 0 : 1;
+                        }
+                        xVal += (diff * (xRatio / (sortedValsThisDirect.length - 1)));
+                        resultCmds.push(cmdName + xVal);
+                    }
+                    break;
+                case 'V':
+                case 'v':
+                    if (direct === 'y') {
+                        let yVal = parseFloat(cmdValue);
+                        let yRatio = sortedValsThisDirect.indexOf(this.toApproxNum(yVal));
+                        if (cmdName === 'v') {
+                            yRatio = sortedValsThisDirect.indexOf(this.toApproxNum(yVal)) === 0 ? 0 : 1;
+                        }
+                        yVal -= (diff * (yRatio / (sortedValsThisDirect.length - 1)));
+                        resultCmds.push(cmdName + yVal);
+                    }
+                    break;
+                case 'A':
+                case 'a':
+                    let tmpACmd = cmdName;
+                    nums.forEach((num, idx) => {
+                        if (idx === 5 && direct === 'x') {//endX
+                            let xVal = parseFloat(num);
+                            let xRatio = sortedValsThisDirect.indexOf(this.toApproxNum(xVal));
+                            if (cmdName === 'a') {
+                                xRatio = sortedValsThisDirect.indexOf(this.toApproxNum(xVal)) === 0 ? 0 : 1;
+                            }
+                            xVal += (diff * (xRatio / (sortedValsThisDirect.length - 1)));
+                            tmpACmd += xVal + ',';
+                        } else if (idx === 6) {//endY
+                            let yVal = parseFloat(num);
+                            let yRatio = sortedValsThisDirect.indexOf(this.toApproxNum(yVal));
+                            if (cmdName === 'a') {
+                                yRatio = sortedValsThisDirect.indexOf(this.toApproxNum(yVal)) === 0 ? 0 : 1;
+                            }
+                            yVal -= (diff * (yRatio / (sortedValsThisDirect.length - 1)));
+                            tmpACmd += yVal;
+                        } else if (idx === 0 && direct === 'x') {//rx
+                            let endXVal = parseFloat(nums[5]);
+                            let rxVal = parseFloat(num);
+                            let endXRatio = sortedValsThisDirect.indexOf(this.toApproxNum(endXVal));
+                            if (cmdName === 'a') {
+                                endXRatio = sortedValsThisDirect.indexOf(this.toApproxNum(endXVal)) === 0 ? 0 : 1;
+                            }
+                            rxVal += Math.abs(diff * (endXRatio / (sortedValsThisDirect.length - 1))) / 2;
+                            tmpACmd += rxVal + ',';
+                        } else if (idx === 1 && direct === 'y') {//ry
+                            let endYVal = parseFloat(nums[6]);
+                            let ryVal = parseFloat(num);
+                            let endYRatio = sortedValsThisDirect.indexOf(this.toApproxNum(endYVal));
+                            if (cmdName === 'a') {
+                                endYRatio = sortedValsThisDirect.indexOf(this.toApproxNum(endYVal)) === 0 ? 0 : 1;
+                            }
+                            ryVal += Math.abs(diff * (endYRatio / (sortedValsThisDirect.length - 1))) / 2;
+                            tmpACmd += ryVal + ',';
+                        } else {
+                            tmpACmd += num + (idx === nums.length - 1 ? '' : ',');
+                        }
+                    })
+                    resultCmds.push(tmpACmd);
+                    break;
+                case 'Z':
+                case 'z':
+                    resultCmds.push(cmdName);
+            }
+        }
+        return resultCmds;
+    }
+
+    static rescalePathSize(dCmds, direct, targetVal) {
+        let resultCmds = [];
+
+        //find ori size
+        const oriCoords = this.orderDCmdsCoords(dCmds);
+        console.log('ori coords: ', oriCoords);
+        switch (direct) {
+            case 'x':
+                const oriW = Math.abs(oriCoords.xCoords[oriCoords.xCoords.length - 1] - oriCoords.xCoords[0]);
+
+                break;
+            case 'y':
+                const oriH = Math.abs(oriCoords.yCoords[oriCoords.yCoords.length - 1] - oriCoords.yCoords[0]);
+                const diff = targetVal - oriH;
+                resultCmds = this.rescaleSizeOneDirect(dCmds, 'y', oriCoords.yCoords, diff);
+                break;
+        }
+        return resultCmds;
+    }
+
     /**
      * check whether 2 d are the same shape
      * if same shape:
@@ -406,7 +623,7 @@ export class CanisUtil {
         const dataCurrentChart = ChartSpec.charts[chartIdx].markDatum.get(markId);
         const vm = ChartSpec.charts[chartIdx].visualMappings;//TODO: check whether need to support visual mapping change
         const xVisualChannel = [(typeof vm.get('x') !== 'undefined'), (typeof vm.get('width') !== 'undefined')];//[x, width]
-        const yVisualChannel = [(typeof vm.get('x') !== 'undefined'), (typeof vm.get('height') !== 'undefined')];//[y, height]
+        const yVisualChannel = [(typeof vm.get('y') !== 'undefined'), (typeof vm.get('height') !== 'undefined')];//[y, height]
 
         let resultCmd = '';
         if (typeof oriD !== 'undefined' && typeof targetD !== 'undefined') {
@@ -422,8 +639,7 @@ export class CanisUtil {
             if (sameShape) {//translate according to translate, scale, or morphin as specified 
                 //calculate diff for both translate and scale
                 // let diffX = 0, diffY = 0, diffScaleX = 0, diffScaleY = 0;
-                const oriStartEnd = this.findDStartEnd(oriCmds);
-                const targetStartEnd = this.findDStartEnd(targetCmds);
+
                 // diffX = targetStartEnd.startX - oriStartEnd.startX;
                 // diffY = targetStartEnd.startY - oriStartEnd.startY;
 
@@ -436,6 +652,7 @@ export class CanisUtil {
                 // }
 
                 //calculate offset X and Y for the end point in each command in d 
+                let rescaledCmds;
                 if (mergeType[3]) {//scale y
                     if (previousTrans[2]) {//data has changed
 
@@ -444,17 +661,22 @@ export class CanisUtil {
                     } else {//data is not changed nor changing
                         //use data last chart and scale this chart
                         let yScale = scaleCurrentChart.filter(s => s.name === 'y-scale')[0];//TODO: consider multiple y-scales
-                        if (typeof vm.get('height') !== 'undefined') {
+                        if (yVisualChannel[0]) {//to rescale y position 
+
+                        }
+                        if (yVisualChannel[1]) {//to rescale height
                             const dataAttr = vm.get('height');
                             const dataVal = dataLastChart[dataAttr];
                             const targetVal = this.scale(dataVal, yScale);
-                            console.log('data last chart and scale this chart: ', dataVal, yScale);
-                        }
-                        if (typeof vm.get('y') !== 'undefined') {
-
+                            //rescale height of the oriCmds
+                            rescaledCmds = this.rescalePathSize(oriCmds, 'y', targetVal);
+                            console.log('data last chart and scale this chart: ', dataVal, yScale, targetVal, oriCmds.join(''), rescaledCmds.join(''));
                         }
                     }
                 }
+                oriCmds = rescaledCmds;
+                const oriStartEnd = this.findDStartEnd(oriCmds);
+                const targetStartEnd = this.findDStartEnd(targetCmds);
 
                 const absXOffset = mergeType[0] ? (targetStartEnd.startX - oriStartEnd.startX) : 0,
                     absYOffset = mergeType[1] ? (targetStartEnd.startY - oriStartEnd.startY) : 0,
@@ -492,9 +714,9 @@ export class CanisUtil {
                                 const mOffsetYVal = parseFloat(nums[1]) + absYOffset;
                                 const mValidX = this.checkValidOffsetDCmd(mOffsetXVal, 0, parseFloat(nums[0]), parseFloat(targetNums[0]));
                                 const mValidY = this.checkValidOffsetDCmd(mOffsetYVal, 0, parseFloat(nums[1]), parseFloat(targetNums[1]));
-                                // resultCmd += (mValidX ? mOffsetXVal : targetNums[0]) + ',' + (mValidY ? mOffsetYVal : targetNums[1]);
-                                tmpValRecord.push(mValidX ? mOffsetXVal : targetNums[0]);
-                                tmpValRecord.push(mValidY ? mOffsetYVal : targetNums[1]);
+                                resultCmd += (mValidX ? mOffsetXVal : targetNums[0]) + ',' + (mValidY ? mOffsetYVal : targetNums[1]);
+                                // tmpValRecord.push(mValidX ? mOffsetXVal : targetNums[0]);
+                                // tmpValRecord.push(mValidY ? mOffsetYVal : targetNums[1]);
                                 break;
                             // const lOffsetXVal = parseFloat(nums[0]) + absXOffset;
                             // const lOffsetYVal = parseFloat(nums[1]) + absYOffset;
@@ -510,9 +732,9 @@ export class CanisUtil {
                                 const lrOffsetYVal = parseFloat(nums[1]) + relativeYOffset;
                                 const lrValidX = this.checkValidOffsetDCmd(lrOffsetXVal, diffScaleX, parseFloat(nums[0]), parseFloat(targetNums[0]));
                                 const lrValidY = this.checkValidOffsetDCmd(lrOffsetYVal, diffScaleY, parseFloat(nums[1]), parseFloat(targetNums[1]));
-                                // resultCmd += (lrValidX ? lrOffsetXVal : targetNums[0]) + ',' + (lrValidY ? lrOffsetYVal : targetNums[1]);
-                                tmpValRecord.push(lrValidX ? lrOffsetXVal : targetNums[0]);
-                                tmpValRecord.push(lrValidY ? lrOffsetYVal : targetNums[1]);
+                                resultCmd += (lrValidX ? lrOffsetXVal : targetNums[0]) + ',' + (lrValidY ? lrOffsetYVal : targetNums[1]);
+                                // tmpValRecord.push(lrValidX ? lrOffsetXVal : targetNums[0]);
+                                // tmpValRecord.push(lrValidY ? lrOffsetYVal : targetNums[1]);
                                 break;
                             case 'S':
                             case 'Q':
@@ -538,8 +760,8 @@ export class CanisUtil {
                                         // }
                                     }
                                     const sValidX = this.checkValidOffsetDCmd(sOffsetVal, 0, parseFloat(num), parseFloat(targetNums[idx]));
-                                    // resultCmd += (sValidX ? sOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
-                                    tmpValRecord.push(sValidX ? sOffsetVal : targetNums[idx]);
+                                    resultCmd += (sValidX ? sOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    // tmpValRecord.push(sValidX ? sOffsetVal : targetNums[idx]);
                                 })
                                 break;
                             case 's':
@@ -556,33 +778,33 @@ export class CanisUtil {
                                         // srScaleVal = (1 + Math.floor(idx / 2)) * relativeYOffset / step2;
                                     }
                                     const srValidX = this.checkValidOffsetDCmd(srOffsetVal, 0, parseFloat(num), parseFloat(targetNums[idx]));
-                                    // resultCmd += (srValidX ? srOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
-                                    tmpValRecord.push(srValidX ? srOffsetVal : targetNums[idx]);
+                                    resultCmd += (srValidX ? srOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    // tmpValRecord.push(srValidX ? srOffsetVal : targetNums[idx]);
                                 })
                                 break;
                             case 'H':
                                 const hOffsetXVal = parseFloat(cmdValue) + absXOffset;
                                 const hValidX = this.checkValidOffsetDCmd(hOffsetXVal, 0, parseFloat(cmdValue), parseFloat(targetCmdValue));
-                                // resultCmd += (hValidX ? hOffsetXVal : targetCmdValue);
-                                tmpValRecord.push(hValidX ? hOffsetXVal : targetCmdValue);
+                                resultCmd += (hValidX ? hOffsetXVal : targetCmdValue);
+                                // tmpValRecord.push(hValidX ? hOffsetXVal : targetCmdValue);
                                 break;
                             case 'h':
                                 const hrOffsetXVal = parseFloat(cmdValue) + relativeXOffset;
                                 const hrValidX = this.checkValidOffsetDCmd(hrOffsetXVal, 0, parseFloat(cmdValue), parseFloat(targetCmdValue));
-                                // resultCmd += (hrValidX ? hrOffsetXVal : targetCmdValue);
-                                tmpValRecord.push(hrValidX ? hrOffsetXVal : targetCmdValue);
+                                resultCmd += (hrValidX ? hrOffsetXVal : targetCmdValue);
+                                // tmpValRecord.push(hrValidX ? hrOffsetXVal : targetCmdValue);
                                 break;
                             case 'V':
                                 const vOffsetXVal = parseFloat(cmdValue) + absYOffset;
                                 const vValidX = this.checkValidOffsetDCmd(vOffsetXVal, 0, parseFloat(cmdValue), parseFloat(targetCmdValue));
-                                // resultCmd += (vValidX ? vOffsetXVal : targetCmdValue);
-                                tmpValRecord.push(vValidX ? vOffsetXVal : targetCmdValue);
+                                resultCmd += (vValidX ? vOffsetXVal : targetCmdValue);
+                                // tmpValRecord.push(vValidX ? vOffsetXVal : targetCmdValue);
                                 break;
                             case 'v':
                                 const vrOffsetXVal = parseFloat(cmdValue) + relativeYOffset;
                                 const vrValidX = this.checkValidOffsetDCmd(vrOffsetXVal, 0, parseFloat(cmdValue), parseFloat(targetCmdValue));
-                                // resultCmd += (vrValidX ? vrOffsetXVal : targetCmdValue);
-                                tmpValRecord.push(vrValidX ? vrOffsetXVal : targetCmdValue);
+                                resultCmd += (vrValidX ? vrOffsetXVal : targetCmdValue);
+                                // tmpValRecord.push(vrValidX ? vrOffsetXVal : targetCmdValue);
                                 break;
                             case 'A':
                                 nums.forEach((num, idx) => {
@@ -603,8 +825,8 @@ export class CanisUtil {
                                         aOffsetVal = parseFloat(num);
                                     }
                                     const aValidX = this.checkValidOffsetDCmd(aOffsetVal, 0, parseFloat(num), parseFloat(targetNums[idx]));
-                                    // resultCmd += (aValidX ? aOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
-                                    tmpValRecord.push(aValidX ? aOffsetVal : targetNums[idx]);
+                                    resultCmd += (aValidX ? aOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    // tmpValRecord.push(aValidX ? aOffsetVal : targetNums[idx]);
                                 })
                                 break;
                             case 'a':
@@ -626,13 +848,13 @@ export class CanisUtil {
                                         arOffsetVal = parseFloat(num);
                                     }
                                     const arValidX = this.checkValidOffsetDCmd(arOffsetVal, 0, parseFloat(num), parseFloat(targetNums[idx]));
-                                    // resultCmd += (arValidX ? arOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
-                                    tmpValRecord.push(arValidX ? arOffsetVal : targetNums[idx]);
+                                    resultCmd += (arValidX ? arOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    // tmpValRecord.push(arValidX ? arOffsetVal : targetNums[idx]);
                                 })
                                 break;
                             default:
-                                // resultCmd += cmdValue;
-                                tmpValRecord.push(cmdValue);
+                                resultCmd += cmdValue;
+                            // tmpValRecord.push(cmdValue);
                         }
                         if (cmdName.toLowerCase() === 'z') {
                             break;//remove redundent 'Z'
@@ -648,7 +870,7 @@ export class CanisUtil {
         } else {
             console.error('undefined d in dTrans!');
         }
-        return targetD;
+        return resultCmd;
     }
 
     static toDOM(obj) {
