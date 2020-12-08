@@ -204,7 +204,8 @@ class ActionSpec extends TimingSpec {
     /**
      * translate template animations to 'custom' type with the transition on some visual attributes
      */
-    static transToVisualAttrAction(actionJson, chartIdx, changedAttrs, markIds, status = {}) {
+    static transToVisualAttrAction(actionJson, previousTrans, chartIdx, changedAttrs, markIds, status = {}) {
+        console.log('going to change action into visual attribute changes: ', actionJson, previousTrans, chartIdx, markIds);
         //repalce action templates if there is any
         actionJson = this.replaceActionTmpls(actionJson);
 
@@ -465,6 +466,7 @@ class ActionSpec extends TimingSpec {
                 case ActionSpec.actionTypes.scaleX:
                 case ActionSpec.actionTypes.scaleY:
                 case ActionSpec.actionTypes.scaleXY:
+                case ActionSpec.actionTypes.dataChange:
                 case ActionSpec.actionTypes.mergedTransition:
                     console.log('test transition: ', ChartSpec.dataTrans, chartIdx);
                     tmpObj.animationType = ActionSpec.targetAnimationType.custom;
@@ -476,8 +478,8 @@ class ActionSpec extends TimingSpec {
                             const transFromD = transArr[chartIdx - 1]['d'];
                             const transToD = transArr[chartIdx]['d'];
                             console.log('calculating dtrans: ', markId);
-                            const translatedD = CanisUtil.dTrans(transFromD, transToD, actionJson);
-                            if (markId === 'mark109') {
+                            const translatedD = CanisUtil.dTrans(chartIdx, markId, transFromD, transToD, previousTrans, actionJson);
+                            if (markId === 'mark1') {
                                 console.log('trans from', transFromD);
                                 console.log('trans to', transToD);
                                 console.log('transed', translatedD);
@@ -643,6 +645,7 @@ ActionSpec.actionTypes = {
     scaleX: 'scale X',
     scaleY: 'scale Y',
     scaleXY: 'scale XY',
+    dataChange: 'data change',
     text: 'text',
     mergedTransition: 'merge transition',
     fadeOut: 'fade out',

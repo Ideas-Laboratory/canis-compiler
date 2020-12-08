@@ -108,10 +108,18 @@ class Animation extends TimingSpec {
             }
             console.log('action index to merge: ', mergeIdxs);
             const mergedActions = [];
-            const mergableActionTypes = [ActionSpec.actionTypes.translateX, ActionSpec.actionTypes.translateY, ActionSpec.actionTypes.translateXY, ActionSpec.actionTypes.scaleX, ActionSpec.actionTypes.scaleY, ActionSpec.actionTypes.scaleXY];
+            const mergableActionTypes = [
+                ActionSpec.actionTypes.translateX,
+                ActionSpec.actionTypes.translateY,
+                ActionSpec.actionTypes.translateXY,
+                ActionSpec.actionTypes.scaleX,
+                ActionSpec.actionTypes.scaleY,
+                ActionSpec.actionTypes.scaleXY,
+                ActionSpec.actionTypes.dataChange
+            ];
             mergeIdxs.forEach((actionIdxs) => {
                 //check whether the recorded actions can be merged according to their effect type
-                let mergedActionJson = {}, merged = false, count = 0, mergeType = [false, false, false, false];//mergeType: [transX, transY, scaleX, scaleY], false:not transiting, true:transiting
+                let mergedActionJson = {}, merged = false, count = 0, mergeType = [false, false, false, false, false];//mergeType: [transX, transY, scaleX, scaleY, dataChange], false:not transiting, true:transiting
                 actionIdxs.forEach(aIdx => {
                     const tmpActionJson = animationJson.effects[aIdx];
                     if (mergableActionTypes.includes(tmpActionJson.type)) {
@@ -124,6 +132,7 @@ class Animation extends TimingSpec {
                         mergeType[1] = (tmpActionJson.type === ActionSpec.actionTypes.translateY || tmpActionJson.type === ActionSpec.actionTypes.translateXY || mergeType[1]);
                         mergeType[2] = (tmpActionJson.type === ActionSpec.actionTypes.scaleX || tmpActionJson.type === ActionSpec.actionTypes.scaleXY || mergeType[2]);
                         mergeType[3] = (tmpActionJson.type === ActionSpec.actionTypes.scaleY || tmpActionJson.type === ActionSpec.actionTypes.scaleXY || mergeType[3]);
+                        mergeType[4] = (tmpActionJson.type === ActionSpec.actionTypes.dataChange || mergeType[4]);
                     } else {
                         mergedActions.push(tmpActionJson);
                     }
@@ -138,45 +147,31 @@ class Animation extends TimingSpec {
 
             })
 
-
-            // let mergedTransJson = {}, mergedTrans = false, mergeTransJsonIdx = -1;
-            // let mergedEffects = [];
-            // for (let i = 0, actionJson; i < animationJson.effects.length | (actionJson = animationJson.effects[i]); i++) {
-
-            //     if (actionJson.type === ActionSpec.actionTypes.translateX || actionJson.type === ActionSpec.actionTypes.translateY) {
-            //         Object.keys(actionJson).forEach((key, idx) => {
-            //             if (key === 'type') {
-            //                 if (!mergedTrans) {
-            //                     mergedTransJson[key] = actionJson[key];
-            //                     mergeTransJsonIdx = idx;
-            //                     mergedTrans = true;
-            //                     mergedEffects.push({});
-            //                 } else {
-            //                     mergedTransJson[key] = ActionSpec.actionTypes.translateXY;
-            //                 }
-            //             } else {
-            //                 mergedTransJson[key] = actionJson[key];
-            //             }
-            //         })
-            //     } else {
-            //         mergedEffects.push(actionJson);
-            //     }
-            // }
-            // if (mergeTransJsonIdx >= 0) {
-            //     mergedEffects[mergeTransJsonIdx] = mergedTransJson;
-            // }
             console.log('merged actions: ', mergedActions);
 
             //translate actions to updates of visual channels
+            let previousTrans = [false, false, false];//[scaleX, scaleY, dataChange]
             for (let i = 0, actionJson; i < mergedActions.length | (actionJson = mergedActions[i]); i++) {
+                if (actionJson.type === ActionSpec.actionTypes.scaleX || actionJson.type === ActionSpec.actionTypes.scaleXY) {
+                    previousTrans[0] = true;
+                } else if (actionJson.type === ActionSpec.actionTypes.scaleY || actionJson.type === ActionSpec.actionTypes.scaleXY) {
+                    previousTrans[1] = true;
+                } else if (actionJson.type === ActionSpec.actionTypes.dataChange) {
+                    previousTrans[2] = true;
+                } else if (typeof actionJson.mergeType !== 'undefined') {
+                    previousTrans[0] = (previousTrans[0] || actionJson.mergeType[2]);
+                    previousTrans[1] = (previousTrans[1] || actionJson.mergeType[3]);
+                    previousTrans[2] = (previousTrans[2] || actionJson.mergeType[4]);
+                }
                 actionJson.chartIdx = animationJson.chartIdx;
-                let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, animationJson.chartIdx, usedChangedAttrs, marksThisAni, status);//translate templates to no-templates
+                let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, previousTrans, animationJson.chartIdx, usedChangedAttrs, marksThisAni, status);//translate templates to no-templates
                 console.log('translated visual action: ', visAttrActionJsonArr);
                 for (let j = 0, visAttrActionJson; j < visAttrActionJsonArr.length | (visAttrActionJson = visAttrActionJsonArr[j]); j++) {
                     let tmpAction = new ActionSpec();
                     tmpAction.initAction(visAttrActionJson);
                     this.actions.push(tmpAction);
                 }
+
             }
         }
 

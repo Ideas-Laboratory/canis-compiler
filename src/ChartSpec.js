@@ -96,8 +96,10 @@ class ChartSpec {
         const datumMarkMapping = new Map();
         for (let i = 0; i < ChartSpec.charts.length; i++) {
             ChartSpec.charts[i].svgContent.setAttribute('trans', '0,0');
-            ChartSpec.removeTransitions(ChartSpec.charts[i].svgContent.children[0], datumMarkMapping);
+            ChartSpec.removeTransitions(ChartSpec.charts[i].svgContent.children[0], i, datumMarkMapping);
         }
+
+        console.log('charts after remove transition and added encoding', ChartSpec.charts[0], ChartSpec.charts[0].svgContent);
         const datumMarkArr = Array.from(datumMarkMapping).map(item => item[1]);
         datumMarkArr.forEach(mArr => {
             mArr.forEach(mId => {
@@ -398,7 +400,7 @@ class ChartSpec {
         return bBoxes;
     }
 
-    static removeTransitions(t, datumMarkMapping) {
+    static removeTransitions(t, chartIdx, datumMarkMapping) {
         //extract fill, stroke and stroke-width out
         if (typeof t.style.fill !== 'undefined' && t.style.fill) {
             if (typeof t.getAttribute('fill') === 'undefined' || !t.getAttribute('fill')) {
@@ -453,6 +455,7 @@ class ChartSpec {
                 this.nonDataMarkDatum.set(tmpId, dataDatumAttrValue);
             } else {
                 this.dataMarkDatum.set(tmpId, dataDatumAttrValue);
+                ChartSpec.charts[chartIdx].addMarkDatum(tmpId, dataDatumAttrValue);
                 let pureDatum = {};
                 Object.keys(dataDatumAttrValue).forEach(key => {
                     if (key.indexOf('_') !== 0) {
@@ -479,6 +482,11 @@ class ChartSpec {
                     this.chartUnderstanding[tmpDataDatum.position] = [];
                 }
                 this.chartUnderstanding[tmpDataDatum.position].push('position');
+                if (typeof tmpDataDatum.encoding !== 'undefined') {
+                    ChartSpec.charts[chartIdx].addEncoding(tmpDataDatum.encoding);
+                } else {
+                    console.error('there is no axis encoding!');
+                }
             } else if (t.classList.contains('legend')) {
                 for (let channel in tmpDataDatum) {
                     if (typeof this.chartUnderstanding[tmpDataDatum[channel]] === 'undefined') {
@@ -486,6 +494,7 @@ class ChartSpec {
                     }
                     this.chartUnderstanding[tmpDataDatum[channel]].push(channel);
                 }
+                //TODO: add legend encoding analysis like axis above
             }
         }
 
@@ -518,7 +527,7 @@ class ChartSpec {
         }
         if (t.children.length > 0) {
             for (let i = 0; i < t.children.length; i++) {
-                ChartSpec.removeTransitions(t.children[i], datumMarkMapping);
+                ChartSpec.removeTransitions(t.children[i], chartIdx, datumMarkMapping);
             }
         }
     }
@@ -561,15 +570,34 @@ export default ChartSpec;
 class Chart {
     constructor(svgContent) {
         this.svgContent = svgContent;
-        this.scales = this.findScales();//Array<{type:string, domain:Array<number|string>, range:Array<number>}>
-        this.oriCoords = this.findOriCoords();
+        this.scales = [];//Array<{type:string, domain:Array<number|string>, range:Array<number>}>
+        this.visualMappings = new Map();//key:data attribute, value: visual channel
+        this.markDatum = new Map();
+        // this.oriCoords = this.findOriCoords();
     }
 
-    findScales() {
-
+    addMarkDatum(markId, markDatum) {
+        this.markDatum.set(markId, markDatum);
     }
 
-    findOriCoords() {
+    addEncoding(encoding) {
+        this.addScales(encoding.scale);
+        this.addVisualMapping(encoding.visualChannel, encoding.attribute);
+    }
 
+    addScales(scale) {
+        if (typeof scale !== 'undefined') {
+            this.scales.push(scale);
+        } else {
+            console.error('undefined scale');
+        }
+    }
+
+    addVisualMapping(key, value) {
+        if (typeof key !== 'undefined' && typeof value !== 'undefined') {
+            this.visualMappings.set(key, value);
+        } else {
+            console.error('undefined viusal mapping ', key, value);
+        }
     }
 }

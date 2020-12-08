@@ -1,6 +1,7 @@
 import { PathMaker } from 'jsmovin';
 import { parseSVG } from 'svg-path-parser'
 import ActionSpec from '../ActionSpec';
+import ChartSpec from '../ChartSpec';
 
 export class CanisUtil {
     constructor() { }
@@ -369,6 +370,10 @@ export class CanisUtil {
         return (Math.abs(targetVal - offsetVal) < thr || Math.abs(oriVal - offsetVal) < thr || Math.abs(targetVal - scaleVal - offsetVal) < thr);
     }
 
+    static scale(val, scale) {
+        return scale.range[0] + (scale.range[1] - scale.range[0]) * (val - scale.domain[0]) / (scale.domain[1] - scale.domain[0]);
+    }
+
     /**
      * check whether 2 d are the same shape
      * if same shape:
@@ -382,16 +387,26 @@ export class CanisUtil {
      * @param {*} transType: 
      * @result: translate x coord of M
      */
-    static dTrans(oriD, targetD, actionJson) {
+    static dTrans(chartIdx, markId, oriD, targetD, previousTrans, actionJson) {
         const transType = actionJson.type;
-        let mergeType = [false, false, false, false];
+        let mergeType = [false, false, false, false, false];
         if (typeof actionJson.mergeType !== 'undefined') {
             mergeType = actionJson.mergeType;
         }
-        mergeType[0] = (transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY || mergeType[0]);
-        mergeType[1] = (transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY || mergeType[1]);
-        mergeType[2] = (transType === ActionSpec.actionTypes.scaleX || transType === ActionSpec.actionTypes.scaleXY || mergeType[2]);
-        mergeType[3] = (transType === ActionSpec.actionTypes.scaleY || transType === ActionSpec.actionTypes.scaleXY || mergeType[3]);
+        mergeType[0] = (transType === ActionSpec.actionTypes.translateX || transType === ActionSpec.actionTypes.translateXY || mergeType[0]);//translate X
+        mergeType[1] = (transType === ActionSpec.actionTypes.translateY || transType === ActionSpec.actionTypes.translateXY || mergeType[1]);//translate Y
+        mergeType[2] = (transType === ActionSpec.actionTypes.scaleX || transType === ActionSpec.actionTypes.scaleXY || mergeType[2]);//scale X
+        mergeType[3] = (transType === ActionSpec.actionTypes.scaleY || transType === ActionSpec.actionTypes.scaleXY || mergeType[3]);//scale Y
+        mergeType[4] = (transType === ActionSpec.actionTypes.dataChange || mergeType[4]);//data change
+        console.log('current mark status: ', ...mergeType, ChartSpec.charts[chartIdx].markDatum.get(markId), ChartSpec.charts[chartIdx].scales, ChartSpec.charts[chartIdx].visualMappings);
+
+        const scaleLastChart = ChartSpec.charts[chartIdx - 1].scales;
+        const scaleCurrentChart = ChartSpec.charts[chartIdx].scales;
+        const dataLastChart = ChartSpec.charts[chartIdx - 1].markDatum.get(markId);
+        const dataCurrentChart = ChartSpec.charts[chartIdx].markDatum.get(markId);
+        const vm = ChartSpec.charts[chartIdx].visualMappings;//TODO: check whether need to support visual mapping change
+        const xVisualChannel = [(typeof vm.get('x') !== 'undefined'), (typeof vm.get('width') !== 'undefined')];//[x, width]
+        const yVisualChannel = [(typeof vm.get('x') !== 'undefined'), (typeof vm.get('height') !== 'undefined')];//[y, height]
 
         let resultCmd = '';
         if (typeof oriD !== 'undefined' && typeof targetD !== 'undefined') {
@@ -403,39 +418,61 @@ export class CanisUtil {
 
             //check if they are of same shape
             let sameShape = this.checkDSameShape(oriCmds, targetCmds);
-            console.log('same shape: ', sameShape);
+            console.log('same shape: ', sameShape, oriCmds, targetCmds);
             if (sameShape) {//translate according to translate, scale, or morphin as specified 
                 //calculate diff for both translate and scale
-                let diffX = 0, diffY = 0, diffScaleX = 0, diffScaleY = 0;
+                // let diffX = 0, diffY = 0, diffScaleX = 0, diffScaleY = 0;
                 const oriStartEnd = this.findDStartEnd(oriCmds);
                 const targetStartEnd = this.findDStartEnd(targetCmds);
-                diffX = targetStartEnd.startX - oriStartEnd.startX;
-                diffY = targetStartEnd.startY - oriStartEnd.startY;
-                if (typeof oriStartEnd.relativeEndX !== 'undefined' && typeof targetStartEnd.relativeEndX !== 'undefined') {
-                    diffScaleX = targetStartEnd.relativeEndX - oriStartEnd.relativeEndX;
-                    diffScaleY = targetStartEnd.relativeEndY - oriStartEnd.relativeEndY;
-                } else {
-                    diffScaleX = targetStartEnd.endX - oriStartEnd.endX - diffX;
-                    diffScaleY = targetStartEnd.endY - oriStartEnd.endY - diffY;
-                }
-                console.log('diff XY: ', diffX, diffY, 'diff scale XY: ', diffScaleX, diffScaleY);
+                // diffX = targetStartEnd.startX - oriStartEnd.startX;
+                // diffY = targetStartEnd.startY - oriStartEnd.startY;
+
+                // if (typeof oriStartEnd.relativeEndX !== 'undefined' && typeof targetStartEnd.relativeEndX !== 'undefined') {
+                //     diffScaleX = targetStartEnd.relativeEndX - oriStartEnd.relativeEndX;
+                //     diffScaleY = targetStartEnd.relativeEndY - oriStartEnd.relativeEndY;
+                // } else {
+                //     diffScaleX = targetStartEnd.endX - oriStartEnd.endX - diffX;
+                //     diffScaleY = targetStartEnd.endY - oriStartEnd.endY - diffY;
+                // }
 
                 //calculate offset X and Y for the end point in each command in d 
-                let absXOffset = mergeType[0] ? diffX : 0,
-                    absYOffset = mergeType[1] ? diffY : 0,
-                    relativeXOffset = mergeType[2] ? diffScaleX : 0,
-                    relativeYOffset = mergeType[3] ? diffScaleY : 0;
-                if (mergeType[2]) {
-                    absXOffset += diffScaleX;
-                }
-                if (mergeType[3]) {
-                    absYOffset += diffScaleY;
+                if (mergeType[3]) {//scale y
+                    if (previousTrans[2]) {//data has changed
+
+                    } else if (mergeType[4]) {//data is changing 
+
+                    } else {//data is not changed nor changing
+                        //use data last chart and scale this chart
+                        let yScale = scaleCurrentChart.filter(s => s.name === 'y-scale')[0];//TODO: consider multiple y-scales
+                        if (typeof vm.get('height') !== 'undefined') {
+                            const dataAttr = vm.get('height');
+                            const dataVal = dataLastChart[dataAttr];
+                            const targetVal = this.scale(dataVal, yScale);
+                            console.log('data last chart and scale this chart: ', dataVal, yScale);
+                        }
+                        if (typeof vm.get('y') !== 'undefined') {
+
+                        }
+                    }
                 }
 
-                console.log('merge type: ', actionJson.mergeType, mergeType, absXOffset, absYOffset, relativeXOffset, relativeYOffset);
+                const absXOffset = mergeType[0] ? (targetStartEnd.startX - oriStartEnd.startX) : 0,
+                    absYOffset = mergeType[1] ? (targetStartEnd.startY - oriStartEnd.startY) : 0,
+                    relativeXOffset = mergeType[0] ? (targetStartEnd.relativeEndX - oriStartEnd.relativeEndX) : 0,
+                    relativeYOffset = mergeType[1] ? (targetStartEnd.relativeEndY - oriStartEnd.relativeEndY) : 0;
+                // if (mergeType[2]) {
+                //     absXOffset += diffScaleX;
+                // }
+                // if (mergeType[3]) {
+                //     absYOffset += diffScaleY;
+                // }
+
+                console.log('diff XY: ', absXOffset, absYOffset, 'diff relative XY: ', relativeXOffset, relativeYOffset);
+                console.log('merge type: ', actionJson.mergeType, mergeType);
 
                 //add the offset to the commands
                 if (oriCmds) {
+                    const cmdNameRecord = [], cmdValRecord = [];
                     for (let i = 0; i < oriCmds.length; i++) {
                         const cmdName = oriCmds[i].substring(0, 1);
                         const cmdValue = oriCmds[i].substring(1);
@@ -444,30 +481,38 @@ export class CanisUtil {
 
                         let nums = cmdValue.split(',');
                         let targetNums = targetCmdValue.split(',');
+                        // cmdNameRecord.push(cmdName);
+                        let tmpValRecord = [];
                         switch (cmdName) {
                             case 'M':
                             case 'm':
-                                const mOffsetXVal = parseFloat(nums[0]) + (mergeType[0] ? diffX : 0);
-                                const mOffsetYVal = parseFloat(nums[1]) + (mergeType[1] ? diffY : 0);
-                                const mValidX = this.checkValidOffsetDCmd(mOffsetXVal, diffScaleX, parseFloat(nums[0]), parseFloat(targetNums[0]));
-                                const mValidY = this.checkValidOffsetDCmd(mOffsetYVal, diffScaleY, parseFloat(nums[1]), parseFloat(targetNums[1]));
-                                resultCmd += (mValidX ? mOffsetXVal : targetNums[0]) + ',' + (mValidY ? mOffsetYVal : targetNums[1]);
-                                break;
                             case 'L':
                             case 'T':
-                                const lOffsetXVal = parseFloat(nums[0]) + absXOffset;
-                                const lOffsetYVal = parseFloat(nums[1]) + absYOffset;
-                                const lValidX = this.checkValidOffsetDCmd(lOffsetXVal, diffScaleX, parseFloat(nums[0]), parseFloat(targetNums[0]));
-                                const lValidY = this.checkValidOffsetDCmd(lOffsetYVal, diffScaleY, parseFloat(nums[1]), parseFloat(targetNums[1]));
-                                resultCmd += (lValidX ? lOffsetXVal : targetNums[0]) + ',' + (lValidY ? lOffsetYVal : targetNums[1]);
+                                const mOffsetXVal = parseFloat(nums[0]) + absXOffset;
+                                const mOffsetYVal = parseFloat(nums[1]) + absYOffset;
+                                const mValidX = this.checkValidOffsetDCmd(mOffsetXVal, 0, parseFloat(nums[0]), parseFloat(targetNums[0]));
+                                const mValidY = this.checkValidOffsetDCmd(mOffsetYVal, 0, parseFloat(nums[1]), parseFloat(targetNums[1]));
+                                // resultCmd += (mValidX ? mOffsetXVal : targetNums[0]) + ',' + (mValidY ? mOffsetYVal : targetNums[1]);
+                                tmpValRecord.push(mValidX ? mOffsetXVal : targetNums[0]);
+                                tmpValRecord.push(mValidY ? mOffsetYVal : targetNums[1]);
                                 break;
+                            // const lOffsetXVal = parseFloat(nums[0]) + absXOffset;
+                            // const lOffsetYVal = parseFloat(nums[1]) + absYOffset;
+                            // const lValidX = this.checkValidOffsetDCmd(lOffsetXVal, 0, parseFloat(nums[0]), parseFloat(targetNums[0]));
+                            // const lValidY = this.checkValidOffsetDCmd(lOffsetYVal, 0, parseFloat(nums[1]), parseFloat(targetNums[1]));
+                            // resultCmd += (lValidX ? lOffsetXVal : targetNums[0]) + ',' + (lValidY ? lOffsetYVal : targetNums[1]);
+                            // tmpValRecord.push(mValidX ? mOffsetXVal : targetNums[0]);
+                            // tmpValRecord.push(mValidY ? mOffsetYVal : targetNums[1]);
+                            // break;
                             case 'l':
                             case 't':
                                 const lrOffsetXVal = parseFloat(nums[0]) + relativeXOffset;
                                 const lrOffsetYVal = parseFloat(nums[1]) + relativeYOffset;
                                 const lrValidX = this.checkValidOffsetDCmd(lrOffsetXVal, diffScaleX, parseFloat(nums[0]), parseFloat(targetNums[0]));
                                 const lrValidY = this.checkValidOffsetDCmd(lrOffsetYVal, diffScaleY, parseFloat(nums[1]), parseFloat(targetNums[1]));
-                                resultCmd += (lrValidX ? lrOffsetXVal : targetNums[0]) + ',' + (lrValidY ? lrOffsetYVal : targetNums[1]);
+                                // resultCmd += (lrValidX ? lrOffsetXVal : targetNums[0]) + ',' + (lrValidY ? lrOffsetYVal : targetNums[1]);
+                                tmpValRecord.push(lrValidX ? lrOffsetXVal : targetNums[0]);
+                                tmpValRecord.push(lrValidY ? lrOffsetYVal : targetNums[1]);
                                 break;
                             case 'S':
                             case 'Q':
@@ -475,25 +520,26 @@ export class CanisUtil {
                                 const step = cmdName === 'C' ? 3 : 2;
                                 nums.forEach((num, idx) => {
                                     let sOffsetVal = 0, sScaleVal = 0;
-                                    if (idx % 2 === 0) {
-                                        sScaleVal = diffScaleX;
-                                        if (!mergeType[2]) {//not scaling X
-                                            sOffsetVal = parseFloat(num) + absXOffset;
-                                        } else {
-                                            sOffsetVal = parseFloat(num) + (1 + idx / 2) * absXOffset / step;
-                                            sScaleVal = (1 + idx / 2) * diffScaleX / step;
-                                        }
+                                    if (idx % 2 === 0) {//x
+                                        // sScaleVal = diffScaleX;
+                                        // if (!mergeType[2]) {//not scaling X
+                                        sOffsetVal = parseFloat(num) + absXOffset;
+                                        // } else {
+                                        //     sOffsetVal = parseFloat(num) + (1 + idx / 2) * absXOffset / step;
+                                        //     sScaleVal = (1 + idx / 2) * diffScaleX / step;
+                                        // }
                                     } else {
-                                        sScaleVal = diffScaleY;
-                                        if (!mergeType[3]) {//not scaling Y
-                                            sOffsetVal = parseFloat(num) + absYOffset;
-                                        } else {
-                                            sOffsetVal = parseFloat(num) + (1 + Math.floor(idx / 2)) * absYOffset / step;
-                                            sScaleVal = (1 + Math.floor(idx / 2)) * absYOffset / step;
-                                        }
+                                        // sScaleVal = diffScaleY;
+                                        // if (!mergeType[3]) {//not scaling Y
+                                        sOffsetVal = parseFloat(num) + absYOffset;
+                                        // } else {
+                                        //     sOffsetVal = parseFloat(num) + (1 + Math.floor(idx / 2)) * absYOffset / step;
+                                        //     sScaleVal = (1 + Math.floor(idx / 2)) * absYOffset / step;
+                                        // }
                                     }
-                                    const sValidX = this.checkValidOffsetDCmd(sOffsetVal, sScaleVal, parseFloat(num), parseFloat(targetNums[idx]));
-                                    resultCmd += (sValidX ? sOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    const sValidX = this.checkValidOffsetDCmd(sOffsetVal, 0, parseFloat(num), parseFloat(targetNums[idx]));
+                                    // resultCmd += (sValidX ? sOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    tmpValRecord.push(sValidX ? sOffsetVal : targetNums[idx]);
                                 })
                                 break;
                             case 's':
@@ -504,90 +550,105 @@ export class CanisUtil {
                                     let srOffsetVal = 0, srScaleVal = 0;
                                     if (idx % 2 === 0) {
                                         srOffsetVal = parseFloat(num) + (1 + idx / 2) * relativeXOffset / step2;
-                                        srScaleVal = (1 + idx / 2) * relativeXOffset / step2;
+                                        // srScaleVal = (1 + idx / 2) * relativeXOffset / step2;
                                     } else {
                                         srOffsetVal = parseFloat(num) + (1 + Math.floor(idx / 2)) * relativeYOffset / step2;
-                                        srScaleVal = (1 + Math.floor(idx / 2)) * relativeYOffset / step2;
+                                        // srScaleVal = (1 + Math.floor(idx / 2)) * relativeYOffset / step2;
                                     }
-                                    const srValidX = this.checkValidOffsetDCmd(srOffsetVal, srScaleVal, parseFloat(num), parseFloat(targetNums[idx]));
-                                    resultCmd += (srValidX ? srOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    const srValidX = this.checkValidOffsetDCmd(srOffsetVal, 0, parseFloat(num), parseFloat(targetNums[idx]));
+                                    // resultCmd += (srValidX ? srOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    tmpValRecord.push(srValidX ? srOffsetVal : targetNums[idx]);
                                 })
                                 break;
                             case 'H':
                                 const hOffsetXVal = parseFloat(cmdValue) + absXOffset;
-                                const hValidX = this.checkValidOffsetDCmd(hOffsetXVal, diffScaleX, parseFloat(cmdValue), parseFloat(targetCmdValue));
-                                resultCmd += (hValidX ? hOffsetXVal : targetCmdValue);
+                                const hValidX = this.checkValidOffsetDCmd(hOffsetXVal, 0, parseFloat(cmdValue), parseFloat(targetCmdValue));
+                                // resultCmd += (hValidX ? hOffsetXVal : targetCmdValue);
+                                tmpValRecord.push(hValidX ? hOffsetXVal : targetCmdValue);
                                 break;
                             case 'h':
                                 const hrOffsetXVal = parseFloat(cmdValue) + relativeXOffset;
-                                const hrValidX = this.checkValidOffsetDCmd(hrOffsetXVal, diffScaleX, parseFloat(cmdValue), parseFloat(targetCmdValue));
-                                resultCmd += (hrValidX ? hrOffsetXVal : targetCmdValue);
+                                const hrValidX = this.checkValidOffsetDCmd(hrOffsetXVal, 0, parseFloat(cmdValue), parseFloat(targetCmdValue));
+                                // resultCmd += (hrValidX ? hrOffsetXVal : targetCmdValue);
+                                tmpValRecord.push(hrValidX ? hrOffsetXVal : targetCmdValue);
                                 break;
                             case 'V':
                                 const vOffsetXVal = parseFloat(cmdValue) + absYOffset;
-                                const vValidX = this.checkValidOffsetDCmd(vOffsetXVal, diffScaleY, parseFloat(cmdValue), parseFloat(targetCmdValue));
-                                resultCmd += (vValidX ? vOffsetXVal : targetCmdValue);
+                                const vValidX = this.checkValidOffsetDCmd(vOffsetXVal, 0, parseFloat(cmdValue), parseFloat(targetCmdValue));
+                                // resultCmd += (vValidX ? vOffsetXVal : targetCmdValue);
+                                tmpValRecord.push(vValidX ? vOffsetXVal : targetCmdValue);
                                 break;
                             case 'v':
                                 const vrOffsetXVal = parseFloat(cmdValue) + relativeYOffset;
-                                const vrValidX = this.checkValidOffsetDCmd(vrOffsetXVal, diffScaleY, parseFloat(cmdValue), parseFloat(targetCmdValue));
-                                resultCmd += (vrValidX ? vrOffsetXVal : targetCmdValue);
+                                const vrValidX = this.checkValidOffsetDCmd(vrOffsetXVal, 0, parseFloat(cmdValue), parseFloat(targetCmdValue));
+                                // resultCmd += (vrValidX ? vrOffsetXVal : targetCmdValue);
+                                tmpValRecord.push(vrValidX ? vrOffsetXVal : targetCmdValue);
                                 break;
                             case 'A':
                                 nums.forEach((num, idx) => {
-                                    let aOffsetVal = 0, aScaleVal = 0;
+                                    let aOffsetVal = 0;//, aScaleVal = 0;
                                     if (idx === 5) {
-                                        aScaleVal = diffScaleX;
+                                        // aScaleVal = diffScaleX;
                                         aOffsetVal = parseFloat(num) + absXOffset;
                                     } else if (idx === 6) {
-                                        aScaleVal = diffScaleY;
+                                        // aScaleVal = diffScaleY;
                                         aOffsetVal = parseFloat(num) + absYOffset;
-                                    } else if (idx === 0 && mergeType[2]) {
-                                        aOffsetVal = parseFloat(num) + (diffScaleX / 2);
-                                    } else if (idx === 1 && mergeType[3]) {
-                                        aOffsetVal = parseFloat(num) + (diffScaleY / 2);
-                                    } else {
+                                    }
+                                    // else if (idx === 0 && mergeType[2]) {
+                                    //     aOffsetVal = parseFloat(num) + (diffScaleX / 2);
+                                    // } else if (idx === 1 && mergeType[3]) {
+                                    //     aOffsetVal = parseFloat(num) + (diffScaleY / 2);
+                                    // } 
+                                    else {
                                         aOffsetVal = parseFloat(num);
                                     }
-                                    const aValidX = this.checkValidOffsetDCmd(aOffsetVal, aScaleVal, parseFloat(num), parseFloat(targetNums[idx]));
-                                    resultCmd += (aValidX ? aOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    const aValidX = this.checkValidOffsetDCmd(aOffsetVal, 0, parseFloat(num), parseFloat(targetNums[idx]));
+                                    // resultCmd += (aValidX ? aOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    tmpValRecord.push(aValidX ? aOffsetVal : targetNums[idx]);
                                 })
                                 break;
                             case 'a':
                                 nums.forEach((num, idx) => {
-                                    let arOffsetVal = 0, arScaleVal = 0;
+                                    let arOffsetVal = 0;//, arScaleVal = 0;
                                     if (idx === 5) {
-                                        arScaleVal = diffScaleX;
+                                        // arScaleVal = diffScaleX;
                                         arOffsetVal = parseFloat(num) + relativeXOffset;
                                     } else if (idx === 6) {
-                                        arScaleVal = diffScaleY;
+                                        // arScaleVal = diffScaleY;
                                         arOffsetVal = parseFloat(num) + relativeYOffset;
-                                    } else if (idx === 0 && mergeType[2]) {
-                                        arOffsetVal = parseFloat(num) + (diffScaleX / 2);
-                                    } else if (idx === 1 && mergeType[3]) {
-                                        arOffsetVal = parseFloat(num) + (diffScaleY / 2);
-                                    } else {
+                                    }
+                                    // else if (idx === 0 && mergeType[2]) {
+                                    //     arOffsetVal = parseFloat(num) + (diffScaleX / 2);
+                                    // } else if (idx === 1 && mergeType[3]) {
+                                    //     arOffsetVal = parseFloat(num) + (diffScaleY / 2);
+                                    // }
+                                    else {
                                         arOffsetVal = parseFloat(num);
                                     }
-                                    const arValidX = this.checkValidOffsetDCmd(arOffsetVal, arScaleVal, parseFloat(num), parseFloat(targetNums[idx]));
-                                    resultCmd += (arValidX ? arOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    const arValidX = this.checkValidOffsetDCmd(arOffsetVal, 0, parseFloat(num), parseFloat(targetNums[idx]));
+                                    // resultCmd += (arValidX ? arOffsetVal : targetNums[idx]) + (idx === nums.length - 1 ? '' : ',');
+                                    tmpValRecord.push(arValidX ? arOffsetVal : targetNums[idx]);
                                 })
                                 break;
                             default:
-                                resultCmd += cmdValue;
+                                // resultCmd += cmdValue;
+                                tmpValRecord.push(cmdValue);
                         }
                         if (cmdName.toLowerCase() === 'z') {
                             break;//remove redundent 'Z'
+                        } else {
+                            cmdNameRecord.push(cmdName);
+                            cmdValRecord.push(tmpValRecord);
                         }
                     }
                 }
             } else {//translate according to translate, morphin as specified
-
+                //TODO: mark type change transition staging 
             }
         } else {
             console.error('undefined d in dTrans!');
         }
-        return resultCmd;
+        return targetD;
     }
 
     static toDOM(obj) {
@@ -1006,6 +1067,8 @@ export class CanisUtil {
                 t.setAttribute('d', resultCmd);
             }
         }
+        t.setAttribute('transX', tx);
+        t.setAttribute('transY', ty);
     }
 
     static splitPath(d) {
@@ -1098,6 +1161,80 @@ export class CanisUtil {
         let pm = new PathMaker(d);
         pm.uniform();
         return [posiOffset, pm];
+    }
+
+    static pathToShape(d) {
+        d = d.replace(/(?<=\d)\s(?=[mMlLhHvVcCsSqQtTaAzZ])/g, '').replace(/(?<=[mMlLhHvVcCsSqQtTaA])\s(?=(\d|[-+]))/g, '').replace(/\s/g, ',');
+        let cmdRegExp = new RegExp(/[mMlLhHvVcCsSqQtTaAzZ][^mMlLhHvVcCsSqQtTaAzZ]*/g);
+        let cmds = d.match(cmdRegExp);
+        if (cmds) {
+            const isRect = this.pathIsRect(cmds);
+            console.log('path is rect: ', isRect);
+        }
+    }
+
+    static pathIsRect(cmds) {
+        let w = 0, h = 0;
+
+        //remove the last z command
+        if (cmds[cmds.length - 1].toLowerCase() === 'z') {
+            cmds.splice(cmds.length - 1, 1);
+        }
+
+        if (cmds.length !== 4) {
+            return [false, w, h];
+        } else {
+            const mvValues = cmds[0].substring(1).split(',');
+            let lastCmdDirect = '', transCoords = { x: 0, y: 0 };
+            for (let i = 1; i < cmds.length; i++) {
+                const cmdName = cmds[i].substring(0, 1);
+                const cmdValue = cmds[i].substring(1);
+                if (cmdName.toLowerCase() === 'v' && (lastCmdDirect === 'h' || lastCmdDirect === '')) {
+                    lastCmdDirect = 'v';
+                    transCoords.y = cmdName === 'V' ? parseFloat(cmdValue) : parseFloat(cmdValue) + transCoords.y;
+                    h = cmdName === 'V' ? (parseFloat(cmdValue) - parseFloat(mvValues[1])) : parseFloat(cmdValue);
+                } else if (cmdName.toLowerCase() === 'h' && (lastCmdDirect === 'v' || lastCmdDirect === '')) {
+                    lastCmdDirect = 'h';
+                    transCoords.x = cmdName === 'H' ? parseFloat(cmdValue) : parseFloat(cmdValue) + transCoords.x;
+                    w = cmdName === 'H' ? (parseFloat(cmdValue) - parseFloat(mvValues[1])) : parseFloat(cmdValue);
+                } else if (cmdName.toLowerCase() === 'l') {
+                    let diffX = 0, diffY = 0;
+                    if (cmdName === 'L') {
+                        const cmdValues = cmdValue.split(',');
+                        diffX = parseFloat(cmdValues[0]) - parseFloat(mvValues[0]) - transCoords.x;
+                        diffY = parseFloat(cmdValues[1]) - parseFloat(mvValues[1]) - transCoords.y;
+                    } else {
+                        const cmdValues = cmdValue.split(',');
+                        diffX = parseFloat(cmdValues[0]);
+                        diffY = parseFloat(cmdValues[1]);
+                    }
+
+                    if (diffX !== 0 && diffY !== 0) {//not vertical or horizontal
+                        return [false, w, h];
+                    } else if (diffX === 0) {
+                        if (lastCmdDirect === 'h' || lastCmdDirect === '') {
+                            lastCmdDirect = 'v';
+                            transCoords.y += diffY + transCoords.y;
+                        } else {
+                            return [false, w, h];
+                        }
+                    } else {
+                        if (lastCmdDirect === 'v' || lastCmdDirect === '') {
+                            lastCmdDirect = 'h';
+                            transCoords.x += diffX + transCoords.x;
+                        } else {
+                            return [false, w, h];
+                        }
+                    }
+                    w = diffX;
+                    h = diffY;
+                }
+            }
+            if (transCoords.x !== 0 || transCoords.y !== 0) {
+                return [false, w, h];
+            }
+        }
+        return [true, Math.abs(w), Math.abs(h)];
     }
 
     static setPathDValue(d, reset, tx = 0, ty = 0, diffCmds = new Map()) {
@@ -1424,6 +1561,10 @@ export class CanisUtil {
     }
 }
 
+CanisUtil.basicShapes = new Map([
+    ['rect', ['x', 'y', 'width', 'height', 'rx', 'ry']],
+    ['circle', ['cx', 'cy', 'r']]
+])
 CanisUtil.colorNames = new Map([['aliceblue', '#f0f8ff'], ['antiquewhite', '#faebd7'], ['aqua', '#00ffff'], ['aquamarine', '#7fffd4'], ['azure', '#f0ffff'], ['beige', '#f5f5dc'], ['bisque', '#ffe4c4'], ['black', '#000000'], ['blanchedalmond', '#ffebcd'], ['blue', '#0000ff'], ['blueviolet', '#8a2be2'], ['brown', '#a52a2a'], ['burlywood', '#deb887'], ['cadetblue', '#5f9ea0'], ['chartreuse', '#7fff00'], ['chocolate', '#d2691e'], ['coral', '#ff7f50'], ['cornflowerblue', '#6495ed'], ['cornsilk', '#fff8dc'], ['crimson', '#dc143c'], ['cyan', '#00ffff'], ['darkblue', '#00008b'], ['darkcyan', '#008b8b'], ['darkgoldenrod', '#b8860b'], ['darkgray', '#a9a9a9'], ['darkgrey', '#a9a9a9'], ['darkgreen', '#006400'], ['darkkhaki', '#bdb76b'], ['darkmagenta', '#8b008b'], ['darkolivegreen', '#556b2f'], ['darkorange', '#ff8c00'], ['darkorchid', '#9932cc'], ['darkred', '#8b0000'], ['darksalmon', '#e9967a'], ['darkseagreen', '#8fbc8f'], ['darkslateblue', '#483d8b'], ['darkslategray', '#2f4f4f'], ['darkslategrey', '#2f4f4f'], ['darkturquoise', '#00ced1'], ['darkviolet', '#9400d3'], ['deeppink', '#ff1493'], ['deepskyblue', '#00bfff'], ['dimgray', '#696969'], ['dimgrey', '#696969'], ['dodgerblue', '#1e90ff'], ['firebrick', '#b22222'], ['floralwhite', '#fffaf0'], ['forestgreen', '#228b22'], ['fuchsia', '#ff00ff'], ['gainsboro', '#dcdcdc'], ['ghostwhite', '#f8f8ff'], ['gold', '#ffd700'], ['goldenrod', '#daa520'], ['gray', '#808080'], ['grey', '#808080'], ['green', '#008000'], ['greenyellow', '#adff2f'], ['honeydew', '#f0fff0'], ['hotpink', '#ff69b4'], ['indianred ', '#cd5c5c'], ['indigo  ', '#4b0082'], ['ivory', '#fffff0'], ['khaki', '#f0e68c'], ['lavender', '#e6e6fa'], ['lavenderblush', '#fff0f5'], ['lawngreen', '#7cfc00'], ['lemonchiffon', '#fffacd'], ['lightblue', '#add8e6'], ['lightcoral', '#f08080'], ['lightcyan', '#e0ffff'], ['lightgoldenrodyellow', '#fafad2'], ['lightgray', '#d3d3d3'], ['lightgrey', '#d3d3d3'], ['lightgreen', '#90ee90'], ['lightpink', '#ffb6c1'], ['lightsalmon', '#ffa07a'], ['lightseagreen', '#20b2aa'], ['lightskyblue', '#87cefa'], ['lightslategray', '#778899'], ['lightslategrey', '#778899'], ['lightsteelblue', '#b0c4de'], ['lightyellow', '#ffffe0'], ['lime', '#00ff00'], ['limegreen', '#32cd32'], ['linen', '#faf0e6'], ['magenta', '#ff00ff'], ['maroon', '#800000'], ['mediumaquamarine', '#66cdaa'], ['mediumblue', '#0000cd'], ['mediumorchid', '#ba55d3'], ['mediumpurple', '#9370db'], ['mediumseagreen', '#3cb371'], ['mediumslateblue', '#7b68ee'], ['mediumspringgreen', '#00fa9a'], ['mediumturquoise', '#48d1cc'], ['mediumvioletred', '#c71585'], ['midnightblue', '#191970'], ['mintcream', '#f5fffa'], ['mistyrose', '#ffe4e1'], ['moccasin', '#ffe4b5'], ['navajowhite', '#ffdead'], ['navy', '#000080'], ['oldlace', '#fdf5e6'], ['olive', '#808000'], ['olivedrab', '#6b8e23'], ['orange', '#ffa500'], ['orangered', '#ff4500'], ['orchid', '#da70d6'], ['palegoldenrod', '#eee8aa'], ['palegreen', '#98fb98'], ['paleturquoise', '#afeeee'], ['palevioletred', '#db7093'], ['papayawhip', '#ffefd5'], ['peachpuff', '#ffdab9'], ['peru', '#cd853f'], ['pink', '#ffc0cb'], ['plum', '#dda0dd'], ['powderblue', '#b0e0e6'], ['purple', '#800080'], ['rebeccapurple', '#663399'], ['red', '#ff0000'], ['rosybrown', '#bc8f8f'], ['royalblue', '#4169e1'], ['saddlebrown', '#8b4513'], ['salmon', '#fa8072'], ['sandybrown', '#f4a460'], ['seagreen', '#2e8b57'], ['seashell', '#fff5ee'], ['sienna', '#a0522d'], ['silver', '#c0c0c0'], ['skyblue', '#87ceeb'], ['slateblue', '#6a5acd'], ['slategray', '#708090'], ['slategrey', '#708090'], ['snow', '#fffafa'], ['springgreen', '#00ff7f'], ['steelblue', '#4682b4'], ['tan', '#d2b48c'], ['teal', '#008080'], ['thistle', '#d8bfd8'], ['tomato', '#ff6347'], ['turquoise', '#40e0d0'], ['violet', '#ee82ee'], ['wheat', '#f5deb3'], ['white', '#ffffff'], ['whitesmoke', '#f5f5f5'], ['yellow', '#ffff00'], ['yellowgreen', '#9acd32']])
 
 export class Viewport {
