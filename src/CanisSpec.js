@@ -445,7 +445,26 @@ class CanisSpec {
 
                         console.log('animation json going to process: ', animationJson, ChartSpec.markSetsDuringTrans);
                         let allTargetMarks = tmpContainer.querySelectorAll(animationJson.selector);
+                        // if (allTargetMarks.length === 0) {
+                        //     console.log('in remaking ani json');
+                        //     let tmpAniJson = {};
+                        //     Object.keys(animationJson).forEach(k => {
+                        //         if (k === 'selector') {
+                        //             tmpAniJson[k] = '#mark1';
+                        //         } else if (k === 'effects') {
+                        //             tmpAniJson[k] = '[{"type": "fade", "duration": ' + (1000 / TimingSpec.FRAME_RATE) + '}]';
+                        //         } else if (k !== 'grouping') {
+                        //             tmpAniJson[k] = animationJson[k];
+                        //         }
+                        //     })
+                        //     this.animations[aniIdx] = tmpAniJson;
+                        //     animationJson = tmpAniJson;
+                        // }
+
+                        console.log('dealing with animation json: ', this.animations[aniIdx], animationJson);
+                        allTargetMarks = tmpContainer.querySelectorAll(animationJson.selector);
                         const entireMarkSet = ChartSpec.markSetsDuringTrans[animationJson.chartIdx][animationJson.marksetType];
+                        console.log('test selected marks length: ', allTargetMarks.length, entireMarkSet);
                         let markIds = [], marks = [], newSelector = '';
                         if (allTargetMarks.length > 0) {
                             [].forEach.call(allTargetMarks, (m, i) => {
@@ -454,20 +473,28 @@ class CanisSpec {
                                     if (entireMarkSet.includes(mId)) {
                                         newSelector = newSelector.concat('#', mId, ',')
                                         markIds.push(mId);
-                                        marks.push(m)
+                                        marks.push(m);
                                     }
                                 }
-                                // else {//need to delete this else
-                                //     markIds.push(mId);
-                                //     marks.push(m)
-                                // }
                             })
+                        }
+                        //if no marks are entering, updating, nor exiting at this stage
+                        if (markIds.length === 0) {
+                            newSelector = '#mark1,';
+                            markIds.push('mark1');
+                            marks.push(tmpContainer.querySelectorAll('#mark1')[0]);
+                            this.animations[aniIdx].effects = [{
+                                type: 'steady',
+                                duration: 1000 / ActionSpec.FRAME_RATE
+                            }]
+                            delete this.animations[aniIdx].grouping;
                         }
                         //replace selector
                         newSelector = newSelector.substring(0, newSelector.length - 1);
                         console.log('the selector is: ', newSelector);
                         this.animations[aniIdx].selector = newSelector;
-                        console.log('marks in this aniunit: ', markIds, newSelector);
+                        console.log('marks in this aniunit: ', markIds, marks, newSelector);
+                        animationJson = this.animations[aniIdx];
 
                         let tmpAllMarks = [];
                         [].forEach.call(tmpContainer.querySelectorAll('.mark'), function (tm) {
@@ -531,6 +558,7 @@ class CanisSpec {
                         if (marks.length > 0) {
                             const idxForEachCls = new Map();
                             [].forEach.call(marks, function (mark) {
+                                console.log('testgin', mark);
                                 if (mark.classList.contains('mark')) {
                                     let markId = mark.getAttribute('id');
                                     let markCls = mark.getAttribute('class');

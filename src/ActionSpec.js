@@ -311,6 +311,15 @@ class ActionSpec extends TimingSpec {
                         to: 1
                     }];
                     break;
+                case ActionSpec.actionTypes.steady:
+                    tmpObj.animationType = ActionSpec.targetAnimationType.fade;
+                    tmpObj.type = ActionSpec.actionTargets.mark;
+                    tmpObj.attribute = [{
+                        attrName: 'opacity',
+                        from: 1,
+                        to: 1
+                    }];
+                    break;
                 case ActionSpec.actionTypes.fadeOut:
                     tmpObj.animationType = ActionSpec.targetAnimationType.fade;
                     tmpObj.type = ActionSpec.actionTargets.mark;
@@ -628,6 +637,7 @@ ActionSpec.attrs = ['extend', 'type', 'offset', 'reference', 'easing', 'duration
 
 ActionSpec.actionTypes = {
     fade: 'fade',
+    steady: 'steady',
     wipeBottom: 'wipe bottom',
     wipeTop: 'wipe top',
     wipeLeft: 'wipe left',
