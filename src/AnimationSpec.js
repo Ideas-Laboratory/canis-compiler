@@ -152,6 +152,8 @@ class Animation extends TimingSpec {
             //translate actions to updates of visual channels
             let previousTrans = [false, false, false];//[scaleX, scaleY, dataChange]
             for (let i = 0, actionJson; i < mergedActions.length | (actionJson = mergedActions[i]); i++) {
+                actionJson.chartIdx = animationJson.chartIdx;
+                let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, previousTrans, animationJson.chartIdx, usedChangedAttrs, marksThisAni, status);//translate templates to no-templates
                 if (actionJson.type === ActionSpec.actionTypes.scaleX || actionJson.type === ActionSpec.actionTypes.scaleXY) {
                     previousTrans[0] = true;
                 } else if (actionJson.type === ActionSpec.actionTypes.scaleY || actionJson.type === ActionSpec.actionTypes.scaleXY) {
@@ -163,8 +165,6 @@ class Animation extends TimingSpec {
                     previousTrans[1] = (previousTrans[1] || actionJson.mergeType[3]);
                     previousTrans[2] = (previousTrans[2] || actionJson.mergeType[4]);
                 }
-                actionJson.chartIdx = animationJson.chartIdx;
-                let visAttrActionJsonArr = ActionSpec.transToVisualAttrAction(actionJson, previousTrans, animationJson.chartIdx, usedChangedAttrs, marksThisAni, status);//translate templates to no-templates
                 console.log('translated visual action: ', visAttrActionJsonArr);
                 for (let j = 0, visAttrActionJson; j < visAttrActionJsonArr.length | (visAttrActionJson = visAttrActionJsonArr[j]); j++) {
                     let tmpAction = new ActionSpec();

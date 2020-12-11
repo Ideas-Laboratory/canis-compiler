@@ -375,7 +375,7 @@ export class CanisUtil {
     }
 
     static toApproxNum(num) {
-        return parseFloat(parseFloat(num).toFixed(2));
+        return parseFloat(parseFloat(num).toFixed(1));
     }
 
     static orderDCmdsCoords(dCmds) {
@@ -443,9 +443,8 @@ export class CanisUtil {
      * rescale size on one direction
      */
     static rescaleSizeOneDirect(dCmds, direct, sortedValsThisDirect, diff) {
-        // const maxVal = sortedValsThisDirect[sortedValsThisDirect.length - 1];
-        // const minVal = sortedValsThisDirect[0];
         const resultCmds = [];
+        console.log('************** rescaling size!!!!!!');
         for (let i = 0; i < dCmds.length; i++) {
             const cmdName = dCmds[i].substring(0, 1);
             const cmdValue = dCmds[i].substring(1);
@@ -459,6 +458,7 @@ export class CanisUtil {
                 case 't':
                     let xVal = parseFloat(nums[0]);
                     let yVal = parseFloat(nums[1]);
+                    console.log('rescale ', cmdName, yVal, diff);
                     let xRatio = sortedValsThisDirect.indexOf(this.toApproxNum(xVal));
                     let yRatio = sortedValsThisDirect.indexOf(this.toApproxNum(yVal));
                     if (cmdName === 'm' || cmdName === 'l' || cmdName === 't') {
@@ -471,6 +471,7 @@ export class CanisUtil {
                     } else if (direct === 'y') {
                         yVal -= (diff * (yRatio / (sortedValsThisDirect.length - 1)));
                     }
+                    console.log('rescaled value: ', yVal);
                     resultCmds.push(cmdName + xVal + ',' + yVal);
                     break;
                 case 'S':
@@ -571,7 +572,10 @@ export class CanisUtil {
         return resultCmds;
     }
 
-    static rescalePathSize(dCmds, direct, targetVal) {
+    static rescalePathSize(dCmds, direct, visualChannel, dataset, visualScale, viusalMapping) {
+        const dataAttr = viusalMapping.get(visualChannel);
+        const dataVal = dataset[dataAttr];
+        const targetVal = this.scale(dataVal, visualScale);
         let resultCmds = [];
 
         //find ori size
@@ -652,25 +656,57 @@ export class CanisUtil {
                 // }
 
                 //calculate offset X and Y for the end point in each command in d 
-                let rescaledCmds;
+                let rescaledCmds = oriCmds;
                 if (mergeType[3]) {//scale y
                     if (previousTrans[2]) {//data has changed
-
-                    } else if (mergeType[4]) {//data is changing 
-
-                    } else {//data is not changed nor changing
-                        //use data last chart and scale this chart
-                        let yScale = scaleCurrentChart.filter(s => s.name === 'y-scale')[0];//TODO: consider multiple y-scales
+                        //use data this chart and scale this chart
+                        const yScale = scaleCurrentChart.filter(s => s.name === 'y-scale')[0];//TODO: consider multiple y-scales
                         if (yVisualChannel[0]) {//to rescale y position 
 
                         }
                         if (yVisualChannel[1]) {//to rescale height
-                            const dataAttr = vm.get('height');
-                            const dataVal = dataLastChart[dataAttr];
-                            const targetVal = this.scale(dataVal, yScale);
                             //rescale height of the oriCmds
-                            rescaledCmds = this.rescalePathSize(oriCmds, 'y', targetVal);
-                            console.log('data last chart and scale this chart: ', dataVal, yScale, targetVal, oriCmds.join(''), rescaledCmds.join(''));
+                            rescaledCmds = this.rescalePathSize(rescaledCmds, 'y', 'height', dataCurrentChart, yScale, vm);
+                        }
+                    } else {//data is not changed nor changing
+                        //use data last chart and scale this chart
+                        const yScale = scaleCurrentChart.filter(s => s.name === 'y-scale')[0];//TODO: consider multiple y-scales
+                        if (yVisualChannel[0]) {//to rescale y position 
+
+                        }
+                        if (yVisualChannel[1]) {//to rescale height
+                            //rescale height of the oriCmds
+                            rescaledCmds = this.rescalePathSize(rescaledCmds, 'y', 'height', dataLastChart, yScale, vm);
+                        }
+                    }
+                }
+                previousTrans[1] = previousTrans[1] || mergeType[3];
+                if (mergeType[4]) {//change data
+                    if (previousTrans[0]) {//x scaled
+
+                    } else {//x not scaled
+
+                    }
+                    if (previousTrans[1]) {//y scaled
+                        //use data this chart and scale this chart
+                        const yScale = scaleCurrentChart.filter(s => s.name === 'y-scale')[0];//TODO: consider multiple y-scales
+                        if (yVisualChannel[0]) {//to rescale y position 
+
+                        }
+                        if (yVisualChannel[1]) {//to rescale height
+                            //rescale height of the oriCmds
+                            console.log('cmds to rescle', rescaledCmds);
+                            rescaledCmds = this.rescalePathSize(rescaledCmds, 'y', 'height', dataCurrentChart, yScale, vm);
+                        }
+                    } else {//y not scaled yet
+                        //use data this chart and scale last chart
+                        const yScale = scaleLastChart.filter(s => s.name === 'y-scale')[0];//TODO: consider multiple y-scales
+                        if (yVisualChannel[0]) {//to rescale y position 
+
+                        }
+                        if (yVisualChannel[1]) {//to rescale height
+                            //rescale height of the oriCmds
+                            rescaledCmds = this.rescalePathSize(rescaledCmds, 'y', 'height', dataCurrentChart, yScale, vm);
                         }
                     }
                 }
